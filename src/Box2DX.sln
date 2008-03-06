@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Box2DX", "Box2DX.csproj", "{C157BCA5-BAC7-455F-A7DE-59D506D46ECF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "B2DXUnitTest", "B2DXUnitTest\B2DXUnitTest.csproj", "{FB50E689-64A5-4DD9-A678-F881A8E88B7D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{7148ADF8-7ABA-470A-B1D7-34825507E973}"
+	ProjectSection(SolutionItems) = preProject
+		Box2DX.vsmdi = Box2DX.vsmdi
+		Box2DX1.vsmdi = Box2DX1.vsmdi
+		LocalTestRun.testrunconfig = LocalTestRun.testrunconfig
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(TestCaseManagementSettings) = postSolution
+		CategoryFile = Box2DX1.vsmdi
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C157BCA5-BAC7-455F-A7DE-59D506D46ECF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C157BCA5-BAC7-455F-A7DE-59D506D46ECF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C157BCA5-BAC7-455F-A7DE-59D506D46ECF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C157BCA5-BAC7-455F-A7DE-59D506D46ECF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FB50E689-64A5-4DD9-A678-F881A8E88B7D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FB50E689-64A5-4DD9-A678-F881A8E88B7D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FB50E689-64A5-4DD9-A678-F881A8E88B7D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FB50E689-64A5-4DD9-A678-F881A8E88B7D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
