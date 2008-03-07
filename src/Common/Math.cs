@@ -4,102 +4,103 @@ using System.Text;
 
 namespace Box2DX.Common
 {
-    public class Math
-    {
-        public static float FLT_EPSILON = 1.192092896e-07f; //smallest such that 1.0f+FLT_EPSILON != 1.0f
+	public class Math
+	{
+		public static float FLT_EPSILON = 1.192092896e-07f; //smallest such that 1.0f+FLT_EPSILON != 1.0f
+		public static float FLT_MAX = 3.402823466e+38F;
 
-        /// <summary>
-        /// This function is used to ensure that a floating point number is
-        /// not a NaN or infinity.
-        /// </summary>
-        /// <param name="x"></param>
-        /// <returns></returns>
-        public static bool IsValid(float x)
-        {
-            return float.IsNaN(x) || float.IsNegativeInfinity(x) || float.IsPositiveInfinity(x);
-        }
+		/// <summary>
+		/// This function is used to ensure that a floating point number is
+		/// not a NaN or infinity.
+		/// </summary>
+		/// <param name="x"></param>
+		/// <returns></returns>
+		public static bool IsValid(float x)
+		{
+			return float.IsNaN(x) || float.IsNegativeInfinity(x) || float.IsPositiveInfinity(x);
+		}
 
-        [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Explicit)]
-        public struct Convert
-        {
-            [System.Runtime.InteropServices.FieldOffset(0)]
-            public float x;
+		[System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Explicit)]
+		public struct Convert
+		{
+			[System.Runtime.InteropServices.FieldOffset(0)]
+			public float x;
 
-            [System.Runtime.InteropServices.FieldOffset(0)]
-            public int i;
-        }
+			[System.Runtime.InteropServices.FieldOffset(0)]
+			public int i;
+		}
 
-        /// <summary>
-        /// This is a approximate yet fast inverse square-root.
-        /// </summary>
-        /// <param name="x"></param>
-        /// <returns></returns>
-        public static float InvSqrt(float x)
-        {
-            Convert convert = new Convert();
-            convert.x = x;
-            float xhalf = 0.5f * x;
-            convert.i = 0x5f3759df - (convert.i >> 1);
-            x = convert.x;
-            x = x * (1.5f - xhalf * x * x);
-            return x;
-        }
+		/// <summary>
+		/// This is a approximate yet fast inverse square-root.
+		/// </summary>
+		/// <param name="x"></param>
+		/// <returns></returns>
+		public static float InvSqrt(float x)
+		{
+			Convert convert = new Convert();
+			convert.x = x;
+			float xhalf = 0.5f * x;
+			convert.i = 0x5f3759df - (convert.i >> 1);
+			x = convert.x;
+			x = x * (1.5f - xhalf * x * x);
+			return x;
+		}
 
-        /// <summary>
-        /// Random number in range [-1,1]
-        /// </summary>
-        /// <returns></returns>
-        public static float Random()
-        {
-            float RAND_MAX = 0x7fff;
-            Random rnd = new Random();
-            float r = (float)rnd.NextDouble();
-            r /= RAND_MAX;
-            r = 2.0f * r - 1.0f;
-            return r;
-        }
+		/// <summary>
+		/// Random number in range [-1,1]
+		/// </summary>
+		/// <returns></returns>
+		public static float Random()
+		{
+			float RAND_MAX = 0x7fff;
+			Random rnd = new Random();
+			float r = (float)rnd.NextDouble();
+			r /= RAND_MAX;
+			r = 2.0f * r - 1.0f;
+			return r;
+		}
 
 #warning: "check perf"
-        /// <summary>
-        /// Random floating point number in range [lo, hi]
-        /// </summary>
-        /// <param name="lo"></param>
-        /// <param name="hi"></param>
-        /// <returns></returns>
-        public static float Random(float lo, float hi)
-        {
-            float RAND_MAX = 0x7fff;
-            Random rnd = new Random();
-            float r = (float)rnd.NextDouble();
-            r /= RAND_MAX;
-            r = (hi - lo) * r + lo;
-            return r;
-        }
+		/// <summary>
+		/// Random floating point number in range [lo, hi]
+		/// </summary>
+		/// <param name="lo"></param>
+		/// <param name="hi"></param>
+		/// <returns></returns>
+		public static float Random(float lo, float hi)
+		{
+			float RAND_MAX = 0x7fff;
+			Random rnd = new Random();
+			float r = (float)rnd.NextDouble();
+			r /= RAND_MAX;
+			r = (hi - lo) * r + lo;
+			return r;
+		}
 
-        /// <summary>
-        /// "Next Largest Power of 2
-        /// Given a binary integer value x, the next largest power of 2 can be computed by a SWAR algorithm
-        /// that recursively "folds" the upper bits into the lower bits. This process yields a bit vector with
-        /// the same most significant 1 as x, but all 1's below it. Adding 1 to that value yields the next
-        /// largest power of 2. For a 32-bit value:"
-        /// </summary>
-        /// <param name="x"></param>
-        /// <returns></returns>
-        public static uint NextPowerOfTwo(uint x)
-        {
-            x |= (x >> 1);
-            x |= (x >> 2);
-            x |= (x >> 4);
-            x |= (x >> 8);
-            x |= (x >> 16);
-            return x + 1;
-        }
+		/// <summary>
+		/// "Next Largest Power of 2
+		/// Given a binary integer value x, the next largest power of 2 can be computed by a SWAR algorithm
+		/// that recursively "folds" the upper bits into the lower bits. This process yields a bit vector with
+		/// the same most significant 1 as x, but all 1's below it. Adding 1 to that value yields the next
+		/// largest power of 2. For a 32-bit value:"
+		/// </summary>
+		/// <param name="x"></param>
+		/// <returns></returns>
+		public static uint NextPowerOfTwo(uint x)
+		{
+			x |= (x >> 1);
+			x |= (x >> 2);
+			x |= (x >> 4);
+			x |= (x >> 8);
+			x |= (x >> 16);
+			return x + 1;
+		}
 
-        public static bool IsPowerOfTwo(uint x)
-        {
-            bool result = x > 0 && (x & (x - 1)) == 0;
-            return result;
-        }
+		public static bool IsPowerOfTwo(uint x)
+		{
+			bool result = x > 0 && (x & (x - 1)) == 0;
+			return result;
+		}
 
 		public static float Abs(float a)
 		{
@@ -245,5 +246,5 @@ namespace Box2DX.Common
 		{
 			return Math.MulT(T.R, v - T.Position);
 		}
-    }
+	}
 }
