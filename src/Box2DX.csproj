@@ -39,6 +39,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Box2DXDebug.cs" />
+    <Compile Include="Collision\Collision.CollideCircle.cs" />
     <Compile Include="Collision\Collision.cs" />
     <Compile Include="Collision\Collision.Distance.cs" />
     <Compile Include="Collision\Collision.TimeOfImpact.cs" />
