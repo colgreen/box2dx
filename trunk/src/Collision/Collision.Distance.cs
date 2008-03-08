@@ -74,7 +74,7 @@ namespace Box2DX.Collision
 			}
 
 			// Should not be in vertex a or b region.
-#warning
+#warning "???"
 			//B2_NOT_USED(sd);
 			//B2_NOT_USED(sn);			
 			Box2DXDebug.Assert(sn > 0.0f || tn > 0.0f);
@@ -274,7 +274,7 @@ namespace Box2DX.Collision
 			return 0.0f;
 		}
 
-#warning: "CAS"
+#warning "CAS"
 		// This is used for polygon-vs-circle distance.
 		public class Point : Collision.IGenericShape
 		{
