@@ -44,6 +44,7 @@
     <Compile Include="Collision\Collision.cs" />
     <Compile Include="Collision\Collision.Distance.cs" />
     <Compile Include="Collision\Collision.TimeOfImpact.cs" />
+    <Compile Include="Collision\Shapes\CircleShape.cs" />
     <Compile Include="Collision\Shapes\Shape.cs" />
     <Compile Include="Common\Mat22.cs" />
     <Compile Include="Common\Math.cs" />

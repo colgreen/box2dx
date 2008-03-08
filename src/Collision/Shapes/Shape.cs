@@ -119,22 +119,62 @@ namespace Box2DX.Collision
 	public abstract class Shape : IDisposable
 	{
 		ShapeType _type;
+		/// <summary>
+		/// Get the type of this shape. You can use this to down cast to the concrete shape.
+		/// </summary>
+		public ShapeType Type { get { return _type; } set { _type = value; } }
+
 		Shape _next;
+		/// <summary>
+		/// Get the next shape in the parent body's shape list.
+		/// </summary>
+		public Shape Next { get { return _next; } set { _next = value; } }
+
 		Body _body;
+		/// <summary>
+		/// Get the parent body of this shape. This is NULL if the shape is not attached.
+		/// </summary>
+		public Body Body { get { return _body; } set { _body = value; } }
 
 		float _sweepRadius;
+		/// <summary>
+		/// Sweep radius relative to the parent body's center of mass.
+		/// </summary>
+		public float SweepRadius { get { return _sweepRadius; } set { _sweepRadius = value; } }
 
 		float _density;
+		public float Density { get { return _density; } set { _density = value; } }
+
 		float _friction;
+		public float Friction { get { return _friction; } set { _friction = value; } }
+
 		float _restitution;
+		public float Restitution { get { return _restitution; } set { _restitution = value; } }
 
 		ushort _proxyId;
+		public ushort ProxyId { get { return _proxyId; } set { _proxyId = value; } }
+
 		ushort _categoryBits;
+		public ushort CategoryBits { get { return _categoryBits; } set { _categoryBits = value; } }
+
 		ushort _maskBits;
+		public ushort MaskBits { get { return _maskBits; } set { _maskBits = value; } }
+
 		short _groupIndex;
+		public short GroupIndex { get { return _groupIndex; } set { _groupIndex = value; } }
 
 		bool _isSensor;
+		/// <summary>
+		/// Is this shape a sensor (non-solid)?
+		/// </summary>
+		public bool IsSensor { get { return _isSensor; } set { _isSensor = value; } }
+
 		object _userData;
+		/// <summary>
+		/// Get the user data that was assigned in the shape definition. Use this to
+		/// store your application specific data.
+		/// </summary>
+		public object UserData { get { return _userData; } set { _userData = value; } }
 
 		public Shape(ShapeDef def)
 		{
@@ -154,51 +194,7 @@ namespace Box2DX.Collision
 			_groupIndex = def.GroupIndex;
 
 			_isSensor = def.IsSensor;
-		}
-
-		/// <summary>
-		/// Get the type of this shape. You can use this to down cast to the concrete shape.
-		/// </summary>
-		public ShapeType Type { get { return _type; } }
-
-
-		/// <summary>
-		/// Is this shape a sensor (non-solid)?
-		/// </summary>
-		public bool IsSensor { get { return _isSensor; } }
-
-		/// <summary>
-		/// Get the parent body of this shape. This is NULL if the shape is not attached.
-		/// </summary>
-		/// <returns>The parent body</returns>
-		public Body GetBody()
-		{
-			return _body;
-		}
-
-		/// <summary>
-		/// Get the next shape in the parent body's shape list.
-		/// </summary>
-		/// <returns>The next shape</returns>
-		public Shape GetNext()
-		{
-			return _next;
-		}
-
-		/// <summary>
-		/// Get the user data that was assigned in the shape definition. Use this to
-		/// store your application specific data.
-		/// </summary>
-		/// <returns></returns>
-		public object GetUserData()
-		{
-			return _userData;
-		}
-
-		/// <summary>
-		/// Sweep radius relative to the parent body's center of mass.
-		/// </summary>
-		public float SweepRadius { get { return _sweepRadius; } }
+		}		
 
 		/// <summary>
 		/// Test a point for containment in this shape. This only works for convex shapes.
