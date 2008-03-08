@@ -25,7 +25,7 @@ namespace Box2DX
 			Debug.Assert(condition, message, detailMessage);
 		}
 
-		private static void Throw(String message)
+		public static void Throw(String message)
 		{
 			string msg = String.Format("Error: {0}", message);
 			throw new Exception(msg);
