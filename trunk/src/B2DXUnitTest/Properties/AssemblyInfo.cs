@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("B2DXUnitTest")]
-[assembly: AssemblyCopyright("Copyright ©  2008")]
+[assembly: AssemblyCopyright("Copyright (c) 2008 Ihar Kalasouski http://code.google.com/p/box2dx")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

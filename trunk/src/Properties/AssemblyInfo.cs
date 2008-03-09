@@ -8,9 +8,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("Box2DX")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("EPAM Systems")]
+[assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("Box2DX")]
-[assembly: AssemblyCopyright("Copyright © EPAM Systems 2008")]
+[assembly: AssemblyCopyright("Copyright (c) 2008 Ihar Kalasouski http://code.google.com/p/box2dx")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
