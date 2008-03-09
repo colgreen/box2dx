@@ -26,8 +26,8 @@ namespace Box2DX.Collision
 #warning: "check params"
 		public static float TimeOfImpact(Shape shape1, Sweep sweep1, Shape shape2, Sweep sweep2)
 		{
-			float r1 = shape1.SweepRadius;
-			float r2 = shape2.SweepRadius;
+			float r1 = shape1.GetSweepRadius();
+			float r2 = shape2.GetSweepRadius();
 
 			Box2DXDebug.Assert(sweep1.T0 == sweep2.T0);
 			Box2DXDebug.Assert(1.0f - sweep1.T0 > Common.Math.FLT_EPSILON);
@@ -55,7 +55,7 @@ namespace Box2DX.Collision
 				sweep2.GetXForm(out xf2, t);
 
 				// Get the distance between shapes.
-				distance = b2Distance(&p1, &p2, shape1, xf1, shape2, xf2);
+				distance = Collision.Distance(out p1, out p2, shape1, xf1, shape2, xf2);
 
 				if (iter == 0)
 				{

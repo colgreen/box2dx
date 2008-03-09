@@ -249,16 +249,16 @@ namespace Box2DX.Collision
 		/// <summary>
 		/// The rotation matrix.
 		/// </summary>
-		Mat22 R;
+		public Mat22 R;
 
 		/// <summary>
 		/// The local centroid.
 		/// </summary>
-		Vector2 Center;
+		public Vector2 Center;
 
 		/// <summary>
 		/// The half-widths.
 		/// </summary>
-		Vector2 Extents;
+		public Vector2 Extents;
 	}
 }

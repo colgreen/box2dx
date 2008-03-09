@@ -26,7 +26,7 @@ namespace Box2DX.Collision
 
 		public PolygonDef()
 		{
-			Type = e_polygonShape;
+			Type = ShapeType.PolygonShape;
 			VertexCount = 0;
 		}
 
@@ -59,7 +59,7 @@ namespace Box2DX.Collision
 			xf.Position = center;
 			xf.R.Set(angle);
 
-			for (int i = 0; i < vertexCount; ++i)
+			for (int i = 0; i < VertexCount; ++i)
 			{
 				Vertices[i] = Common.Math.Mul(xf, Vertices[i]);
 			}
@@ -69,44 +69,54 @@ namespace Box2DX.Collision
 	/// <summary>
 	/// A convex polygon.
 	/// </summary>
-	public class PolygonShape : Shape
+	public class PolygonShape : Shape, Collision.IGenericShape
 	{
 		// Local position of the polygon centroid.
-		Vector2 _centroid;
+		public Vector2 _centroid;
+		/// <summary>
+		/// Get local centroid relative to the parent body.
+		/// </summary>
+		/// <returns></returns>
+		//public Vector2 Centroid { get { return _centroid; } }
+		public Vector2 GetCentroid() { return _centroid; }
 
-		OBB _obb;
+		public OBB _obb;
 		/// <summary>
 		/// Get the oriented bounding box relative to the parent body.
 		/// </summary>
-		public OBB OBB { get { return _obb; } }
+		//public OBB OBB { get { return _obb; } }
+		public OBB GetOBB() { return _obb; }
 
-		Vector2[] _vertices = new Vector2[Settings.MaxPolygonVertices];
+		public Vector2[] _vertices = new Vector2[Settings.MaxPolygonVertices];
 		/// <summary>
 		/// Get the vertices in local coordinates.
 		/// </summary>
-		public Vector2[] Vertices { get { return _vertices; } }
+		//public Vector2[] Vertices { get { return _vertices; } }
+		public Vector2[] GetVertices() { return _vertices; }
 
-		Vector2[] _normals = new Vector2[Settings.MaxPolygonVertices];
+		public Vector2[] _normals = new Vector2[Settings.MaxPolygonVertices];
 
-		Vector2[] _coreVertices = new Vector2[Settings.MaxPolygonVertices];
+		public Vector2[] _coreVertices = new Vector2[Settings.MaxPolygonVertices];
 		/// <summary>
 		/// Get the core vertices in local coordinates. These vertices
 		/// represent a smaller polygon that is used for time of impact
 		/// computations.
 		/// </summary>
-		public Vector2[] CoreVertices { get { return _coreVertices; } }
-		
-		int _vertexCount;
+		//public Vector2[] CoreVertices { get { return _coreVertices; } }
+		public Vector2[] GetCoreVertices() { return _coreVertices; }
+
+		public int _vertexCount;
 		/// <summary>
 		/// Get the vertex count.
 		/// </summary>
 		public int VertexCount { get { return _vertexCount; } }
+		//public int GetVertexCount() { return _vertexCount; }
 
 		public PolygonShape(ShapeDef def)
 			: base(def)
 		{
 			Box2DXDebug.Assert(def.Type == ShapeType.PolygonShape);
-			Type = ShapeType.PolygonShape;
+			_type = ShapeType.PolygonShape;
 			PolygonDef poly = (PolygonDef)def;
 
 			// Get the vertices transformed into the body frame.
@@ -141,7 +151,7 @@ namespace Box2DX.Collision
 					{
 						continue;
 					}
-					
+
 					// Your polygon is non-convex (it has an indentation).
 					// Or your polygon is too skinny.
 					float s = Vector2.Dot(_normals[i], _vertices[j] - _vertices[i]);
@@ -152,10 +162,10 @@ namespace Box2DX.Collision
 			// Ensure the polygon is counter-clockwise.
 			for (int i = 1; i < _vertexCount; ++i)
 			{
-				float cross = Vector2.Cross(_normals[i-1], _normals[i]);
+				float cross = Vector2.Cross(_normals[i - 1], _normals[i]);
 
 				// Keep asinf happy.
-				cross = Vector2.Clamp(cross, -1.0f, 1.0f);
+				cross = Common.Math.Clamp(cross, -1.0f, 1.0f);
 
 				// You have consecutive edges that are almost parallel on your polygon.
 				float angle = (float)System.Math.Asin(cross);
@@ -191,13 +201,13 @@ namespace Box2DX.Collision
 				Box2DXDebug.Assert(d.X >= 0.0f);
 				Box2DXDebug.Assert(d.Y >= 0.0f);
 				Mat22 A = new Mat22();
-				A.Col1.X = n1.x; A.Col2.X = n1.Y;
-				A.Col1.Y = n2.x; A.Col2.Y = n2.Y;
+				A.Col1.X = n1.X; A.Col2.X = n1.Y;
+				A.Col1.Y = n2.X; A.Col2.Y = n2.Y;
 				_coreVertices[i] = A.Solve(d) + _centroid;
 			}
 		}
 
-		public void UpdateSweepRadius(Vector2 center)
+		public override void UpdateSweepRadius(Vector2 center)
 		{
 			// Update the sweep radius (maximum radius) as measured from
 			// a local center point.
@@ -256,6 +266,9 @@ namespace Box2DX.Collision
 
 		public override bool TestSegment(XForm xf, out float lambda, out Vector2 normal, Segment segment, float maxLambda)
 		{
+			lambda = 0f;
+			normal = Vector2.Zero;
+
 			float lower = 0.0f, upper = maxLambda;
 
 			Vector2 p1 = Common.Math.MulT(xf.R, segment.P1 - xf.Position);
@@ -311,7 +324,7 @@ namespace Box2DX.Collision
 			aabb.UpperBound = position + h;
 		}
 
-		public override void ComputeSweptAABB(out AABB aabb, XForm xf1, XForm xf2)
+		public override void ComputeSweptAABB(out AABB aabb, XForm transform1, XForm transform2)
 		{
 			AABB aabb1, aabb2;
 			ComputeAABB(out aabb1, transform1);
@@ -345,10 +358,10 @@ namespace Box2DX.Collision
 			// Simplification: triangle centroid = (1/3) * (p1 + p2 + p3)
 			//
 			// The rest of the derivation is handled by computer algebra.
-			
+
 			Box2DXDebug.Assert(_vertexCount >= 3);
 
-			Vector2 center = new Vector2(); 
+			Vector2 center = new Vector2();
 			center.Set(0.0f, 0.0f);
 			float area = 0.0f;
 			float I = 0.0f;
@@ -398,7 +411,7 @@ namespace Box2DX.Collision
 
 			// Total mass
 			massData.Mass = _density * area;
-			
+
 			// Center of mass
 			Box2DXDebug.Assert(area > Common.Math.FLT_EPSILON);
 			center *= 1.0f / area;
@@ -408,10 +421,100 @@ namespace Box2DX.Collision
 			massData.I = _density * I;
 		}
 
-		/// <summary>
-		/// Get local centroid relative to the parent body.
-		/// </summary>
-		/// <returns></returns>
-		public Vector2 GetCentroid() { return _centroid; }
+		public static Vector2 ComputeCentroid(Vector2[] vs, int count)
+		{
+			Box2DXDebug.Assert(count >= 3);
+
+			Vector2 c = new Vector2(); c.Set(0.0f, 0.0f);
+			float area = 0.0f;
+
+			// pRef is the reference point for forming triangles.
+			// It's location doesn't change the result (except for rounding error).
+			Vector2 pRef = new Vector2(0.0f, 0.0f);
+#if O
+			// This code would put the reference point inside the polygon.
+			for (int i = 0; i < count; ++i)
+			{
+				pRef += vs[i];
+			}
+			pRef *= 1.0f / count;
+#endif
+
+			float inv3 = 1.0f / 3.0f;
+
+			for (int i = 0; i < count; ++i)
+			{
+				// Triangle vertices.
+				Vector2 p1 = pRef;
+				Vector2 p2 = vs[i];
+				Vector2 p3 = i + 1 < count ? vs[i + 1] : vs[0];
+
+				Vector2 e1 = p2 - p1;
+				Vector2 e2 = p3 - p1;
+
+				float D = Vector2.Cross(e1, e2);
+
+				float triangleArea = 0.5f * D;
+				area += triangleArea;
+
+				// Area weighted centroid
+				c += triangleArea * inv3 * (p1 + p2 + p3);
+			}
+
+			// Centroid
+			Box2DXDebug.Assert(area > Common.Math.FLT_EPSILON);
+			c *= 1.0f / area;
+			return c;
+		}
+
+		// http://www.geometrictools.com/Documentation/MinimumAreaRectangle.pdf
+		public static void ComputeOBB(out OBB obb, Vector2[] vs, int count)
+		{
+			obb = new OBB();
+
+			Box2DXDebug.Assert(count <= Settings.MaxPolygonVertices);
+			Vector2[] p = new Vector2[Settings.MaxPolygonVertices + 1];
+			for (int i = 0; i < count; ++i)
+			{
+				p[i] = vs[i];
+			}
+			p[count] = p[0];
+
+			float minArea = Common.Math.FLT_MAX;
+
+			for (int i = 1; i <= count; ++i)
+			{
+				Vector2 root = p[i - 1];
+				Vector2 ux = p[i] - root;
+				float length = ux.Normalize();
+				Box2DXDebug.Assert(length > Common.Math.FLT_EPSILON);
+				Vector2 uy = new Vector2(-ux.Y, ux.X);
+				Vector2 lower = new Vector2(Common.Math.FLT_MAX, Common.Math.FLT_MAX);
+				Vector2 upper = new Vector2(-Common.Math.FLT_MAX, -Common.Math.FLT_MAX);
+
+				for (int j = 0; j < count; ++j)
+				{
+					Vector2 d = p[j] - root;
+					Vector2 r = new Vector2();
+					r.X = Vector2.Dot(ux, d);
+					r.Y = Vector2.Dot(uy, d);
+					lower = Common.Math.Min(lower, r);
+					upper = Common.Math.Max(upper, r);
+				}
+
+				float area = (upper.X - lower.X) * (upper.Y - lower.Y);
+				if (area < 0.95f * minArea)
+				{
+					minArea = area;
+					obb.R.Col1 = ux;
+					obb.R.Col2 = uy;
+					Vector2 center = 0.5f * (lower + upper);
+					obb.Center = root + Common.Math.Mul(obb.R, center);
+					obb.Extents = 0.5f * (upper - lower);
+				}
+			}
+
+			Box2DXDebug.Assert(minArea < Common.Math.FLT_MAX);
+		}
 	}
 }

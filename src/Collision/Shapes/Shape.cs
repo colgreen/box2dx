@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 
 using Box2DX.Common;
+using Box2DX.Dynamics;
 
 namespace Box2DX.Collision
 {
@@ -73,20 +74,20 @@ namespace Box2DX.Collision
 		/// <summary>
 		/// The collision category bits. Normally you would just set one bit.
 		/// </summary>
-		public uint CategoryBits;
+		public ushort CategoryBits;
 
 		/// <summary>
 		/// The collision mask bits. This states the categories that this
 		/// shape would accept for collision.
 		/// </summary>
-		public uint MaskBits;
+		public ushort MaskBits;
 
 		/// <summary>
 		/// Collision groups allow a certain group of objects to never collide (negative)
 		/// or always collide (positive). Zero means no collision group. Non-zero group
 		/// filtering always wins against the mask bits.
 		/// </summary>
-		public int GroupIndex;
+		public short GroupIndex;
 
 		/// <summary>
 		/// A sensor shape collects contact information but never generates a collision
@@ -100,7 +101,7 @@ namespace Box2DX.Collision
 		public ShapeDef()
 		{
 			Type = ShapeType.UnknownShape;
-			SerData = null;
+			UserData = null;
 			Friction = 0.2f;
 			Restitution = 0.0f;
 			Density = 0.0f;
@@ -118,63 +119,55 @@ namespace Box2DX.Collision
 	/// </summary>
 	public abstract class Shape : IDisposable
 	{
-		ShapeType _type;
+		public ShapeType _type;
 		/// <summary>
 		/// Get the type of this shape. You can use this to down cast to the concrete shape.
 		/// </summary>
-		public ShapeType Type { get { return _type; } set { _type = value; } }
+		//public ShapeType Type { get { return _type; } }
+		public new ShapeType GetType() { return _type; }
 
-		Shape _next;
+		public Shape _next;
 		/// <summary>
 		/// Get the next shape in the parent body's shape list.
 		/// </summary>
-		public Shape Next { get { return _next; } set { _next = value; } }
+		//public Shape Next { get { return _next; } }
+		public Shape GetNext() { return _next; }
 
-		Body _body;
+		public Body _body;
 		/// <summary>
 		/// Get the parent body of this shape. This is NULL if the shape is not attached.
 		/// </summary>
-		public Body Body { get { return _body; } set { _body = value; } }
+		//public Body Body { get { return _body; } }
+		public Body GetBody() { return _body; }
 
-		float _sweepRadius;
+		public float _sweepRadius;
 		/// <summary>
 		/// Sweep radius relative to the parent body's center of mass.
 		/// </summary>
-		public float SweepRadius { get { return _sweepRadius; } set { _sweepRadius = value; } }
+		//public float SweepRadius { get { return _sweepRadius; } }
+		public float GetSweepRadius() { return _sweepRadius; }
 
-		float _density;
-		public float Density { get { return _density; } set { _density = value; } }
+		public float _density;
+		public float _friction;
+		public float _restitution;
+		public ushort _proxyId;
+		public ushort _categoryBits;
+		public ushort _maskBits;
+		public short _groupIndex;
 
-		float _friction;
-		public float Friction { get { return _friction; } set { _friction = value; } }
-
-		float _restitution;
-		public float Restitution { get { return _restitution; } set { _restitution = value; } }
-
-		ushort _proxyId;
-		public ushort ProxyId { get { return _proxyId; } set { _proxyId = value; } }
-
-		ushort _categoryBits;
-		public ushort CategoryBits { get { return _categoryBits; } set { _categoryBits = value; } }
-
-		ushort _maskBits;
-		public ushort MaskBits { get { return _maskBits; } set { _maskBits = value; } }
-
-		short _groupIndex;
-		public short GroupIndex { get { return _groupIndex; } set { _groupIndex = value; } }
-
-		bool _isSensor;
+		public bool _isSensor;
 		/// <summary>
 		/// Is this shape a sensor (non-solid)?
 		/// </summary>
-		public bool IsSensor { get { return _isSensor; } set { _isSensor = value; } }
+		public bool IsSensor { get { return _isSensor; } }
 
-		object _userData;
+		public object _userData;
 		/// <summary>
 		/// Get the user data that was assigned in the shape definition. Use this to
 		/// store your application specific data.
 		/// </summary>
-		public object UserData { get { return _userData; } set { _userData = value; } }
+		//public object UserData { get { return _userData; } }
+		public object GetUserData() { return _userData; }
 
 		public Shape(ShapeDef def)
 		{
@@ -194,7 +187,7 @@ namespace Box2DX.Collision
 			_groupIndex = def.GroupIndex;
 
 			_isSensor = def.IsSensor;
-		}		
+		}
 
 		/// <summary>
 		/// Test a point for containment in this shape. This only works for convex shapes.
@@ -263,7 +256,7 @@ namespace Box2DX.Collision
 
 		public void Destroy(Shape s)
 		{
-			switch (s.Type)
+			switch (s.GetType())
 			{
 				case ShapeType.CircleShape:
 					if (s is IDisposable)
@@ -279,12 +272,13 @@ namespace Box2DX.Collision
 
 				default:
 					Box2DXDebug.Assert(false);
+					break;
 			}
 		}
 
 		public void CreateProxy(BroadPhase broadPhase, XForm transform)
 		{
-			Box2DXDebug.Assert(_proxyId == PairManger.NullProxy);
+			Box2DXDebug.Assert(_proxyId == PairManager.NullProxy);
 
 			AABB aabb;
 			ComputeAABB(out aabb, transform);
@@ -300,22 +294,22 @@ namespace Box2DX.Collision
 			}
 			else
 			{
-				_proxyId = PairManger.NullProxy;
+				_proxyId = PairManager.NullProxy;
 			}
 		}
 
 		public void DestroyProxy(BroadPhase broadPhase)
 		{
-			if (_proxyId != PairManger.NullProxy)
+			if (_proxyId != PairManager.NullProxy)
 			{
 				broadPhase.DestroyProxy(_proxyId);
-				_proxyId = PairManger.NullProxy;
+				_proxyId = PairManager.NullProxy;
 			}
 		}
 
 		public bool Synchronize(BroadPhase broadPhase, XForm transform1, XForm transform2)
 		{
-			if (_proxyId == PairManger.NullProxy)
+			if (_proxyId == PairManager.NullProxy)
 			{
 				return false;
 			}
@@ -337,7 +331,7 @@ namespace Box2DX.Collision
 
 		public void ResetProxy(BroadPhase broadPhase, XForm transform)
 		{
-			if (_proxyId != PairManger.NullProxy)
+			if (_proxyId != PairManager.NullProxy)
 			{
 				broadPhase.DestroyProxy(_proxyId);
 			}
@@ -356,7 +350,7 @@ namespace Box2DX.Collision
 			}
 			else
 			{
-				_proxyId = PairManger.NullProxy;
+				_proxyId = PairManager.NullProxy;
 			}
 		}
 

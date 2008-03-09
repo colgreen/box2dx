@@ -8,7 +8,7 @@ namespace Box2DX.Common
 	{
 		public static readonly float Pi = 3.14159265359f;
 
-        // Global tuning constants based on meters-kilograms-seconds (MKS) units.
+		// Global tuning constants based on meters-kilograms-seconds (MKS) units.
 
 		// Collision
 		public static readonly int MaxManifoldPoints = 2;

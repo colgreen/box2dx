@@ -4,36 +4,36 @@ using System.Text;
 
 namespace Box2DX.Common
 {
-    /// <summary>
-    /// A 2-by-2 matrix. Stored in column-major order.
-    /// </summary>
-    public struct Mat22
-    {
-        public Vector2 Col1, Col2;
+	/// <summary>
+	/// A 2-by-2 matrix. Stored in column-major order.
+	/// </summary>
+	public struct Mat22
+	{
+		public Vector2 Col1, Col2;
 
-        /// <summary>
-        /// Construct this matrix using columns.
-        /// </summary>
-        /// <param name="c1"></param>
-        /// <param name="c2"></param>
-        public Mat22(Vector2 c1, Vector2 c2)
-        {
-            Col1 = c1;
-            Col2 = c2;
-        }
+		/// <summary>
+		/// Construct this matrix using columns.
+		/// </summary>
+		/// <param name="c1"></param>
+		/// <param name="c2"></param>
+		public Mat22(Vector2 c1, Vector2 c2)
+		{
+			Col1 = c1;
+			Col2 = c2;
+		}
 
-        /// <summary>
-        /// Construct this matrix using scalars.
-        /// </summary>
-        /// <param name="a11"></param>
-        /// <param name="a12"></param>
-        /// <param name="a21"></param>
-        /// <param name="a22"></param>
-        public Mat22(float a11, float a12, float a21, float a22)
-        {
-            Col1.X = a11; Col1.Y = a21;
-            Col2.X = a12; Col2.Y = a22;
-        }
+		/// <summary>
+		/// Construct this matrix using scalars.
+		/// </summary>
+		/// <param name="a11"></param>
+		/// <param name="a12"></param>
+		/// <param name="a21"></param>
+		/// <param name="a22"></param>
+		public Mat22(float a11, float a12, float a21, float a22)
+		{
+			Col1.X = a11; Col1.Y = a21;
+			Col2.X = a12; Col2.Y = a22;
+		}
 
 		/// <summary>
 		/// Construct this matrix using an angle. 
@@ -131,7 +131,7 @@ namespace Box2DX.Common
 			return x;
 		}
 
-		public static Mat22 Identity { get { return new Mat22(1,0,0,1); } }
+		public static Mat22 Identity { get { return new Mat22(1, 0, 0, 1); } }
 
 		public static Mat22 operator +(Mat22 A, Mat22 B)
 		{
@@ -139,5 +139,5 @@ namespace Box2DX.Common
 			C.Set(A.Col1 + B.Col1, A.Col2 + B.Col2);
 			return C;
 		}
-    }
+	}
 }
