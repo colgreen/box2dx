@@ -8,6 +8,7 @@ namespace Box2DX.Common
 	{
 		public static float FLT_EPSILON = 1.192092896e-07f; //smallest such that 1.0f+FLT_EPSILON != 1.0f
 		public static float FLT_MAX = 3.402823466e+38F;
+		public static ushort USHRT_MAX = 0xffff;
 
 		/// <summary>
 		/// This function is used to ensure that a floating point number is
@@ -157,17 +158,17 @@ namespace Box2DX.Common
 			return c;
 		}
 
-		public float Clamp(float a, float low, float high)
+		public static float Clamp(float a, float low, float high)
 		{
 			return Math.Max(low, Math.Min(a, high));
 		}
 
-		public int Clamp(int a, int low, int high)
+		public static int Clamp(int a, int low, int high)
 		{
 			return Math.Max(low, Math.Min(a, high));
 		}
 
-		public Vector2 Clamp(Vector2 a, Vector2 low, Vector2 high)
+		public static Vector2 Clamp(Vector2 a, Vector2 low, Vector2 high)
 		{
 			return Math.Max(low, Math.Min(a, high));
 		}

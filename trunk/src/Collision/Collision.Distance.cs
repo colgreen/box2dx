@@ -134,8 +134,8 @@ namespace Box2DX.Collision
 				Vector2 d = Common.Math.Abs(w - points[i]);
 				Vector2 m = Common.Math.Max(Common.Math.Abs(w), Common.Math.Abs(points[i]));
 
-				if (d.x < k_tolerance * (m.x + 1.0f) &&
-					d.y < k_tolerance * (m.y + 1.0f))
+				if (d.X < k_tolerance * (m.X + 1.0f) &&
+					d.Y < k_tolerance * (m.Y + 1.0f))
 				{
 					return true;
 				}
@@ -204,14 +204,14 @@ namespace Box2DX.Collision
 						p1s[1] = w1;
 						p2s[1] = w2;
 						points[1] = w;
-						pointCount = Collision.ProcessTwo(x1, x2, p1s, p2s, points);
+						pointCount = Collision.ProcessTwo(out x1, out x2, ref p1s, ref p2s, ref points);
 						break;
 
 					case 2:
 						p1s[2] = w1;
 						p2s[2] = w2;
 						points[2] = w;
-						pointCount = Collision.ProcessThree(x1, x2, p1s, p2s, points);
+						pointCount = Collision.ProcessThree(out x1, out x2, ref p1s, ref p2s, ref points);
 						break;
 				}
 
@@ -245,13 +245,13 @@ namespace Box2DX.Collision
 		public static float DistanceCC(out Vector2 x1, out Vector2 x2,
 			CircleShape circle1, XForm xf1, CircleShape circle2, XForm xf2)
 		{
-			Vector2 p1 = Common.Math.Mul(xf1, circle1.LocalPosition);
-			Vector2 p2 = Common.Math.Mul(xf2, circle2.LocalPosition);
+			Vector2 p1 = Common.Math.Mul(xf1, circle1._localPosition);
+			Vector2 p2 = Common.Math.Mul(xf2, circle2._localPosition);
 
 			Vector2 d = p2 - p1;
 			float dSqr = Vector2.Dot(d, d);
-			float r1 = circle1.Radius - Settings.ToiSlop;
-			float r2 = circle2.Radius - Settings.ToiSlop;
+			float r1 = circle1._radius - Settings.ToiSlop;
+			float r2 = circle2._radius - Settings.ToiSlop;
 			float r = r1 + r2;
 			if (dSqr > r * r)
 			{
@@ -296,12 +296,12 @@ namespace Box2DX.Collision
 		public static float DistancePC(out Vector2 x1, out Vector2 x2,
 			PolygonShape polygon, XForm xf1, CircleShape circle, XForm xf2)
 		{
-			Point point;
-			point.p = Common.Math.Mul(xf2, circle.LocalPosition);
+			Point point = new Point();
+			point.p = Common.Math.Mul(xf2, circle._localPosition);
 
-			float distance = DistanceGeneric(x1, x2, polygon, xf1, point, XForm.Identity);
+			float distance = DistanceGeneric<PolygonShape, Point>(out x1, out x2, polygon, xf1, point, XForm.Identity);
 
-			float r = circle.Radius - Settings.ToiSlop;
+			float r = circle._radius - Settings.ToiSlop;
 
 			if (distance > r)
 			{
@@ -322,27 +322,30 @@ namespace Box2DX.Collision
 		public static float Distance(out Vector2 x1, out Vector2 x2,
 			Shape shape1, XForm xf1, Shape shape2, XForm xf2)
 		{
+			x1 = new Vector2();
+			x2 = new Vector2();
+
 			ShapeType type1 = shape1.GetType();
 			ShapeType type2 = shape2.GetType();
 
 			if (type1 == ShapeType.CircleShape && type2 == ShapeType.CircleShape)
 			{
-				return DistanceCC(x1, x2, (CircleShape)shape1, xf1, (CircleShape)shape2, xf2);
+				return DistanceCC(out x1, out x2, (CircleShape)shape1, xf1, (CircleShape)shape2, xf2);
 			}
 
 			if (type1 == ShapeType.PolygonShape && type2 == ShapeType.CircleShape)
 			{
-				return DistancePC(x1, x2, (PolygonShape)shape1, xf1, (CircleShape)shape2, xf2);
+				return DistancePC(out x1, out x2, (PolygonShape)shape1, xf1, (CircleShape)shape2, xf2);
 			}
 
 			if (type1 == ShapeType.CircleShape && type2 == ShapeType.PolygonShape)
 			{
-				return DistancePC(x2, x1, (PolygonShape)shape2, xf2, (CircleShape)shape1, xf1);
+				return DistancePC(out x2, out x1, (PolygonShape)shape2, xf2, (CircleShape)shape1, xf1);
 			}
 
 			if (type1 == ShapeType.PolygonShape && type2 == ShapeType.PolygonShape)
 			{
-				return DistanceGeneric(x1, x2, (PolygonShape)shape1, xf1, (PolygonShape)shape2, xf2);
+				return DistanceGeneric(out x1, out x2, (PolygonShape)shape1, xf1, (PolygonShape)shape2, xf2);
 			}
 
 			return 0.0f;

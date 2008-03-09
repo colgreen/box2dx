@@ -73,7 +73,7 @@ namespace Box2DX.Common
 		/// <returns></returns>
 		public bool IsValid
 		{
-            get { return Math.IsValid(X) && Math.IsValid(Y); }
+			get { return Math.IsValid(X) && Math.IsValid(Y); }
 		}
 
 		/// <summary>
@@ -126,7 +126,7 @@ namespace Box2DX.Common
 			return a.X != b.X && a.Y != b.Y;
 		}
 
-		public static Vector2 Zero { get { return new Vector2(0,0); } }
+		public static Vector2 Zero { get { return new Vector2(0, 0); } }
 
 		/// <summary>
 		/// Peform the dot product on two vectors.
