@@ -259,7 +259,7 @@ namespace Box2DX.Collision
 		// Find incident edge
 		// Clip
 		// The normal points from 1 to 2
-		public void CollidePolygons(ref Manifold manifold,
+		public static void CollidePolygons(ref Manifold manifold,
 			PolygonShape polyA, XForm xfA, PolygonShape polyB, XForm xfB)
 		{
 			manifold.PointCount = 0;

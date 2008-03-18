@@ -94,6 +94,7 @@ namespace Box2DX.Collision
 		public uint Key;
 	}
 
+#warning "CAS"
 	/// <summary>
 	/// A manifold point is a contact point belonging to a contact
 	/// manifold. It holds details related to the geometry and dynamics
@@ -101,7 +102,7 @@ namespace Box2DX.Collision
 	/// The point is stored in local coordinates because CCD
 	/// requires sub-stepping in which the separation is stale.
 	/// </summary>
-	public struct ManifoldPoint
+	public class ManifoldPoint
 	{
 		/// <summary>
 		/// Local position of the contact point in body1.
