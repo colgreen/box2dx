@@ -134,15 +134,16 @@ namespace Box2DX.Collision
 		public ContactID ID;
 	}
 
+#warning "CAS"
 	/// <summary>
 	/// A manifold for two touching convex shapes.
 	/// </summary>
-	public struct Manifold
+	public class Manifold
 	{
 		/// <summary>
 		/// The points of contact.
 		/// </summary>
-		public ManifoldPoint[/*Settings.MaxManifoldPoints*/] Points;
+		public ManifoldPoint[/*Settings.MaxManifoldPoints*/] Points = new ManifoldPoint[Settings.MaxManifoldPoints];
 
 		/// <summary>
 		/// The shared unit normal vector.
