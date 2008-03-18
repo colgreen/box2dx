@@ -23,7 +23,10 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Box2DX.Dynamics.Contacts
+using Box2DX.Collision;
+using Box2DX.Common;
+
+namespace Box2DX.Dynamics
 {
 	public class NullContact : Contact
 	{

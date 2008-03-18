@@ -26,7 +26,7 @@ using System.Text;
 using Box2DX.Collision;
 using Box2DX.Common;
 
-namespace Box2DX.Dynamics.Contacts
+namespace Box2DX.Dynamics
 {
 	public class PolygonContact : Contact
 	{
