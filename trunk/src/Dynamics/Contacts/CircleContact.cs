@@ -30,7 +30,7 @@ namespace Box2DX.Dynamics
 {
 	public class CircleContact : Contact
 	{
-		public Manifold _manifold;
+		public Manifold _manifold = new Manifold();
 
 		public Manifold GetManifolds()
 		{
