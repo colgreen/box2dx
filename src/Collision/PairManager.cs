@@ -376,7 +376,8 @@ If the added pair is not a new pair, then it must be in the pair buffer (because
 
 #warning "???"
 			//std::sort(m_pairBuffer, m_pairBuffer + m_pairBufferCount);
-
+			Array.Sort(_pairBuffer, 0, _pairBufferCount);
+			
 			for (int i = 0; i < _pairBufferCount; ++i)
 			{
 				if (i > 0)

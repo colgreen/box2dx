@@ -55,7 +55,12 @@
     <Compile Include="Common\Sweep.cs" />
     <Compile Include="Common\Vector2.cs" />
     <Compile Include="Common\XForm.cs" />
-    <Compile Include="Dynamics\Body.cs" />
+    <Compile Include="Dynamics\Contacts\CircleContact.cs" />
+    <Compile Include="Dynamics\Contacts\Contact.cs" />
+    <Compile Include="Dynamics\Contacts\ContactSolver.cs" />
+    <Compile Include="Dynamics\Contacts\NullContact.cs" />
+    <Compile Include="Dynamics\Contacts\PolyAndCircleContact.cs" />
+    <Compile Include="Dynamics\Contacts\PolyContact.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
