@@ -116,18 +116,18 @@ namespace Box2DX.Dynamics
 		[Flags]
 		public enum CollisionFlags
 		{
-			NonSolidFlag = 0x0001,
-			SlowFlag = 0x0002,
-			IslandFlag = 0x0004,
-			ToiFlag = 0x0008
+			NonSolid = 0x0001,
+			Slow = 0x0002,
+			Island = 0x0004,
+			Toi = 0x0008
 		}
 
-		public static ContactRegister[][] _registers =
-			new ContactRegister[ShapeType.ShapeTypeCount, ShapeType.ShapeTypeCount];
+		public static ContactRegister[,] _registers =
+			new ContactRegister[(int)ShapeType.ShapeTypeCount,(int)ShapeType.ShapeTypeCount];
 		public static bool _initialized = false;
 
 		public CollisionFlags _flags;
-		public uint _manifoldCount;
+		public int _manifoldCount;
 
 		// World pool and list pointers.
 		public Contact _prev;
@@ -155,9 +155,9 @@ namespace Box2DX.Dynamics
 		{
 			_flags = 0;
 
-			if (s1.IsSensor() || s2.IsSensor())
+			if (s1.IsSensor || s2.IsSensor)
 			{
-				_flags |= CollisionFlags.NonSolidFlag;
+				_flags |= CollisionFlags.NonSolid;
 			}
 
 			_shape1 = s1;
@@ -165,7 +165,7 @@ namespace Box2DX.Dynamics
 
 			_manifoldCount = 0;
 
-			_friction = System.Math.Sqrt(_shape1._friction * _shape2._friction);
+			_friction = (float)System.Math.Sqrt(_shape1._friction * _shape2._friction);
 			_restitution = Common.Math.Max(_shape1._restitution, _shape2._restitution);
 			_prev = null;
 			_next = null;
@@ -187,15 +187,15 @@ namespace Box2DX.Dynamics
 			Box2DXDebug.Assert(ShapeType.UnknownShape < type1 && type1 < ShapeType.ShapeTypeCount);
 			Box2DXDebug.Assert(ShapeType.UnknownShape < type2 && type2 < ShapeType.ShapeTypeCount);
 
-			_registers[type1][type2].CreateFcn = createFcn;
-			_registers[type1][type2].DestroyFcn = destoryFcn;
-			_registers[type1][type2].Primary = true;
+			_registers[(int)type1,(int)type2].CreateFcn = createFcn;
+			_registers[(int)type1,(int)type2].DestroyFcn = destoryFcn;
+			_registers[(int)type1,(int)type2].Primary = true;
 
 			if (type1 != type2)
 			{
-				_registers[type2][type1].CreateFcn = createFcn;
-				_registers[type2][type1].DestroyFcn = destoryFcn;
-				_registers[type2][type1].Primary = false;
+				_registers[(int)type2,(int)type1].CreateFcn = createFcn;
+				_registers[(int)type2,(int)type1].DestroyFcn = destoryFcn;
+				_registers[(int)type2,(int)type1].Primary = false;
 			}
 		}
 
@@ -220,19 +220,21 @@ namespace Box2DX.Dynamics
 			Box2DXDebug.Assert(ShapeType.UnknownShape < type1 && type1 < ShapeType.ShapeTypeCount);
 			Box2DXDebug.Assert(ShapeType.UnknownShape < type2 && type2 < ShapeType.ShapeTypeCount);
 
-			ContactCreateFcn createFcn = _registers[(int)type1][(int)type2].CreateFcn;
+			ContactCreateFcn createFcn = _registers[(int)type1,(int)type2].CreateFcn;
 			if (createFcn != null)
 			{
-				if (_registers[type1][type2].Primary)
+				if (_registers[(int)type1,(int)type2].Primary)
 				{
 					return createFcn(shape1, shape2);
 				}
 				else
 				{
 					Contact c = createFcn(shape2, shape1);
-					for (int i = 0; i < c.GetManifoldCount(); ++i)
+#warning "manifold array"
+					//for (int i = 0; i < c.GetManifoldCount(); ++i)
+					if(c.GetManifoldCount()>0)
 					{
-						Manifold m = c.GetManifolds()[i];
+						Manifold m = c.GetManifolds();
 						m.Normal = -m.Normal;
 					}
 					return c;
@@ -260,7 +262,7 @@ namespace Box2DX.Dynamics
 			Box2DXDebug.Assert(ShapeType.UnknownShape < type1 && type1 < ShapeType.ShapeTypeCount);
 			Box2DXDebug.Assert(ShapeType.UnknownShape < type2 && type2 < ShapeType.ShapeTypeCount);
 
-			ContactDestroyFcn destroyFcn = _registers[type1][type2].DestroyFcn;
+			ContactDestroyFcn destroyFcn = _registers[(int)type1,(int)type2].DestroyFcn;
 			destroyFcn(contact);
 		}
 
@@ -287,7 +289,7 @@ namespace Box2DX.Dynamics
 		/// <returns>True if this contact should generate a response.</returns>
 		public bool IsSolid()
 		{
-			return (_flags & CollisionFlags.OnSolidFlag) == 0;
+			return (_flags & CollisionFlags.NonSolid) == 0;
 		}
 
 		/// <summary>
@@ -327,11 +329,11 @@ namespace Box2DX.Dynamics
 			// Slow contacts don't generate TOI events.
 			if (body1.IsStatic() || body1.IsBullet() || body2.IsStatic() || body2.IsBullet())
 			{
-				_flags &= ~CollisionFlags.SlowFlag;
+				_flags &= ~CollisionFlags.Slow;
 			}
 			else
 			{
-				_flags |= CollisionFlags.SlowFlag;
+				_flags |= CollisionFlags.Slow;
 			}
 		}
 

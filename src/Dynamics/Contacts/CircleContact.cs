@@ -32,7 +32,7 @@ namespace Box2DX.Dynamics
 	{
 		public Manifold _manifold = new Manifold();
 
-		public Manifold GetManifolds()
+		public override Manifold GetManifolds()
 		{
 			return _manifold;
 		}
@@ -47,7 +47,7 @@ namespace Box2DX.Dynamics
 			_manifold.Points[0].TangentForce = 0.0f;
 		}
 
-		public void Evaluate(ContactListener listener)
+		public override void Evaluate(ContactListener listener)
 		{
 			Body b1 = _shape1._body;
 			Body b2 = _shape2._body;
@@ -69,7 +69,7 @@ namespace Box2DX.Dynamics
 				}
 				else
 				{
-					_manifold.Points[0].ID.Features.Flip &= ~Collision.Collision.NewPoint;
+					_manifold.Points[0].ID.Features.Flip &= (byte)~Collision.Collision.NewPoint;
 				}
 			}
 			else
@@ -78,9 +78,9 @@ namespace Box2DX.Dynamics
 				if (m0.PointCount > 0 && listener != null)
 				{
 					ContactPoint cp = new ContactPoint();
-					cp.Shape1 = m_shape1;
-					cp.Shape2 = m_shape2;
-					cp.Normal = m0.normal;
+					cp.Shape1 = _shape1;
+					cp.Shape2 = _shape2;
+					cp.Normal = m0.Normal;
 					cp.Position = Common.Math.Mul(b1._xf, m0.Points[0].LocalPoint1);
 					cp.Separation = m0.Points[0].Separation;
 					cp.NormalForce = m0.Points[0].NormalForce;
@@ -91,12 +91,12 @@ namespace Box2DX.Dynamics
 			}
 		}
 
-		public static Contact Create(Shape shape1, Shape shape2)
+		new public static Contact Create(Shape shape1, Shape shape2)
 		{
 			return new CircleContact(shape1, shape2);
 		}
 
-		public static void Destroy(Contact contact)
+		new public static void Destroy(Contact contact)
 		{
 			if (contact is IDisposable)
 				(contact as IDisposable).Dispose();

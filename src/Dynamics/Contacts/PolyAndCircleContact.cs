@@ -69,7 +69,7 @@ namespace Box2DX.Dynamics
 				}
 				else
 				{
-					_manifold.Points[0].ID.Features.Flip &= ~Collision.Collision.NewPoint;
+					_manifold.Points[0].ID.Features.Flip &= (byte)~Collision.Collision.NewPoint;
 				}
 			}
 			else
@@ -91,12 +91,12 @@ namespace Box2DX.Dynamics
 			}
 		}
 
-		public static Contact Create(Shape shape1, Shape shape2)
+		new public static Contact Create(Shape shape1, Shape shape2)
 		{
 			return new PolyAndCircleContact(shape1, shape2);
 		}
 
-		public static void Destroy(Contact contact)
+		new public static void Destroy(Contact contact)
 		{
 			Box2DXDebug.Assert(contact._shape1._body._contactList != contact._node1);
 			Box2DXDebug.Assert(contact._shape1._body._contactList != contact._node2);

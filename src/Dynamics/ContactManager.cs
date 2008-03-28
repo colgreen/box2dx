@@ -134,7 +134,7 @@ namespace Box2DX.Dynamics
 		// to overlap. We retire the Contact.
 		public override void PairRemoved(object proxyUserData1, object proxyUserData2, object pairUserData)
 		{
-#warning:???
+#warning "???"
 			//B2_NOT_USED(proxyUserData1);
 			//B2_NOT_USED(proxyUserData2);
 
@@ -161,16 +161,17 @@ namespace Box2DX.Dynamics
 
 			// Inform the user that this contact is ending.
 			int manifoldCount = c.GetManifoldCount();
-			if (manifoldCount > 0 && _world._contactListener)
+			if (manifoldCount > 0 && _world._contactListener!=null)
 			{
 				ContactPoint cp = new ContactPoint();
 				cp.Shape1 = c.GetShape1();
 				cp.Shape2 = c.GetShape2();
 				Body b1 = cp.Shape1.GetBody();
-				Manifold[] manifolds = c.GetManifolds();
+#warning "manifold array"
+				Manifold manifolds = c.GetManifolds();
 				for (int i = 0; i < manifoldCount; ++i)
 				{
-					Manifold manifold = manifolds[i];
+					Manifold manifold = manifolds;
 					cp.Normal = manifold.Normal;
 					for (int j = 0; j < manifold.PointCount; ++j)
 					{
@@ -217,7 +218,7 @@ namespace Box2DX.Dynamics
 
 			if (c._node1 == body1._contactList)
 			{
-				body1._contactList = c._node1.next;
+				body1._contactList = c._node1.Next;
 			}
 
 			// Remove from body 2
@@ -271,10 +272,12 @@ namespace Box2DX.Dynamics
 
 					Body b1 = cp.Shape1.GetBody();
 					int manifoldCount = c.GetManifoldCount();
-					Manifold[] manifolds = c.GetManifolds();
-					for (int i = 0; i < manifoldCount; ++i)
+					Manifold manifolds = c.GetManifolds();
+#warning "manifold array"
+					//for (int i = 0; i < manifoldCount; ++i)
+					if(manifoldCount>0)
 					{
-						Manifold manifold = manifolds[i];
+						Manifold manifold = manifolds;
 						cp.Normal = manifold.Normal;
 						for (int j = 0; j < manifold.PointCount; ++j)
 						{
@@ -284,7 +287,8 @@ namespace Box2DX.Dynamics
 
 							if ((point.ID.Features.Flip & Collision.Collision.NewPoint) != 0)
 							{
-								point.ID.Features.Flip &= ~Collision.Collision.NewPoint;
+#warning "TC"
+								point.ID.Features.Flip &= (byte)~Collision.Collision.NewPoint;
 								cp.ID = point.ID;
 								_world._contactListener.Add(cp);
 							}

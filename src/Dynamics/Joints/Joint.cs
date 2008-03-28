@@ -147,7 +147,7 @@ namespace Box2DX.Dynamics
 	/// The base joint class. Joints are used to constraint two bodies together in
 	/// various fashions. Some joints also feature limits and motors.
 	/// </summary>
-	public class Joint
+	public abstract class Joint
 	{
 		public JointType _type;
 		public Joint _prev;
@@ -166,7 +166,7 @@ namespace Box2DX.Dynamics
 		/// Get the type of the concrete joint.
 		/// </summary>
 		/// <returns></returns>
-		public JointType GetType()
+		public new JointType GetType()
 		{
 			return _type;
 		}
@@ -296,7 +296,7 @@ namespace Box2DX.Dynamics
 		public static void Destroy(Joint joint)
 		{
 			if (joint is IDisposable)
-				(Joint as IDisposable).Dispose();
+				(joint as IDisposable).Dispose();
 			joint = null;
 		}
 

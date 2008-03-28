@@ -58,7 +58,7 @@ namespace Box2DX.Dynamics
 
 			Collision.Collision.CollidePolygons(ref _manifold, (PolygonShape)_shape1, b1._xf, (PolygonShape)_shape2, b2._xf);
 
-			bool[] match = new bool[Settings.MaxManifoldPoints] { false, false };
+			bool[] match = new bool[] { false, false };
 
 			// Match contact ids to facilitate warm starting.
 			if (_manifold.PointCount > 0)
@@ -131,12 +131,12 @@ namespace Box2DX.Dynamics
 			}
 		}
 
-		public static Contact Create(Shape shape1, Shape shape2)
+		new public static Contact Create(Shape shape1, Shape shape2)
 		{
 			return new PolygonContact(shape1, shape2);
 		}
 
-		public static void Destroy(Contact contact)
+		new public static void Destroy(Contact contact)
 		{
 			if (contact is IDisposable)
 				(contact as IDisposable).Dispose();
