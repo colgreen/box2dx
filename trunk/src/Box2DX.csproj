@@ -63,6 +63,7 @@
     <Compile Include="Dynamics\Contacts\NullContact.cs" />
     <Compile Include="Dynamics\Contacts\PolyAndCircleContact.cs" />
     <Compile Include="Dynamics\Contacts\PolyContact.cs" />
+    <Compile Include="Dynamics\Island.cs" />
     <Compile Include="Dynamics\Joints\DistanceJoint.cs" />
     <Compile Include="Dynamics\Joints\Joint.cs" />
     <Compile Include="Dynamics\World.cs" />

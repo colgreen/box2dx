@@ -65,7 +65,6 @@ namespace Box2DX.Dynamics
 		public ContactSolver(TimeStep step, Contact[] contacts, int contactCount)
 		{
 			_step = step;
-			_allocator = allocator;
 
 			_constraintCount = 0;
 			for (int i = 0; i < contactCount; ++i)
@@ -93,9 +92,11 @@ namespace Box2DX.Dynamics
 				float w1 = b1._angularVelocity;
 				float w2 = b2._angularVelocity;
 
-				for (int j = 0; j < manifoldCount; ++j)
+#warning "manifold array"
+				//for (int j = 0; j < manifoldCount; ++j)
+				if(manifoldCount>0)
 				{
-					Manifold manifold = manifolds[j];
+					Manifold manifold = manifolds;
 
 					Box2DXDebug.Assert(manifold.PointCount > 0);
 
@@ -193,14 +194,14 @@ namespace Box2DX.Dynamics
 				Vector2 normal = c.Normal;
 				Vector2 tangent = Vector2.Cross(normal, 1.0f);
 
-				if (World.s_enableWarmStarting)
+				if (World.s_enableWarmStarting!=0)
 				{
 					for (int j = 0; j < c.PointCount; ++j)
 					{
 						ContactConstraintPoint ccp = c.Points[j];
-						Vector2 P = _step.DT * (ccp.NormalForce * normal + ccp.TangentForce * tangent);
-						Vector2 r1 = b2Mul(b1._xf.R, ccp.LocalAnchor1 - b1.GetLocalCenter());
-						Vector2 r2 = b2Mul(b2._xf.R, ccp.LocalAnchor2 - b2.GetLocalCenter());
+						Vector2 P = _step.Dt * (ccp.NormalForce * normal + ccp.TangentForce * tangent);
+						Vector2 r1 = Common.Math.Mul(b1._xf.R, ccp.LocalAnchor1 - b1.GetLocalCenter());
+						Vector2 r2 = Common.Math.Mul(b2._xf.R, ccp.LocalAnchor2 - b2.GetLocalCenter());
 						b1._angularVelocity -= invI1 * Vector2.Cross(r1, P);
 						b1._linearVelocity -= invMass1 * P;
 						b2._angularVelocity += invI2 * Vector2.Cross(r2, P);
@@ -247,14 +248,14 @@ namespace Box2DX.Dynamics
 
 					// Compute normal force
 					float vn = Vector2.Dot(dv, normal);
-					float lambda = -_step.inv_dt * ccp.NormalMass * (vn - ccp.VelocityBias);
+					float lambda = -_step.Inv_Dt * ccp.NormalMass * (vn - ccp.VelocityBias);
 
 					// b2Clamp the accumulated force
 					float newForce = Common.Math.Max(ccp.NormalForce + lambda, 0.0f);
 					lambda = newForce - ccp.NormalForce;
 
 					// Apply contact impulse
-					Vector2 P = _step.dt * lambda * normal;
+					Vector2 P = _step.Dt * lambda * normal;
 
 					b1._linearVelocity -= invMass1 * P;
 					b1._angularVelocity -= invI1 * Vector2.Cross(r1, P);
@@ -279,7 +280,7 @@ namespace Box2DX.Dynamics
 
 					// Compute tangent force
 					float vt = Vector2.Dot(dv, tangent);
-					float lambda = _step.inv_dt * ccp.TangentMass * (-vt);
+					float lambda = _step.Inv_Dt * ccp.TangentMass * (-vt);
 
 					// b2Clamp the accumulated force
 					float maxFriction = c.Friction * ccp.NormalForce;
@@ -287,7 +288,7 @@ namespace Box2DX.Dynamics
 					lambda = newForce - ccp.TangentForce;
 
 					// Apply contact impulse
-					Vector2 P = _step.dt * lambda * tangent;
+					Vector2 P = _step.Dt * lambda * tangent;
 
 					b1._linearVelocity -= invMass1 * P;
 					b1._angularVelocity -= invI1 * Vector2.Cross(r1, P);
@@ -339,8 +340,8 @@ namespace Box2DX.Dynamics
 					Vector2 r1 = Common.Math.Mul(b1._xf.R, ccp.LocalAnchor1 - b1.GetLocalCenter());
 					Vector2 r2 = Common.Math.Mul(b2._xf.R, ccp.LocalAnchor2 - b2.GetLocalCenter());
 
-					Vector2 p1 = b1._sweep.c + r1;
-					Vector2 p2 = b2._sweep.c + r2;
+					Vector2 p1 = b1._sweep.C + r1;
+					Vector2 p2 = b2._sweep.C + r2;
 					Vector2 dp = p2 - p1;
 
 					// Approximate the current separation.
@@ -362,12 +363,12 @@ namespace Box2DX.Dynamics
 
 					Vector2 impulse = dImpulse * normal;
 
-					b1._sweep.c -= invMass1 * impulse;
-					b1._sweep.a -= invI1 * Vector2.Cross(r1, impulse);
+					b1._sweep.C -= invMass1 * impulse;
+					b1._sweep.A -= invI1 * Vector2.Cross(r1, impulse);
 					b1.SynchronizeTransform();
 
-					b2._sweep.c += invMass2 * impulse;
-					b2._sweep.a += invI2 * Vector2.Cross(r2, impulse);
+					b2._sweep.C += invMass2 * impulse;
+					b2._sweep.A += invI2 * Vector2.Cross(r2, impulse);
 					b2.SynchronizeTransform();
 				}
 			}

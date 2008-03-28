@@ -99,22 +99,22 @@ namespace Box2DX.Dynamics
 		public float _mass;		// effective mass for the constraint.
 		public float _length;
 
-		public Vector2 GetAnchor1()
+		public override Vector2 GetAnchor1()
 		{
 			return _body1.GetWorldPoint(_localAnchor1);
 		}
 
-		public Vector2 GetAnchor2()
+		public override Vector2 GetAnchor2()
 		{
 			return _body2.GetWorldPoint(_localAnchor2);
 		}
 
-		public Vector2 GetReactionForce()
+		public override Vector2 GetReactionForce()
 		{
 			return _force * _u;
 		}
 
-		public float GetReactionTorque()
+		public override float GetReactionTorque()
 		{
 			return 0.0f;
 		}
@@ -155,7 +155,7 @@ namespace Box2DX.Dynamics
 			Box2DXDebug.Assert(_mass > Common.Math.FLT_EPSILON);
 			_mass = 1.0f / _mass;
 
-			if (World.s_enableWarmStarting)
+			if (World.s_enableWarmStarting!=0)
 			{
 				Vector2 P = step.Dt * _force * _u;
 				b1._linearVelocity -= b1._invMass * P;
@@ -210,7 +210,7 @@ namespace Box2DX.Dynamics
 			Vector2 v1 = b1._linearVelocity + Vector2.Cross(b1._angularVelocity, r1);
 			Vector2 v2 = b2._linearVelocity + Vector2.Cross(b2._angularVelocity, r2);
 			float Cdot = Vector2.Dot(_u, v2 - v1);
-			float force = -step.inv_dt * _mass * Cdot;
+			float force = -step.Inv_Dt * _mass * Cdot;
 			_force += force;
 
 			Vector2 P = step.Dt * force * _u;

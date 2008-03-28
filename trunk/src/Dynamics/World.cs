@@ -186,12 +186,12 @@ namespace Box2DX.Dynamics
 				return null;
 			}
 
-			Body b = new Body(def, Body.Type.Static, this);
+			Body b = new Body(def, Body.BodyType.Static, this);
 
 			// Add to world doubly linked list.
 			b._prev = null;
 			b._next = _bodyList;
-			if (_bodyList)
+			if (_bodyList!=null)
 			{
 				_bodyList._prev = b;
 			}
@@ -216,12 +216,12 @@ namespace Box2DX.Dynamics
 				return null;
 			}
 
-			Body b = new Body(def, Body.Type.Dynamic, this);
+			Body b = new Body(def, Body.BodyType.Dynamic, this);
 
 			// Add to world doubly linked list.
 			b._prev = null;
 			b._next = _bodyList;
-			if (_bodyList)
+			if (_bodyList!=null)
 			{
 				_bodyList._prev = b;
 			}
@@ -256,7 +256,7 @@ namespace Box2DX.Dynamics
 				JointEdge jn0 = jn;
 				jn = jn.Next;
 
-				if (_destructionListener)
+				if (_destructionListener!=null)
 				{
 					_destructionListener.SayGoodbye(jn0.Joint);
 				}
@@ -274,7 +274,7 @@ namespace Box2DX.Dynamics
 				Shape s0 = s;
 				s = s._next;
 
-				if (_destructionListener)
+				if (_destructionListener!=null)
 				{
 					_destructionListener.SayGoodbye(s0);
 				}
@@ -284,17 +284,17 @@ namespace Box2DX.Dynamics
 			}
 
 			// Remove world body list.
-			if (b._prev)
+			if (b._prev!=null)
 			{
 				b._prev._next = b._next;
 			}
 
-			if (b._next)
+			if (b._next!=null)
 			{
 				b._next._prev = b._prev;
 			}
 
-			if (b == _bodyList[0])
+			if (b == _bodyList)
 			{
 				_bodyList = b._next;
 			}
@@ -335,7 +335,7 @@ namespace Box2DX.Dynamics
 			j._node1.Next = j._body1._jointList;
 			if (j._body1._jointList != null)
 				j._body1._jointList.Prev = j._node1;
-			j._body1._jointList = j.m_node1;
+			j._body1._jointList = j._node1;
 
 			j._node2.Joint = j;
 			j._node2.Other = j._body1;
@@ -466,7 +466,7 @@ namespace Box2DX.Dynamics
 		/// <returns>The head of the world body list.</returns>
 		public Body GetBodyList()
 		{
-			return _bodyList[0];
+			return _bodyList;
 		}
 
 		/// <summary>
@@ -476,7 +476,7 @@ namespace Box2DX.Dynamics
 		/// <returns>The head of the world joint list.</returns>
 		public Joint GetJointList()
 		{
-			return _jointList[0];
+			return _jointList;
 		}
 
 		/// <summary>
@@ -511,7 +511,7 @@ namespace Box2DX.Dynamics
 			}
 
 			// Handle TOI events.
-			if (World.s_enableTOI && step.Dt > 0.0f)
+			if (World.s_enableTOI!=0 && step.Dt > 0.0f)
 			{
 				SolveTOI(step);
 			}
@@ -531,8 +531,10 @@ namespace Box2DX.Dynamics
 		/// @return the number of shapes found in aabb.
 		public int Query(AABB aabb, Shape[] shapes, int maxCount)
 		{
-			using (object[] results = new object[maxCount])
+			//using (object[] results = new object[maxCount])
 			{
+				object[] results = new object[maxCount];
+
 				int count = _broadPhase.Query(aabb, results, maxCount);
 
 				for (int i = 0; i < count; ++i)
@@ -556,11 +558,11 @@ namespace Box2DX.Dynamics
 			// Clear all the island flags.
 			for (Body b = _bodyList; b != null; b = b._next)
 			{
-				b._flags &= ~Body.Flags.IslandFlag;
+				b._flags &= ~Body.BodyFlags.Island;
 			}
 			for (Contact c = _contactList; c != null; c = c._next)
 			{
-				c._flags &= ~Contact.CollisionFlags.IslandFlag;
+				c._flags &= ~Contact.CollisionFlags.Island;
 			}
 			for (Joint j = _jointList; j != null; j = j._next)
 			{
@@ -569,11 +571,13 @@ namespace Box2DX.Dynamics
 
 			// Build and simulate all awake islands.
 			int stackSize = _bodyCount;
-			using (Body[] stack = new Body[stackSize])
+			//using (Body[] stack = new Body[stackSize])
 			{
+				Body[] stack = new Body[stackSize];
+
 				for (Body seed = _bodyList; seed != null; seed = seed._next)
 				{
-					if ((seed._flags & (Body.Flags.IslandFlag | Body.Flags.SleepFlag | Body.Flags.FrozenFlag)) != 0)
+					if ((seed._flags & (Body.BodyFlags.Island | Body.BodyFlags.Sleep | Body.BodyFlags.Frozen)) != 0)
 					{
 						continue;
 					}
@@ -587,7 +591,7 @@ namespace Box2DX.Dynamics
 					island.Clear();
 					int stackCount = 0;
 					stack[stackCount++] = seed;
-					seed._flags |= Body.Flags.IslandFlag;
+					seed._flags |= Body.BodyFlags.Island;
 
 					// Perform a depth first search (DFS) on the constraint graph.
 					while (stackCount > 0)
@@ -597,7 +601,7 @@ namespace Box2DX.Dynamics
 						island.Add(b);
 
 						// Make sure the body is awake.
-						b._flags &= ~Body.Flags.SleepFlag;
+						b._flags &= ~Body.BodyFlags.Sleep;
 
 						// To keep islands as small as possible, we don't
 						// propagate islands across static bodies.
@@ -610,7 +614,7 @@ namespace Box2DX.Dynamics
 						for (ContactEdge cn = b._contactList; cn != null; cn = cn.Next)
 						{
 							// Has this contact already been added to an island?
-							if ((cn.Contact._flags & (Contact.CollisionFlags.IslandFlag | Contact.CollisionFlags.NonSolidFlag)) != 0)
+							if ((cn.Contact._flags & (Contact.CollisionFlags.Island | Contact.CollisionFlags.NonSolid)) != 0)
 							{
 								continue;
 							}
@@ -621,20 +625,20 @@ namespace Box2DX.Dynamics
 								continue;
 							}
 
-							island.Add(cn->contact);
-							cn.Contact._flags |= Contact.CollisionFlags.IslandFlag;
+							island.Add(cn.Contact);
+							cn.Contact._flags |= Contact.CollisionFlags.Island;
 
 							Body other = cn.Other;
 
 							// Was the other body already added to this island?
-							if ((other._flags & Body.Flags.IslandFlag) != 0)
+							if ((other._flags & Body.BodyFlags.Island) != 0)
 							{
 								continue;
 							}
 
 							Box2DXDebug.Assert(stackCount < stackSize);
 							stack[stackCount++] = other;
-							other._flags |= Body.Flags.IslandFlag;
+							other._flags |= Body.BodyFlags.Island;
 						}
 
 						// Search all joints connect to this body.
@@ -649,14 +653,14 @@ namespace Box2DX.Dynamics
 							jn.Joint._islandFlag = true;
 
 							Body other = jn.Other;
-							if ((other._flags & Body.Flags.IslandFlag) != 0)
+							if ((other._flags & Body.BodyFlags.Island) != 0)
 							{
 								continue;
 							}
 
 							Box2DXDebug.Assert(stackCount < stackSize);
 							stack[stackCount++] = other;
-							other._flags |= Body.Flags.IslandFlag;
+							other._flags |= Body.BodyFlags.Island;
 						}
 					}
 
@@ -670,17 +674,18 @@ namespace Box2DX.Dynamics
 						Body b = island._bodies[i];
 						if (b.IsStatic())
 						{
-							b._flags &= ~Body.Flags.IslandFlag;
+							b._flags &= ~Body.BodyFlags.Island;
 						}
 					}
 				}
+
 				stack = null;
 			}
 
 			// Synchronize shapes, check for out of range bodies.
 			for (Body b = _bodyList; b != null; b = b.GetNext())
 			{
-				if (b._flags & (Body.Flags.SleepFlag | Body.Flags.FrozenFlag))
+				if ((b._flags & (Body.BodyFlags.Sleep | Body.BodyFlags.Frozen))!=0)
 				{
 					continue;
 				}
@@ -713,19 +718,19 @@ namespace Box2DX.Dynamics
 			// Reserve an island and a stack for TOI island solution.
 			Island island = new Island(_bodyCount, Settings.MaxTOIContactsPerIsland, 0, _contactListener);
 			int stackSize = _bodyCount;
-			using (Body[] stack = new Body[stackSize])
+			//using (Body[] stack = new Body[stackSize])
 			{
-
+				Body[] stack = new Body[stackSize];
 				for (Body b = _bodyList; b != null; b = b._next)
 				{
-					b._flags &= ~Body.Flags.IslandFlag;
+					b._flags &= ~Body.BodyFlags.Island;
 					b._sweep.T0 = 0.0f;
 				}
 
 				for (Contact c = _contactList; c != null; c = c._next)
 				{
 					// Invalidate TOI
-					c._flags &= ~(Contact.CollisionFlags.ToiFlag | Contact.CollisionFlags.IslandFlag);
+					c._flags &= ~(Contact.CollisionFlags.Toi | Contact.CollisionFlags.Island);
 				}
 
 				// Find TOI events and solve them.
@@ -737,7 +742,7 @@ namespace Box2DX.Dynamics
 
 					for (Contact c = _contactList; c != null; c = c._next)
 					{
-						if ((c._flags & (Contact.CollisionFlags.SlowFlag | Contact.CollisionFlags.NonSolidFlag)) != 0)
+						if ((c._flags & (Contact.CollisionFlags.Slow | Contact.CollisionFlags.NonSolid)) != 0)
 						{
 							continue;
 						}
@@ -745,7 +750,7 @@ namespace Box2DX.Dynamics
 						// TODO_ERIN keep a counter on the contact, only respond to M TOIs per contact.
 
 						float toi = 1.0f;
-						if ((c._flags & Contact.CollisionFlags.ToiFlag) != 0)
+						if ((c._flags & Contact.CollisionFlags.Toi) != 0)
 						{
 							// This contact has a valid cached TOI.
 							toi = c._toi;
@@ -753,34 +758,34 @@ namespace Box2DX.Dynamics
 						else
 						{
 							// Compute the TOI for this contact.
-							Shape s1 = c.GetShape1();
-							Shape s2 = c.GetShape2();
-							Body b1 = s1.GetBody();
-							Body b2 = s2.GetBody();
+							Shape s1_ = c.GetShape1();
+							Shape s2_ = c.GetShape2();
+							Body b1_ = s1_.GetBody();
+							Body b2_ = s2_.GetBody();
 
-							if ((b1.IsStatic() || b1.IsSleeping()) && (b2.IsStatic() || b2.IsSleeping()))
+							if ((b1_.IsStatic() || b1_.IsSleeping()) && (b2_.IsStatic() || b2_.IsSleeping()))
 							{
 								continue;
 							}
 
 							// Put the sweeps onto the same time interval.
-							float t0 = b1._sweep.T0;
+							float t0 = b1_._sweep.T0;
 
-							if (b1._sweep.T0 < b2._sweep.T0)
+							if (b1_._sweep.T0 < b2_._sweep.T0)
 							{
-								t0 = b2._sweep.T0;
-								b1._sweep.Advance(t0);
+								t0 = b2_._sweep.T0;
+								b1_._sweep.Advance(t0);
 							}
-							else if (b2._sweep.T0 < b1._sweep.T0)
+							else if (b2_._sweep.T0 < b1_._sweep.T0)
 							{
-								t0 = b1._sweep.T0;
-								b2._sweep.Advance(T0);
+								t0 = b1_._sweep.T0;
+								b2_._sweep.Advance(t0);
 							}
 
 							Box2DXDebug.Assert(t0 < 1.0f);
 
 							// Compute the time of impact.
-							toi = Collision.Collision.TimeOfImpact(c._shape1, b1._sweep, c._shape2, b2._sweep);
+							toi = Collision.Collision.TimeOfImpact(c._shape1, b1_._sweep, c._shape2, b2_._sweep);
 							Box2DXDebug.Assert(0.0f <= toi && toi <= 1.0f);
 
 							if (toi > 0.0f && toi < 1.0f)
@@ -790,7 +795,7 @@ namespace Box2DX.Dynamics
 
 
 							c._toi = toi;
-							c._flags |= Contact.CollisionFlags.ToiFlag;
+							c._flags |= Contact.CollisionFlags.Toi;
 						}
 
 						if (Common.Math.FLT_EPSILON < toi && toi < minTOI)
@@ -817,7 +822,7 @@ namespace Box2DX.Dynamics
 
 					// The TOI contact likely has some new contact points.
 					minContact.Update(_contactListener);
-					minContact._flags &= ~Contact.CollisionFlags.ToiFlag;
+					minContact._flags &= ~Contact.CollisionFlags.Toi;
 
 					if (minContact.GetManifoldCount() == 0)
 					{
@@ -837,7 +842,7 @@ namespace Box2DX.Dynamics
 					island.Clear();
 					int stackCount = 0;
 					stack[stackCount++] = seed;
-					seed._flags |= Body.Flags.IslandFlag;
+					seed._flags |= Body.BodyFlags.Island;
 
 					// Perform a depth first search (DFS) on the contact graph.
 					while (stackCount > 0)
@@ -847,7 +852,7 @@ namespace Box2DX.Dynamics
 						island.Add(b);
 
 						// Make sure the body is awake.
-						b._flags &= ~Body.Flags.SleepFlag;
+						b._flags &= ~Body.BodyFlags.Sleep;
 
 						// To keep islands as small as possible, we don't
 						// propagate islands across static bodies.
@@ -866,7 +871,7 @@ namespace Box2DX.Dynamics
 							}
 
 							// Has this contact already been added to an island? Skip slow or non-solid contacts.
-							if (cn.Contact._flags & (Contact.CollisionFlags.IslandFlag | Contact.CollisionFlags.SlowFlag | Contact.CollisionFlags.NonSolidFlag))
+							if ((cn.Contact._flags & (Contact.CollisionFlags.Island | Contact.CollisionFlags.Slow | Contact.CollisionFlags.NonSolid))!=0)
 							{
 								continue;
 							}
@@ -878,13 +883,13 @@ namespace Box2DX.Dynamics
 							}
 
 							island.Add(cn.Contact);
-							cn.Contact._flags |= Contact.CollisionFlags.IslandFlag;
+							cn.Contact._flags |= Contact.CollisionFlags.Island;
 
 							// Update other body.
 							Body other = cn.Other;
 
 							// Was the other body already added to this island?
-							if ((other._flags & Body.Flags.IslandFlag) != 0)
+							if ((other._flags & Body.BodyFlags.Island) != 0)
 							{
 								continue;
 							}
@@ -898,7 +903,7 @@ namespace Box2DX.Dynamics
 
 							Box2DXDebug.Assert(stackCount < stackSize);
 							stack[stackCount++] = other;
-							other._flags |= Body.Flags.IslandFlag;
+							other._flags |= Body.BodyFlags.Island;
 						}
 					}
 
@@ -915,9 +920,9 @@ namespace Box2DX.Dynamics
 					{
 						// Allow bodies to participate in future TOI islands.
 						Body b = island._bodies[i];
-						b._flags &= ~Body.Flags.IslandFlag;
+						b._flags &= ~Body.BodyFlags.Island;
 
-						if ((b._flags & (Body.Flags.SleepFlag | Body.Flags.FrozenFlag)) != 0)
+						if ((b._flags & (Body.BodyFlags.Sleep | Body.BodyFlags.Frozen)) != 0)
 						{
 							continue;
 						}
@@ -940,9 +945,9 @@ namespace Box2DX.Dynamics
 
 						// Invalidate all contact TOIs associated with this body. Some of these
 						// may not be in the island because they were not touching.
-						for (ContactEdge cn = b._contactList; cn; cn = cn.Next)
+						for (ContactEdge cn = b._contactList; cn!=null; cn = cn.Next)
 						{
-							cn.Contact._flags &= ~Contact.CollisionFlags.ToiFlag;
+							cn.Contact._flags &= ~Contact.CollisionFlags.Toi;
 						}
 					}
 
@@ -950,7 +955,7 @@ namespace Box2DX.Dynamics
 					{
 						// Allow contacts to participate in future TOI islands.
 						Contact c = island._contacts[i];
-						c._flags &= ~(Contact.CollisionFlags.ToiFlag | Contact.CollisionFlags.IslandFlag);
+						c._flags &= ~(Contact.CollisionFlags.Toi | Contact.CollisionFlags.Island);
 					}
 
 					// Commit shape proxy movements to the broad-phase so that new contacts are created.
@@ -1030,8 +1035,8 @@ namespace Box2DX.Dynamics
 				case ShapeType.PolygonShape:
 					{
 						PolygonShape poly = (PolygonShape)shape;
-						int vertexCount = poly.GetVertexCount();
-						Vector2 localVertices = poly.GetVertices();
+						int vertexCount = poly.VertexCount;
+						Vector2[] localVertices = poly.GetVertices();
 
 						Box2DXDebug.Assert(vertexCount <= Settings.MaxPolygonVertices);
 						Vector2[] vertices = new Vector2[Settings.MaxPolygonVertices];
@@ -1045,7 +1050,7 @@ namespace Box2DX.Dynamics
 
 						if (core)
 						{
-							Vector2 localCoreVertices = poly.GetCoreVertices();
+							Vector2[] localCoreVertices = poly.GetCoreVertices();
 							for (int i = 0; i < vertexCount; ++i)
 							{
 								vertices[i] = Common.Math.Mul(xf, localCoreVertices[i]);
@@ -1064,11 +1069,11 @@ namespace Box2DX.Dynamics
 				return;
 			}
 
-			DebugDraw.DrawFlags flags = _debugDraw.GetFlags();
+			DebugDraw.DrawFlags flags = _debugDraw.Flags;
 
 			if ((flags & DebugDraw.DrawFlags.Shape) != 0)
 			{
-				bool core = (flags & DebugDraw.DrawFlags.CoreShape) == DebugDraw.DrawFlags.CoreShapeBit;
+				bool core = (flags & DebugDraw.DrawFlags.CoreShape) == DebugDraw.DrawFlags.CoreShape;
 
 				for (Body b = _bodyList; b != null; b = b.GetNext())
 				{
@@ -1079,7 +1084,7 @@ namespace Box2DX.Dynamics
 						{
 							DrawShape(s, xf, new Color(0.5f, 0.9f, 0.5f), core);
 						}
-						else if (b->IsSleeping())
+						else if (b.IsSleeping())
 						{
 							DrawShape(s, xf, new Color(0.5f, 0.5f, 0.9f), core);
 						}
@@ -1115,8 +1120,8 @@ namespace Box2DX.Dynamics
 					while (index != PairManager.NullPair)
 					{
 						Pair pair = bp._pairManager._pairs[index];
-						Proxy p1 = bp._proxyPool[pair->proxyId1];
-						Proxy p2 = bp._proxyPool[pair->proxyId2];
+						Proxy p1 = bp._proxyPool[pair.ProxyId1];
+						Proxy p2 = bp._proxyPool[pair.ProxyId2];
 
 						AABB b1 = new AABB(), b2 = new AABB();
 						b1.LowerBound.X = bp._worldAABB.LowerBound.X + invQ.X * bp._bounds[0][p1.LowerBounds[0]].Value;
@@ -1129,7 +1134,7 @@ namespace Box2DX.Dynamics
 						b2.UpperBound.Y = bp._worldAABB.LowerBound.Y + invQ.Y * bp._bounds[1][p2.UpperBounds[1]].Value;
 
 						Vector2 x1 = 0.5f * (b1.LowerBound + b1.UpperBound);
-						Vector2 x2 = 0.5f * (b2.LowerBound + b2.upperBound);
+						Vector2 x2 = 0.5f * (b2.LowerBound + b2.UpperBound);
 
 						_debugDraw.DrawSegment(x1, x2, color);
 
@@ -1150,7 +1155,7 @@ namespace Box2DX.Dynamics
 				for (int i = 0; i < Settings.MaxProxies; ++i)
 				{
 					Proxy p = bp._proxyPool[i];
-					if (p.IsValid() == false)
+					if (p.IsValid == false)
 					{
 						continue;
 					}
@@ -1161,13 +1166,13 @@ namespace Box2DX.Dynamics
 					b.UpperBound.X = worldLower.X + invQ.X * bp._bounds[0][p.UpperBounds[0]].Value;
 					b.UpperBound.Y = worldLower.Y + invQ.Y * bp._bounds[1][p.UpperBounds[1]].Value;
 
-					Vector2[] vs = new Vector2[4];
-					vs[0].Set(b.LowerBound.X, b.LowerBound.Y);
-					vs[1].Set(b.UpperBound.X, b.LowerBound.Y);
-					vs[2].Set(b.UpperBound.X, b.UpperBound.Y);
-					vs[3].Set(b.LowerBound.X, b.UpperBound.Y);
+					Vector2[] vs1 = new Vector2[4];
+					vs1[0].Set(b.LowerBound.X, b.LowerBound.Y);
+					vs1[1].Set(b.UpperBound.X, b.LowerBound.Y);
+					vs1[2].Set(b.UpperBound.X, b.UpperBound.Y);
+					vs1[3].Set(b.LowerBound.X, b.UpperBound.Y);
 
-					_debugDraw.DrawPolygon(vs, 4, color);
+					_debugDraw.DrawPolygon(vs1, 4, color);
 				}
 
 				Vector2[] vs = new Vector2[4];
@@ -1196,10 +1201,10 @@ namespace Box2DX.Dynamics
 						OBB obb = poly.GetOBB();
 						Vector2 h = obb.Extents;
 						Vector2[] vs = new Vector2[4];
-						vs[0].Set(-h.x, -h.y);
-						vs[1].Set(h.x, -h.y);
-						vs[2].Set(h.x, h.y);
-						vs[3].Set(-h.x, h.y);
+						vs[0].Set(-h.X, -h.Y);
+						vs[1].Set(h.X, -h.Y);
+						vs[2].Set(h.X, h.Y);
+						vs[3].Set(-h.X, h.Y);
 
 						for (int i = 0; i < 4; ++i)
 						{
