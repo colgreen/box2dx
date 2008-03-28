@@ -255,7 +255,7 @@ namespace Box2DX.Collision
 
 		public abstract void UpdateSweepRadius(Vector2 center);
 
-		public Shape Create(ShapeDef def)
+		public static Shape Create(ShapeDef def)
 		{
 			switch (def.Type)
 			{
@@ -275,7 +275,7 @@ namespace Box2DX.Collision
 			}
 		}
 
-		public void Destroy(Shape s)
+		public static void Destroy(Shape s)
 		{
 			switch (s.GetType())
 			{
