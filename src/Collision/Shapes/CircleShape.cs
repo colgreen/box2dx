@@ -158,5 +158,23 @@ namespace Box2DX.Collision
 			// inertia about the local origin
 			massData.I = massData.Mass * (0.5f * _radius * _radius + Vector2.Dot(_localPosition, _localPosition));
 		}
+
+		/// <summary>
+		/// Get the local position of this circle in its parent body.
+		/// </summary>
+		/// <returns></returns>
+		public Vector2 GetLocalPosition()
+		{
+			return _localPosition;
+		}
+
+		/// <summary>
+		/// Get the radius of this circle.
+		/// </summary>
+		/// <returns></returns>
+		public float GetRadius()
+		{
+			return _radius;
+		}
 	}
 }

@@ -51,19 +51,19 @@ namespace Box2DX.Dynamics
 		/// <summary>
 		/// Provides quick access to the other body attached.
 		/// </summary>
-		public Body other;
+		public Body Other;
 		/// <summary>
 		/// The contact.
 		/// </summary>
-		public Contact contact;
+		public Contact Contact;
 		/// <summary>
 		/// The previous contact edge in the body's contact list.
 		/// </summary>
-		public ContactEdge prev;
+		public ContactEdge Prev;
 		/// <summary>
 		/// The next contact edge in the body's contact list.
 		/// </summary>
-		public ContactEdge next;
+		public ContactEdge Next;
 	}
 
 #warning "CAS"
