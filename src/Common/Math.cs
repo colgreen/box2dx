@@ -39,7 +39,7 @@ namespace Box2DX.Common
 		/// <returns></returns>
 		public static bool IsValid(float x)
 		{
-			return float.IsNaN(x) || float.IsNegativeInfinity(x) || float.IsPositiveInfinity(x);
+			return !(float.IsNaN(x) || float.IsNegativeInfinity(x) || float.IsPositiveInfinity(x));
 		}
 
 		[System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Explicit)]
