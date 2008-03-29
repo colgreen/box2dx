@@ -193,25 +193,25 @@ namespace Box2DX.Dynamics
 		/// Get the anchor point on body1 in world coordinates.
 		/// </summary>
 		/// <returns></returns>
-		public abstract Vector2 GetAnchor1();
+		public abstract Vector2 Anchor1 { get; }
 
 		/// <summary>
 		/// Get the anchor point on body2 in world coordinates.
 		/// </summary>
 		/// <returns></returns>
-		public abstract Vector2 GetAnchor2();
+		public abstract Vector2 Anchor2 { get; }
 
 		/// <summary>
 		/// Get the reaction force on body2 at the joint anchor.
 		/// </summary>
 		/// <returns></returns>
-		public abstract Vector2 GetReactionForce();
+		public abstract Vector2 ReactionForce { get; }
 
 		/// <summary>
 		/// Get the reaction torque on body2.
 		/// </summary>
 		/// <returns></returns>
-		public abstract float GetReactionTorque();
+		public abstract float ReactionTorque { get; }
 
 		/// <summary>
 		/// Get the next joint the world joint list.

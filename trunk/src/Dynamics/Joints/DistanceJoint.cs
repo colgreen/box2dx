@@ -19,6 +19,13 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
+// C = norm(p2 - p1) - L
+// u = (p2 - p1) / norm(p2 - p1)
+// Cdot = dot(u, v2 + cross(w2, r2) - v1 - cross(w1, r1))
+// J = [-u -cross(r1, u) u cross(r2, u)]
+// K = J * invM * JT
+//   = invMass1 + invI1 * cross(r1, u)^2 + invMass2 + invI2 * cross(r2, u)^2
+
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -44,13 +51,6 @@ namespace Box2DX.Dynamics
 			LocalAnchor2.Set(0.0f, 0.0f);
 			Length = 1.0f;
 		}
-
-		// C = norm(p2 - p1) - L
-		// u = (p2 - p1) / norm(p2 - p1)
-		// Cdot = dot(u, v2 + cross(w2, r2) - v1 - cross(w1, r1))
-		// J = [-u -cross(r1, u) u cross(r2, u)]
-		// K = J * invM * JT
-		//   = invMass1 + invI1 * cross(r1, u)^2 + invMass2 + invI2 * cross(r2, u)^2
 
 		/// <summary>
 		/// Initialize the bodies, anchors, and length using the world anchors.
@@ -99,24 +99,24 @@ namespace Box2DX.Dynamics
 		public float _mass;		// effective mass for the constraint.
 		public float _length;
 
-		public override Vector2 GetAnchor1()
+		public override Vector2 Anchor1
 		{
-			return _body1.GetWorldPoint(_localAnchor1);
+			get { return _body1.GetWorldPoint(_localAnchor1);}
 		}
 
-		public override Vector2 GetAnchor2()
+		public override Vector2 Anchor2
 		{
-			return _body2.GetWorldPoint(_localAnchor2);
+			get { return _body2.GetWorldPoint(_localAnchor2);}
 		}
 
-		public override Vector2 GetReactionForce()
+		public override Vector2 ReactionForce
 		{
-			return _force * _u;
+			get { return _force * _u; }
 		}
 
-		public override float GetReactionTorque()
+		public override float ReactionTorque
 		{
-			return 0.0f;
+			get { return 0.0f; }
 		}
 
 		public DistanceJoint(DistanceJointDef def)

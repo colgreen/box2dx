@@ -975,8 +975,8 @@ namespace Box2DX.Dynamics
 			XForm xf2 = b2.GetXForm();
 			Vector2 x1 = xf1.Position;
 			Vector2 x2 = xf2.Position;
-			Vector2 p1 = joint.GetAnchor1();
-			Vector2 p2 = joint.GetAnchor2();
+			Vector2 p1 = joint.Anchor1;
+			Vector2 p2 = joint.Anchor2;
 
 			Color color = new Color(0.5f, 0.8f, 0.8f);
 
@@ -989,8 +989,8 @@ namespace Box2DX.Dynamics
 				case JointType.PulleyJoint:
 					{
 						PulleyJoint pulley = (PulleyJoint)joint;
-						Vector2 s1 = pulley.GetGroundAnchor1();
-						Vector2 s2 = pulley.GetGroundAnchor2();
+						Vector2 s1 = pulley.GroundAnchor1;
+						Vector2 s2 = pulley.GroundAnchor2;
 						_debugDraw.DrawSegment(s1, p1, color);
 						_debugDraw.DrawSegment(s2, p2, color);
 						_debugDraw.DrawSegment(s1, s2, color);
