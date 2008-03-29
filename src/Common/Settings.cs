@@ -27,6 +27,14 @@ namespace Box2DX.Common
 {
 	public class Settings
 	{
+#if TARGET_FLOAT32_IS_FIXED
+		public static float	FORCE_SCALE2(x){ return x<<7;}
+		public static float FORCE_INV_SCALE2(x)	{return x>>7;}
+#else
+		public static float FORCE_SCALE(float x) { return x; }
+		public static float FORCE_INV_SCALE(float x) { return x; }
+#endif
+
 		public static readonly float Pi = 3.14159265359f;
 
 		// Global tuning constants based on meters-kilograms-seconds (MKS) units.
@@ -85,16 +93,20 @@ namespace Box2DX.Common
 		/// The maximum linear velocity of a body. This limit is very large and is used
 		/// to prevent numerical problems. You shouldn't need to adjust this.
 		/// </summary>
+#if TARGET_FLOAT32_IS_FIXED
+		public static readonly float MaxLinearVelocity = 100.0f;
+#else
 		public static readonly float MaxLinearVelocity = 200.0f;
 		public static readonly float MaxLinearVelocitySquared = MaxLinearVelocity * MaxLinearVelocity;
-
+#endif
 		/// <summary>
 		/// The maximum angular velocity of a body. This limit is very large and is used
 		/// to prevent numerical problems. You shouldn't need to adjust this.
 		/// </summary>
 		public static readonly float MaxAngularVelocity = 250.0f;
+#if !TARGET_FLOAT32_IS_FIXED
 		public static readonly float MaxAngularVelocitySquared = MaxAngularVelocity * MaxAngularVelocity;
-
+#endif
 		/// <summary>
 		/// This scale factor controls how fast overlap is resolved. Ideally this would be 1 so
 		/// that overlap is removed in one time step. However using values close to 1 often lead to overshoot.

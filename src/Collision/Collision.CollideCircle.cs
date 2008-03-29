@@ -46,14 +46,14 @@ namespace Box2DX.Collision
 			}
 
 			float separation;
-			if (distSqr < Common.Math.FLT_EPSILON)
+			if (distSqr < Common.Math.FLOAT32_EPSILON)
 			{
 				separation = -radiusSum;
 				manifold.Normal.Set(0.0f, 1.0f);
 			}
 			else
 			{
-				float dist = (float)System.Math.Sqrt(distSqr);
+				float dist = Common.Math.Sqrt(distSqr);
 				separation = dist - radiusSum;
 				float a = 1.0f / dist;
 				manifold.Normal.X = a * d.X;
@@ -84,7 +84,7 @@ namespace Box2DX.Collision
 
 			// Find the min separating edge.
 			int normalIndex = 0;
-			float separation = -Common.Math.FLT_MAX;
+			float separation = -Common.Math.FLOAT32_MAX;
 			float radius = circle._radius;
 
 			for (int i = 0; i < polygon.VertexCount; ++i)
@@ -104,13 +104,13 @@ namespace Box2DX.Collision
 			}
 
 			// If the center is inside the polygon ...
-			if (separation < Common.Math.FLT_EPSILON)
+			if (separation < Common.Math.FLOAT32_EPSILON)
 			{
 				manifold.PointCount = 1;
 				manifold.Normal = Common.Math.Mul(xf1.R, polygon._normals[normalIndex]);
 				manifold.Points[0].ID.Features.IncidentEdge = (byte)normalIndex;
 				manifold.Points[0].ID.Features.IncidentVertex = Collision.NullFeature;
-				manifold.Points[0].ID.Features.ReferenceFace = Collision.NullFeature;
+				manifold.Points[0].ID.Features.ReferenceEdge = Collision.NullFeature;
 				manifold.Points[0].ID.Features.Flip = 0;
 				Vector2 position = c - radius * manifold.Normal;
 				manifold.Points[0].LocalPoint1 = Common.Math.MulT(xf1, position);
@@ -126,7 +126,7 @@ namespace Box2DX.Collision
 			float length = e.Normalize();
 
 			// If the edge length is zero ...
-			if (length < Common.Math.FLT_EPSILON)
+			if (length < Common.Math.FLOAT32_EPSILON)
 			{
 				Vector2 d_ = cLocal - polygon._vertices[vertIndex1];
 				float dist_ = d_.Normalize();
@@ -139,7 +139,7 @@ namespace Box2DX.Collision
 				manifold.Normal = Common.Math.Mul(xf1.R, d_);
 				manifold.Points[0].ID.Features.IncidentEdge = Collision.NullFeature;
 				manifold.Points[0].ID.Features.IncidentVertex = (byte)vertIndex1;
-				manifold.Points[0].ID.Features.ReferenceFace = Collision.NullFeature;
+				manifold.Points[0].ID.Features.ReferenceEdge = Collision.NullFeature;
 				manifold.Points[0].ID.Features.Flip = 0;
 				Vector2 position = c - radius * manifold.Normal;
 				manifold.Points[0].LocalPoint1 = Common.Math.MulT(xf1, position);
@@ -152,7 +152,7 @@ namespace Box2DX.Collision
 			float u = Vector2.Dot(cLocal - polygon._vertices[vertIndex1], e);
 			manifold.Points[0].ID.Features.IncidentEdge = Collision.NullFeature;
 			manifold.Points[0].ID.Features.IncidentVertex = Collision.NullFeature;
-			manifold.Points[0].ID.Features.ReferenceFace = Collision.NullFeature;
+			manifold.Points[0].ID.Features.ReferenceEdge = Collision.NullFeature;
 			manifold.Points[0].ID.Features.Flip = 0;
 			Vector2 p;
 			if (u <= 0.0f)

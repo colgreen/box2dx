@@ -58,22 +58,22 @@ namespace Box2DX.Collision
 	public struct Features
 	{
 		/// <summary>
-		/// The edge that defines the contact normal
+		/// The edge that defines the outward contact normal.
 		/// </summary>
-		public byte ReferenceFace;
+		public byte ReferenceEdge;
 
 		/// <summary>
-		/// The edge most anti-parallel to the reference face
+		/// The edge most anti-parallel to the reference edge.
 		/// </summary>
 		public byte IncidentEdge;
 
 		/// <summary>
-		/// The vertex (0 or 1) on the incident edge that was clipped
+		/// The vertex (0 or 1) on the incident edge that was clipped.
 		/// </summary>
 		public byte IncidentVertex;
 
 		/// <summary>
-		/// Indicates that the contact normal should be flipped
+		/// A value of 1 indicates that the reference edge is on shape2.
 		/// </summary>
 		public byte Flip;
 	}
@@ -195,7 +195,7 @@ namespace Box2DX.Collision
 			Vector2 d = P2 - P1;
 			Vector2 n = Vector2.Cross(d, 1.0f);
 
-			float k_slop = 100.0f * Common.Math.FLT_EPSILON;
+			float k_slop = 100.0f * Common.Math.FLOAT32_EPSILON;
 			float denom = -Vector2.Dot(r, n);
 
 			// Cull back facing collision and ignore parallel segments.
@@ -246,7 +246,7 @@ namespace Box2DX.Collision
 			get
 			{
 				Vector2 d = UpperBound - LowerBound;
-				bool valid = d.X >= 0.0f && d.Y >= 0;
+				bool valid = d.X >= 0.0f && d.Y >= 0.0f;
 				valid = valid && LowerBound.IsValid && UpperBound.IsValid;
 				return valid;
 			}

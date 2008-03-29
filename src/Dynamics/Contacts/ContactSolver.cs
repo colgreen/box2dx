@@ -33,6 +33,8 @@ namespace Box2DX.Dynamics
 	{
 		public Vector2 LocalAnchor1;
 		public Vector2 LocalAnchor2;
+		public Vector2 R1;
+		public Vector2 R2;
 		public float NormalForce;
 		public float TangentForce;
 		public float PositionImpulse;
@@ -58,6 +60,14 @@ namespace Box2DX.Dynamics
 
 	public class ContactSolver : IDisposable
 	{
+#if TARGET_FLOAT32_IS_FIXED
+		public static float	FORCE_SCALE2(x){ return x<<7;}
+		public static float FORCE_INV_SCALE2(x)	{return x>>7;}
+#else
+		public static float	FORCE_SCALE2(float x){ return x;}
+		public static float FORCE_INV_SCALE2(float x)	{return x;}
+#endif
+
 		public TimeStep _step;
 		public ContactConstraint[] _constraints;
 		public int _constraintCount;
@@ -124,32 +134,31 @@ namespace Box2DX.Dynamics
 
 						ccp.LocalAnchor1 = cp.LocalPoint1;
 						ccp.LocalAnchor2 = cp.LocalPoint2;
+						ccp.R1 = Common.Math.Mul(b1._xf.R, cp.LocalPoint1 - b1.GetLocalCenter());
+						ccp.R2 = Common.Math.Mul(b2._xf.R, cp.LocalPoint2 - b2.GetLocalCenter());
 
-						Vector2 r1 = Common.Math.Mul(b1._xf.R, ccp.LocalAnchor1 - b1.GetLocalCenter());
-						Vector2 r2 = Common.Math.Mul(b2._xf.R, ccp.LocalAnchor2 - b2.GetLocalCenter());
-
-						float r1Sqr = Vector2.Dot(r1, r1);
-						float r2Sqr = Vector2.Dot(r2, r2);
-						float rn1 = Vector2.Dot(r1, normal);
-						float rn2 = Vector2.Dot(r2, normal);
+						float r1Sqr = Vector2.Dot(ccp.R1, ccp.R1);
+						float r2Sqr = Vector2.Dot(ccp.R2, ccp.R2);
+						float rn1 = Vector2.Dot(ccp.R1, normal);
+						float rn2 = Vector2.Dot(ccp.R2, normal);
 
 						float kNormal = b1._invMass + b2._invMass;
 						kNormal += b1._invI * (r1Sqr - rn1 * rn1) + b2._invI * (r2Sqr - rn2 * rn2);
-						Box2DXDebug.Assert(kNormal > Common.Math.FLT_EPSILON);
+						Box2DXDebug.Assert(kNormal > Common.Math.FLOAT32_EPSILON);
 						ccp.NormalMass = 1.0f / kNormal;
 
 						float kEqualized = b1._mass * b1._invMass + b2._mass * b2._invMass;
 						kEqualized += b1._mass * b1._invI * (r1Sqr - rn1 * rn1) + b2._mass * b2._invI * (r2Sqr - rn2 * rn2);
-						Box2DXDebug.Assert(kEqualized > Common.Math.FLT_EPSILON);
+						Box2DXDebug.Assert(kEqualized > Common.Math.FLOAT32_EPSILON);
 						ccp.EqualizedMass = 1.0f / kEqualized;
 
 						Vector2 tangent = Vector2.Cross(normal, 1.0f);
 
-						float rt1 = Vector2.Dot(r1, tangent);
-						float rt2 = Vector2.Dot(r2, tangent);
+						float rt1 = Vector2.Dot(ccp.R1, tangent);
+						float rt2 = Vector2.Dot(ccp.R2, tangent);
 						float kTangent = b1._invMass + b2._invMass;
 						kTangent += b1._invI * (r1Sqr - rt1 * rt1) + b2._invI * (r2Sqr - rt2 * rt2);
-						Box2DXDebug.Assert(kTangent > Common.Math.FLT_EPSILON);
+						Box2DXDebug.Assert(kTangent > Common.Math.FLOAT32_EPSILON);
 						ccp.TangentMass = 1.0f / kTangent;
 
 						// Setup a velocity bias for restitution.
@@ -159,7 +168,7 @@ namespace Box2DX.Dynamics
 							ccp.VelocityBias = -60.0f * ccp.Separation; // TODO_ERIN b2TimeStep
 						}
 
-						float vRel = Vector2.Dot(c.Normal, v2 + Vector2.Cross(w2, r2) - v1 - Vector2.Cross(w1, r1));
+						float vRel = Vector2.Dot(c.Normal, v2 + Vector2.Cross(w2, ccp.R2) - v1 - Vector2.Cross(w1, ccp.R1));
 						if (vRel < -Settings.VelocityThreshold)
 						{
 							ccp.VelocityBias += -c.Restitution * vRel;
@@ -199,12 +208,10 @@ namespace Box2DX.Dynamics
 					for (int j = 0; j < c.PointCount; ++j)
 					{
 						ContactConstraintPoint ccp = c.Points[j];
-						Vector2 P = _step.Dt * (ccp.NormalForce * normal + ccp.TangentForce * tangent);
-						Vector2 r1 = Common.Math.Mul(b1._xf.R, ccp.LocalAnchor1 - b1.GetLocalCenter());
-						Vector2 r2 = Common.Math.Mul(b2._xf.R, ccp.LocalAnchor2 - b2.GetLocalCenter());
-						b1._angularVelocity -= invI1 * Vector2.Cross(r1, P);
+						Vector2 P = FORCE_SCALE2(_step.Dt) * (ccp.NormalForce * normal + ccp.TangentForce * tangent);
+						b1._angularVelocity -= invI1 * Vector2.Cross(ccp.R1, P);
 						b1._linearVelocity -= invMass1 * P;
-						b2._angularVelocity += invI2 * Vector2.Cross(r2, P);
+						b2._angularVelocity += invI2 * Vector2.Cross(ccp.R2, P);
 						b2._linearVelocity += invMass2 * P;
 					}
 				}
@@ -227,77 +234,98 @@ namespace Box2DX.Dynamics
 				ContactConstraint c = _constraints[i];
 				Body b1 = c.Body1;
 				Body b2 = c.Body2;
+				float w1 = b1._angularVelocity;
+				float w2 = b2._angularVelocity;
+				Vector2 v1 = b1._linearVelocity;
+				Vector2 v2 = b2._linearVelocity;
 				float invMass1 = b1._invMass;
 				float invI1 = b1._invI;
 				float invMass2 = b2._invMass;
 				float invI2 = b2._invI;
 				Vector2 normal = c.Normal;
 				Vector2 tangent = Vector2.Cross(normal, 1.0f);
-
+				float friction = c.Friction;
+#if DEFERRED_UPDATE
+				Vector2 b1_linearVelocity = b1._linearVelocity;
+				float b1_angularVelocity = b1._angularVelocity;
+				Vector2 b2_linearVelocity = b2._linearVelocity;
+				float b2_angularVelocity = b2._angularVelocity;
+#endif
 				// Solve normal constraints
 				for (int j = 0; j < c.PointCount; ++j)
 				{
 					ContactConstraintPoint ccp = c.Points[j];
 
-					Vector2 r1 = Common.Math.Mul(b1._xf.R, ccp.LocalAnchor1 - b1.GetLocalCenter());
-					Vector2 r2 = Common.Math.Mul(b2._xf.R, ccp.LocalAnchor2 - b2.GetLocalCenter());
-
 					// Relative velocity at contact
-					Vector2 dv = b2._linearVelocity + Vector2.Cross(b2._angularVelocity, r2) -
-						b1._linearVelocity - Vector2.Cross(b1._angularVelocity, r1);
+					Vector2 dv = v2 + Vector2.Cross(w2, ccp.R2) - v1 - Vector2.Cross(w1, ccp.R1);
 
 					// Compute normal force
 					float vn = Vector2.Dot(dv, normal);
-					float lambda = -_step.Inv_Dt * ccp.NormalMass * (vn - ccp.VelocityBias);
+
+					float lambda = -FORCE_INV_SCALE2(_step.Inv_Dt) * ccp.NormalMass * (vn - ccp.VelocityBias);
 
 					// b2Clamp the accumulated force
 					float newForce = Common.Math.Max(ccp.NormalForce + lambda, 0.0f);
 					lambda = newForce - ccp.NormalForce;
 
 					// Apply contact impulse
-					Vector2 P = _step.Dt * lambda * normal;
+					Vector2 P = FORCE_SCALE2(_step.Dt) * lambda * normal;
+#if DEFERRED_UPDATE
+					b1_linearVelocity -= invMass1 * P;
+					b1_angularVelocity -= invI1 * Vector2.Cross(r1, P);
 
-					b1._linearVelocity -= invMass1 * P;
-					b1._angularVelocity -= invI1 * Vector2.Cross(r1, P);
+					b2_linearVelocity += invMass2 * P;
+					b2_angularVelocity += invI2 * Vector2.Cross(r2, P);
+#else
+					v1 -= invMass1 * P;
+					w1 -= invI1 * Vector2.Cross(ccp.R1, P);
 
-					b2._linearVelocity += invMass2 * P;
-					b2._angularVelocity += invI2 * Vector2.Cross(r2, P);
-
+					v2 += invMass2 * P;
+					w2 += invI2 * Vector2.Cross(ccp.R2, P);
+#endif
 					ccp.NormalForce = newForce;
 				}
+
+#if DEFERRED_UPDATE
+				b1._linearVelocity = b1_linearVelocity;
+				b1._angularVelocity = b1_angularVelocity;
+				b2._linearVelocity = b2_linearVelocity;
+				b2._angularVelocity = b2_angularVelocity;
+#endif
 
 				// Solve tangent constraints
 				for (int j = 0; j < c.PointCount; ++j)
 				{
 					ContactConstraintPoint ccp = c.Points[j];
 
-					Vector2 r1 = Common.Math.Mul(b1._xf.R, ccp.LocalAnchor1 - b1.GetLocalCenter());
-					Vector2 r2 = Common.Math.Mul(b2._xf.R, ccp.LocalAnchor2 - b2.GetLocalCenter());
-
 					// Relative velocity at contact
-					Vector2 dv = b2._linearVelocity + Vector2.Cross(b2._angularVelocity, r2) -
-						b1._linearVelocity - Vector2.Cross(b1._angularVelocity, r1);
+					Vector2 dv = v2 + Vector2.Cross(w2, ccp.R2) - v1 - Vector2.Cross(w1, ccp.R1);
 
 					// Compute tangent force
 					float vt = Vector2.Dot(dv, tangent);
-					float lambda = _step.Inv_Dt * ccp.TangentMass * (-vt);
+					float lambda = FORCE_INV_SCALE2(_step.Inv_Dt) * ccp.TangentMass * (-vt);
 
-					// b2Clamp the accumulated force
-					float maxFriction = c.Friction * ccp.NormalForce;
+					// Clamp the accumulated force
+					float maxFriction = friction * ccp.NormalForce;
 					float newForce = Common.Math.Clamp(ccp.TangentForce + lambda, -maxFriction, maxFriction);
 					lambda = newForce - ccp.TangentForce;
 
 					// Apply contact impulse
-					Vector2 P = _step.Dt * lambda * tangent;
+					Vector2 P = FORCE_SCALE2(_step.Dt) * lambda * tangent;
 
-					b1._linearVelocity -= invMass1 * P;
-					b1._angularVelocity -= invI1 * Vector2.Cross(r1, P);
+					v1 -= invMass1 * P;
+					w1 -= invI1 * Vector2.Cross(ccp.R1, P);
 
-					b2._linearVelocity += invMass2 * P;
-					b2._angularVelocity += invI2 * Vector2.Cross(r2, P);
+					v2 += invMass2 * P;
+					w2 += invI2 * Vector2.Cross(ccp.R2, P);
 
 					ccp.TangentForce = newForce;
 				}
+
+				b1._linearVelocity = v1;
+				b1._angularVelocity = w1;
+				b2._linearVelocity = v2;
+				b2._angularVelocity = w2;
 			}
 		}
 

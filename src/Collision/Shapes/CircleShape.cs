@@ -105,13 +105,13 @@ namespace Box2DX.Collision
 			float sigma = c * c - rr * b;
 
 			// Check for negative discriminant and short segment.
-			if (sigma < 0.0f || rr < Common.Math.FLT_EPSILON)
+			if (sigma < 0.0f || rr < Common.Math.FLOAT32_EPSILON)
 			{
 				return false;
 			}
 
 			// Find the point of intersection of the line with the circle.
-			float a = -(c + (float)System.Math.Sqrt(sigma));
+			float a = -(c + Common.Math.Sqrt(sigma));
 
 			// Is the intersection point on the segment?
 			if (0.0f <= a && a <= maxLambda * rr)

@@ -27,8 +27,10 @@ namespace Box2DX.Common
 {
 	public class Math
 	{
-		public static float FLT_EPSILON = 1.192092896e-07f; //smallest such that 1.0f+FLT_EPSILON != 1.0f
-		public static float FLT_MAX = 3.402823466e+38F;
+		//public static float FLT_EPSILON = 1.192092896e-07f; //smallest such that 1.0f+FLT_EPSILON != 1.0f
+		public static float FLOAT32_EPSILON = 1.192092896e-07f;
+		//public static float FLT_MAX = 3.402823466e+38F;
+		public static float FLOAT32_MAX = 3.402823466e+38F;
 		public static ushort USHRT_MAX = 0xffff;
 
 		/// <summary>
@@ -66,6 +68,11 @@ namespace Box2DX.Common
 			x = convert.x;
 			x = x * (1.5f - xhalf * x * x);
 			return x;
+		}
+
+		public static float Sqrt(float x)
+		{
+			return (float)System.Math.Sqrt(x);
 		}
 
 		/// <summary>

@@ -51,7 +51,7 @@ namespace Box2DX.Collision
 			float r2 = shape2.GetSweepRadius();
 
 			Box2DXDebug.Assert(sweep1.T0 == sweep2.T0);
-			Box2DXDebug.Assert(1.0f - sweep1.T0 > Common.Math.FLT_EPSILON);
+			Box2DXDebug.Assert(1.0f - sweep1.T0 > Common.Math.FLOAT32_EPSILON);
 
 			float t0 = sweep1.T0;
 			Vector2 v1 = sweep1.C - sweep1.C0;
@@ -103,7 +103,7 @@ namespace Box2DX.Collision
 				// Compute upper bound on remaining movement.
 				float approachVelocityBound = Vector2.Dot(normal, v1 - v2) +
 					Common.Math.Abs(omega1) * r1 + Common.Math.Abs(omega2) * r2;
-				if (Common.Math.Abs(approachVelocityBound) < Common.Math.FLT_EPSILON)
+				if (Common.Math.Abs(approachVelocityBound) < Common.Math.FLOAT32_EPSILON)
 				{
 					alpha = 1.0f;
 					break;
@@ -122,7 +122,7 @@ namespace Box2DX.Collision
 				}
 
 				// Ensure significant advancement.
-				if (newAlpha < (1.0f + 100.0f * Common.Math.FLT_EPSILON) * alpha)
+				if (newAlpha < (1.0f + 100.0f * Common.Math.FLOAT32_EPSILON) * alpha)
 				{
 					break;
 				}

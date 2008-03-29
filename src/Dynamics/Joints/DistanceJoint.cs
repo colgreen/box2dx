@@ -111,7 +111,7 @@ namespace Box2DX.Dynamics
 
 		public override Vector2 ReactionForce
 		{
-			get { return _force * _u; }
+			get { return Settings.FORCE_SCALE(_force) * _u; }
 		}
 
 		public override float ReactionTorque
@@ -152,12 +152,12 @@ namespace Box2DX.Dynamics
 			float cr1u = Vector2.Cross(r1, _u);
 			float cr2u = Vector2.Cross(r2, _u);
 			_mass = b1._invMass + b1._invI * cr1u * cr1u + b2._invMass + b2._invI * cr2u * cr2u;
-			Box2DXDebug.Assert(_mass > Common.Math.FLT_EPSILON);
+			Box2DXDebug.Assert(_mass > Common.Math.FLOAT32_EPSILON);
 			_mass = 1.0f / _mass;
 
 			if (World.s_enableWarmStarting!=0)
 			{
-				Vector2 P = step.Dt * _force * _u;
+				Vector2 P = Settings.FORCE_SCALE(step.Dt) * _force * _u;
 				b1._linearVelocity -= b1._invMass * P;
 				b1._angularVelocity -= b1._invI * Vector2.Cross(r1, P);
 				b2._linearVelocity += b2._invMass * P;
@@ -210,10 +210,10 @@ namespace Box2DX.Dynamics
 			Vector2 v1 = b1._linearVelocity + Vector2.Cross(b1._angularVelocity, r1);
 			Vector2 v2 = b2._linearVelocity + Vector2.Cross(b2._angularVelocity, r2);
 			float Cdot = Vector2.Dot(_u, v2 - v1);
-			float force = -step.Inv_Dt * _mass * Cdot;
+			float force = -Settings.FORCE_INV_SCALE(step.Inv_Dt) * _mass * Cdot;
 			_force += force;
 
-			Vector2 P = step.Dt * force * _u;
+			Vector2 P = Settings.FORCE_SCALE(step.Dt) * force * _u;
 			b1._linearVelocity -= b1._invMass * P;
 			b1._angularVelocity -= b1._invI * Vector2.Cross(r1, P);
 			b2._linearVelocity += b2._invMass * P;

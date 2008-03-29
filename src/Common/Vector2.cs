@@ -77,7 +77,7 @@ namespace Box2DX.Common
 		public float Normalize()
 		{
 			float length = Length();
-			if (length < Math.FLT_EPSILON)
+			if (length < Math.FLOAT32_EPSILON)
 			{
 				return 0.0f;
 			}

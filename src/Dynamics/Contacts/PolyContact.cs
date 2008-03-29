@@ -80,6 +80,7 @@ namespace Box2DX.Dynamics
 
 						ManifoldPoint cp0 = m0.Points[j];
 						ContactID id0 = cp0.ID;
+						cp0.ID.Features.Flip &= (byte)~Collision.Collision.NewPoint;
 
 						if (id0.Key == id.Key)
 						{

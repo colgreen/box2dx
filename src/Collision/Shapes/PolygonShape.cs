@@ -156,7 +156,7 @@ namespace Box2DX.Collision
 				int i1 = i;
 				int i2 = i + 1 < _vertexCount ? i + 1 : 0;
 				Vector2 edge = _vertices[i2] - _vertices[i1];
-				Box2DXDebug.Assert(edge.LengthSquared() > Common.Math.FLT_EPSILON * Common.Math.FLT_EPSILON);
+				Box2DXDebug.Assert(edge.LengthSquared() > Common.Math.FLOAT32_EPSILON * Common.Math.FLOAT32_EPSILON);
 				_normals[i] = Vector2.Cross(edge, 1.0f);
 				_normals[i].Normalize();
 			}
@@ -305,14 +305,21 @@ namespace Box2DX.Collision
 				float numerator = Vector2.Dot(_normals[i], _vertices[i] - p1);
 				float denominator = Vector2.Dot(_normals[i], d);
 
-				if (denominator < 0.0f && numerator > lower * denominator)
+				// Note: we want this predicate without division:
+				// lower < numerator / denominator, where denominator < 0
+				// Since denominator < 0, we have to flip the inequality:
+				// lower < numerator / denominator <==> denominator * lower > numerator.
+
+				if (denominator < 0.0f && numerator < lower * denominator)
 				{
+					// Increase lower.
 					// The segment enters this half-space.
 					lower = numerator / denominator;
 					index = i;
 				}
 				else if (denominator > 0.0f && numerator < upper * denominator)
 				{
+					// Decrease upper.
 					// The segment exits this half-space.
 					upper = numerator / denominator;
 				}
@@ -434,7 +441,7 @@ namespace Box2DX.Collision
 			massData.Mass = _density * area;
 
 			// Center of mass
-			Box2DXDebug.Assert(area > Common.Math.FLT_EPSILON);
+			Box2DXDebug.Assert(area > Common.Math.FLOAT32_EPSILON);
 			center *= 1.0f / area;
 			massData.Center = center;
 
@@ -483,7 +490,7 @@ namespace Box2DX.Collision
 			}
 
 			// Centroid
-			Box2DXDebug.Assert(area > Common.Math.FLT_EPSILON);
+			Box2DXDebug.Assert(area > Common.Math.FLOAT32_EPSILON);
 			c *= 1.0f / area;
 			return c;
 		}
@@ -501,17 +508,17 @@ namespace Box2DX.Collision
 			}
 			p[count] = p[0];
 
-			float minArea = Common.Math.FLT_MAX;
+			float minArea = Common.Math.FLOAT32_MAX;
 
 			for (int i = 1; i <= count; ++i)
 			{
 				Vector2 root = p[i - 1];
 				Vector2 ux = p[i] - root;
 				float length = ux.Normalize();
-				Box2DXDebug.Assert(length > Common.Math.FLT_EPSILON);
+				Box2DXDebug.Assert(length > Common.Math.FLOAT32_EPSILON);
 				Vector2 uy = new Vector2(-ux.Y, ux.X);
-				Vector2 lower = new Vector2(Common.Math.FLT_MAX, Common.Math.FLT_MAX);
-				Vector2 upper = new Vector2(-Common.Math.FLT_MAX, -Common.Math.FLT_MAX);
+				Vector2 lower = new Vector2(Common.Math.FLOAT32_MAX, Common.Math.FLOAT32_MAX);
+				Vector2 upper = new Vector2(-Common.Math.FLOAT32_MAX, -Common.Math.FLOAT32_MAX);
 
 				for (int j = 0; j < count; ++j)
 				{
@@ -535,7 +542,7 @@ namespace Box2DX.Collision
 				}
 			}
 
-			Box2DXDebug.Assert(minArea < Common.Math.FLT_MAX);
+			Box2DXDebug.Assert(minArea < Common.Math.FLOAT32_MAX);
 		}
 	}
 }

@@ -174,7 +174,7 @@ namespace Box2DX.Dynamics
 
 		public override Vector2 ReactionForce
 		{
-			get { return _pivotForce; }
+			get { return Settings.FORCE_SCALE(1.0f) * _pivotForce; }
 		}
 
 		public override float ReactionTorque
