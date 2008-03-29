@@ -79,6 +79,7 @@ namespace Box2DX.Dynamics
 		public float Ratio;
 	}
 
+	/// <summary>
 	/// A gear joint is used to connect two joints together. Either joint
 	/// can be a revolute or prismatic joint. You specify a gear ratio
 	/// to bind the motions together:
@@ -88,6 +89,7 @@ namespace Box2DX.Dynamics
 	/// of length or units of 1/length.
 	/// @warning The revolute and prismatic joints must be attached to
 	/// fixed bodies (which must be body1 on those joints).
+	/// </summary>
 	public class GearJoint : Joint
 	{
 		public Body _ground1;
@@ -126,7 +128,7 @@ namespace Box2DX.Dynamics
 			get
 			{
 				// TODO_ERIN not tested
-				Vector2 F = _force * _J.Linear2;
+				Vector2 F = Settings.FORCE_SCALE(_force) * _J.Linear2;
 				return F;
 			}
 		}
@@ -138,7 +140,7 @@ namespace Box2DX.Dynamics
 				// TODO_ERIN not tested
 				Vector2 r = Common.Math.Mul(_body2._xf.R, _localAnchor2 - _body2.GetLocalCenter());
 				Vector2 F = _force * _J.Linear2;
-				float T = _force * _J.Angular2 - Vector2.Cross(r, F);
+				float T = Settings.FORCE_SCALE(_force * _J.Angular2 - Vector2.Cross(r, F));
 				return T;
 			}
 		}
@@ -251,7 +253,7 @@ namespace Box2DX.Dynamics
 			if (World.s_enableWarmStarting!=0)
 			{
 				// Warm starting.
-				float P = step.Dt * _force;
+				float P = Settings.FORCE_SCALE(step.Dt) * _force;
 				b1._linearVelocity += b1._invMass * P * _J.Linear1;
 				b1._angularVelocity += b1._invI * P * _J.Angular1;
 				b2._linearVelocity += b2._invMass * P * _J.Linear2;
@@ -271,10 +273,10 @@ namespace Box2DX.Dynamics
 			float Cdot = _J.Compute(b1._linearVelocity, b1._angularVelocity,
 										b2._linearVelocity, b2._angularVelocity);
 
-			float force = -step.Inv_Dt * _mass * Cdot;
+			float force = -Settings.FORCE_INV_SCALE(step.Inv_Dt) * _mass * Cdot;
 			_force += force;
 
-			float P = step.Dt * force;
+			float P = Settings.FORCE_SCALE(step.Dt) * force;
 			b1._linearVelocity += b1._invMass * P * _J.Linear1;
 			b1._angularVelocity += b1._invI * P * _J.Angular1;
 			b2._linearVelocity += b2._invMass * P * _J.Linear2;

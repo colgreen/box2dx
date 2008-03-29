@@ -321,10 +321,20 @@ namespace Box2DX.Dynamics
 
 		public void Update(ContactListener listener)
 		{
+			int oldCount = GetManifoldCount();
+
 			Evaluate(listener);
+
+			int newCount = GetManifoldCount();
 
 			Body body1 = _shape1.GetBody();
 			Body body2 = _shape2.GetBody();
+
+			if (newCount == 0 && oldCount > 0)
+			{
+				body1.WakeUp();
+				body2.WakeUp();
+			}
 
 			// Slow contacts don't generate TOI events.
 			if (body1.IsStatic() || body1.IsBullet() || body2.IsStatic() || body2.IsBullet())

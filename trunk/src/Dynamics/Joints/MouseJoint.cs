@@ -110,7 +110,7 @@ namespace Box2DX.Dynamics
 
 		public override Vector2 ReactionForce
 		{
-			get { return _force; }
+			get { return Settings.FORCE_SCALE(1.0f) * _force; }
 		}
 
 		public override float ReactionTorque
@@ -137,7 +137,7 @@ namespace Box2DX.Dynamics
 			_target = def.Target;
 			_localAnchor = Common.Math.MulT(_body2._xf, _target);
 
-			_maxForce = def.MaxForce;
+			_maxForce = Settings.FORCE_INV_SCALE(def.MaxForce);
 			_force.SetZero();
 
 			float mass = _body2._mass;
@@ -149,11 +149,11 @@ namespace Box2DX.Dynamics
 			float d = 2.0f * mass * def.DampingRatio * omega;
 
 			// Spring stiffness
-			float k = mass * omega * omega;
+			float k = (def.TimeStep * mass) * (omega * omega);
 
 			// magic formulas
-			_gamma = 1.0f / (d + def.TimeStep * k);
-			_beta = def.TimeStep * k / (d + def.TimeStep * k);
+			_gamma = 1.0f / (d + k);
+			_beta = k / (d + k);
 		}
 
 		public override void InitVelocityConstraints(TimeStep step)
@@ -189,7 +189,7 @@ namespace Box2DX.Dynamics
 			b._angularVelocity *= 0.98f;
 
 			// Warm starting.
-			Vector2 P = step.Dt * _force;
+			Vector2 P = Settings.FORCE_SCALE(step.Dt) * _force;
 			b._linearVelocity += invMass * P;
 			b._angularVelocity += invI * Vector2.Cross(r, P);
 		}
@@ -202,7 +202,8 @@ namespace Box2DX.Dynamics
 
 			// Cdot = v + cross(w, r)
 			Vector2 Cdot = b._linearVelocity + Vector2.Cross(b._angularVelocity, r);
-			Vector2 force = -step.Inv_Dt * Common.Math.Mul(_mass, Cdot + (_beta * step.Inv_Dt) * _C + _gamma * step.Dt * _force);
+			Vector2 force = -Settings.FORCE_INV_SCALE(step.Inv_Dt) * Common.Math.Mul(_mass, Cdot + 
+				(_beta * step.Inv_Dt) * _C + Settings.FORCE_SCALE(step.Dt) * (_gamma * _force));
 
 			Vector2 oldForce = _force;
 			_force += force;
@@ -213,7 +214,7 @@ namespace Box2DX.Dynamics
 			}
 			force = _force - oldForce;
 
-			Vector2 P = step.Dt * force;
+			Vector2 P = Settings.FORCE_SCALE(step.Dt) * force;
 			b._linearVelocity += b._invMass * P;
 			b._angularVelocity += b._invI * Vector2.Cross(r, P);
 		}

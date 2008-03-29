@@ -44,7 +44,7 @@ namespace Box2DX.Collision
 			Vector2 d = points[0] - points[1];
 			float length = d.Normalize();
 			float lambda = Vector2.Dot(r, d);
-			if (lambda <= 0.0f || length < Common.Math.FLT_EPSILON)
+			if (lambda <= 0.0f || length < Common.Math.FLOAT32_EPSILON)
 			{
 				// The simplex is reduced to a point.
 				x1 = p1s[1];
@@ -103,13 +103,17 @@ namespace Box2DX.Collision
 
 			float n = Vector2.Cross(ab, ac);
 
+#if TARGET_FLOAT32_IS_FIXED
+				n = (n < 0.0f) ? -1.0f : ((n > 0.0f) ? 1.0f : 0.0f);
+#endif
+
 			// Should not be in edge ab region.
 			float vc = n * Vector2.Cross(a, b);
 			Box2DXDebug.Assert(vc > 0.0f || sn > 0.0f || sd > 0.0f);
 
 			// In edge bc region?
 			float va = n * Vector2.Cross(b, c);
-			if (va <= 0.0f && un >= 0.0f && ud >= 0.0f)
+			if (va <= 0.0f && un >= 0.0f && ud >= 0.0f && (un + ud) > 0.0f)
 			{
 				Box2DXDebug.Assert(un + ud > 0.0f);
 				float lambda = un / (un + ud);
@@ -123,7 +127,7 @@ namespace Box2DX.Collision
 
 			// In edge ac region?
 			float vb = n * Vector2.Cross(c, a);
-			if (vb <= 0.0f && tn >= 0.0f && td >= 0.0f)
+			if (vb <= 0.0f && tn >= 0.0f && td >= 0.0f && (tn + td) > 0.0f)
 			{
 				Box2DXDebug.Assert(tn + td > 0.0f);
 				float lambda = tn / (tn + td);
@@ -139,17 +143,22 @@ namespace Box2DX.Collision
 			float denom = va + vb + vc;
 			Box2DXDebug.Assert(denom > 0.0f);
 			denom = 1.0f / denom;
+#if TARGET_FLOAT32_IS_FIXED
+			x1 = denom * (va * p1s[0] + vb * p1s[1] + vc * p1s[2]);
+			x2 = denom * (va * p2s[0] + vb * p2s[1] + vc * p2s[2]);
+#else
 			float u = va * denom;
 			float v = vb * denom;
 			float w = 1.0f - u - v;
 			x1 = u * p1s[0] + v * p1s[1] + w * p1s[2];
 			x2 = u * p2s[0] + v * p2s[1] + w * p2s[2];
+#endif
 			return 3;
 		}
 
 		public static bool InPoints(Vector2 w, Vector2[] points, int pointCount)
 		{
-			float k_tolerance = 100.0f * Common.Math.FLT_EPSILON;
+			float k_tolerance = 100.0f * Common.Math.FLOAT32_EPSILON;
 			for (int i = 0; i < pointCount; ++i)
 			{
 				Vector2 d = Common.Math.Abs(w - points[i]);
@@ -207,7 +216,7 @@ namespace Box2DX.Collision
 						x2 = w2;
 					}
 					Collision.GJKIterations = iter;
-					return (float)System.Math.Sqrt(vSqr);
+					return Common.Math.Sqrt(vSqr);
 				}
 
 				switch (pointCount)
@@ -243,24 +252,28 @@ namespace Box2DX.Collision
 					return 0.0f;
 				}
 
-				float maxSqr = -Common.Math.FLT_MAX;
+				float maxSqr = -Common.Math.FLOAT32_MAX;
 				for (int i = 0; i < pointCount; ++i)
 				{
 					maxSqr = Common.Math.Max(maxSqr, Vector2.Dot(points[i], points[i]));
 				}
 
-				if (pointCount == 3 || vSqr <= 100.0f * Common.Math.FLT_EPSILON * maxSqr)
+#if TARGET_FLOAT32_IS_FIXED
+				if (pointCount == 3 || vSqr <= 5.0*Common.Math.FLOAT32_EPSILON * maxSqr)
+#else
+				if (pointCount == 3 || vSqr <= 100.0f * Common.Math.FLOAT32_EPSILON * maxSqr)
+#endif
 				{
 					Collision.GJKIterations = iter;
 					v = x2 - x1;
 					vSqr = Vector2.Dot(v, v);
 
-					return (float)System.Math.Sqrt(vSqr);
+					return Common.Math.Sqrt(vSqr);
 				}
 			}
 
 			Collision.GJKIterations = maxIterations;
-			return (float)System.Math.Sqrt(vSqr);
+			return Common.Math.Sqrt(vSqr);
 		}
 
 		public static float DistanceCC(out Vector2 x1, out Vector2 x2,
@@ -282,7 +295,7 @@ namespace Box2DX.Collision
 				x2 = p2 - r2 * d;
 				return distance;
 			}
-			else if (dSqr > Common.Math.FLT_EPSILON * Common.Math.FLT_EPSILON)
+			else if (dSqr > Common.Math.FLOAT32_EPSILON * Common.Math.FLOAT32_EPSILON)
 			{
 				d.Normalize();
 				x1 = p1 + r1 * d;

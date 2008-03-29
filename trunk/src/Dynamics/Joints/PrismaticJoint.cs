@@ -191,13 +191,13 @@ namespace Box2DX.Dynamics
 				Vector2 ax1 = Common.Math.Mul(_body1._xf.R, _localXAxis1);
 				Vector2 ay1 = Common.Math.Mul(_body1._xf.R, _localYAxis1);
 
-				return _limitForce * ax1 + _force * ay1;
+				return Settings.FORCE_SCALE(1.0f) * (_limitForce * ax1 + _force * ay1);
 			}
 		}
 
 		public override float ReactionTorque
 		{
-			get { return _torque; }
+			get { return Settings.FORCE_SCALE(_torque); }
 		}
 
 		/// <summary>
@@ -319,16 +319,16 @@ namespace Box2DX.Dynamics
 		}
 
 		/// <summary>
-		/// Set the maximum motor torque, usually in N.
+		/// Set the maximum motor force, usually in N.
 		/// </summary>
 		/// <param name="torque"></param>
 		public void SetMaxMotorForce(float force)
 		{
-			_maxMotorForce = force;
+			_maxMotorForce = Settings.FORCE_SCALE(1.0f) * force;
 		}
 
 		/// <summary>
-		/// Get the current motor torque, usually in N.
+		/// Get the current motor force, usually in N.
 		/// </summary>
 		public float MotorForce
 		{
@@ -359,7 +359,7 @@ namespace Box2DX.Dynamics
 
 			_lowerTranslation = def.LowerTranslation;
 			_upperTranslation = def.UpperTranslation;
-			_maxMotorForce = def.MaxMotorForce;
+			_maxMotorForce = Settings.FORCE_INV_SCALE(def.MaxMotorForce);
 			_motorSpeed = def.MotorSpeed;
 			_enableLimit = def.EnableLimit;
 			_enableMotor = def.EnableMotor;

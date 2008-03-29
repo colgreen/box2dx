@@ -85,7 +85,7 @@ namespace Box2DX.Dynamics
 			Vector2 d2 = anchor2 - groundAnchor2;
 			Length2 = d2.Length();
 			Ratio = ratio;
-			Box2DXDebug.Assert(ratio > Common.Math.FLT_EPSILON);
+			Box2DXDebug.Assert(ratio > Common.Math.FLOAT32_EPSILON);
 			float C = Length1 + ratio * Length2;
 			MaxLength1 = C - ratio * PulleyJoint.MinPulleyLength;
 			MaxLength2 = (C - PulleyJoint.MinPulleyLength) / ratio;
@@ -197,7 +197,7 @@ namespace Box2DX.Dynamics
 		{
 			get
 			{
-				Vector2 F = _force * _u2;
+				Vector2 F = Settings.FORCE_SCALE(_force) * _u2;
 				return F;
 			}
 		}

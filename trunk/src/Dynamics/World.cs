@@ -57,6 +57,8 @@ namespace Box2DX.Dynamics
 		public int _jointCount;
 
 		public Vector2 _gravity;
+		public Vector2 Gravity { get { return _gravity; } set { _gravity = value; } }
+
 		public bool _allowSleep;
 
 		public Body _groundBody;
@@ -104,7 +106,7 @@ namespace Box2DX.Dynamics
 			_gravity = gravity;
 
 			_lock = false;
-
+			
 			_contactManager._world = this;
 			_broadPhase = new BroadPhase(worldAABB, _contactManager);
 
@@ -798,7 +800,7 @@ namespace Box2DX.Dynamics
 							c._flags |= Contact.CollisionFlags.Toi;
 						}
 
-						if (Common.Math.FLT_EPSILON < toi && toi < minTOI)
+						if (Common.Math.FLOAT32_EPSILON < toi && toi < minTOI)
 						{
 							// This is the minimum TOI found so far.
 							minContact = c;
@@ -806,7 +808,7 @@ namespace Box2DX.Dynamics
 						}
 					}
 
-					if (minContact == null || 1.0f - 100.0f * Common.Math.FLT_EPSILON < minTOI)
+					if (minContact == null || 1.0f - 100.0f * Common.Math.FLOAT32_EPSILON < minTOI)
 					{
 						// No more TOI events. Done!
 						break;
@@ -909,7 +911,7 @@ namespace Box2DX.Dynamics
 
 					TimeStep subStep = new TimeStep();
 					subStep.Dt = (1.0f - minTOI) * step.Dt;
-					Box2DXDebug.Assert(subStep.Dt > Common.Math.FLT_EPSILON);
+					Box2DXDebug.Assert(subStep.Dt > Common.Math.FLOAT32_EPSILON);
 					subStep.Inv_Dt = 1.0f / subStep.Dt;
 					subStep.MaxIterations = step.MaxIterations;
 

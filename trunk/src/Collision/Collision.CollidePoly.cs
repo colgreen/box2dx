@@ -93,7 +93,7 @@ namespace Box2DX.Collision
 
 			// Find support vertex on poly2 for -normal.
 			int index = 0;
-			float minDot = Common.Math.FLT_MAX;
+			float minDot = Common.Math.FLOAT32_MAX;
 			for (int i = 0; i < poly2.VertexCount; ++i)
 			{
 				float dot = Vector2.Dot(poly2._vertices[i], normal1);
@@ -130,7 +130,7 @@ namespace Box2DX.Collision
 
 			// Find edge normal on poly1 that has the largest projection onto d.
 			int edge = 0;
-			float maxDot = -Common.Math.FLT_MAX;
+			float maxDot = -Common.Math.FLOAT32_MAX;
 			for (int i = 0; i < count1; ++i)
 			{
 				float dot = Vector2.Dot(poly1._normals[i], dLocal1);
@@ -227,7 +227,7 @@ namespace Box2DX.Collision
 
 			// Find the incident edge on poly2.
 			int index = 0;
-			float minDot = Common.Math.FLT_MAX;
+			float minDot = Common.Math.FLOAT32_MAX;
 			for (int i = 0; i < poly2.VertexCount; ++i)
 			{
 				float dot = Vector2.Dot(normal1, poly2._normals[i]);
@@ -243,12 +243,12 @@ namespace Box2DX.Collision
 			int i2 = i1 + 1 < poly2.VertexCount ? i1 + 1 : 0;
 
 			c[0].V = Common.Math.Mul(xf2, poly2._vertices[i1]);
-			c[0].ID.Features.ReferenceFace = (byte)edge1;
+			c[0].ID.Features.ReferenceEdge = (byte)edge1;
 			c[0].ID.Features.IncidentEdge = (byte)i1;
 			c[0].ID.Features.IncidentVertex = 0;
 
 			c[1].V = Common.Math.Mul(xf2, poly2._vertices[i2]);
-			c[1].ID.Features.ReferenceFace = (byte)edge1;
+			c[1].ID.Features.ReferenceEdge = (byte)edge1;
 			c[1].ID.Features.IncidentEdge = (byte)i2;
 			c[1].ID.Features.IncidentVertex = 1;
 		}

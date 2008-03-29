@@ -38,6 +38,8 @@ Bullet (http:/www.bulletphysics.com).
 // - no broadphase is perfect and neither is this one: it is not great for huge
 //   worlds (use a multi-SAP instead), it is not great for large objects.
 
+//#define TARGET_FLOAT32_IS_FIXED
+
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -81,8 +83,14 @@ namespace Box2DX.Collision
 
 	public class BroadPhase
 	{
-		public static readonly ushort Invalid = Common.Math.USHRT_MAX;
-		public static readonly ushort NullEdge = Common.Math.USHRT_MAX;
+#if TARGET_FLOAT32_IS_FIXED
+		public static readonly ushort BROADPHASE_MAX = (Common.Math.USHRT_MAX/2);
+#else
+		public static readonly ushort BROADPHASE_MAX = Common.Math.USHRT_MAX;
+#endif
+
+		public static readonly ushort Invalid = BROADPHASE_MAX;
+		public static readonly ushort NullEdge = BROADPHASE_MAX;
 
 		public PairManager _pairManager;
 
@@ -110,8 +118,8 @@ namespace Box2DX.Collision
 			_proxyCount = 0;
 
 			Vector2 d = worldAABB.UpperBound - worldAABB.LowerBound;
-			_quantizationFactor.X = Common.Math.USHRT_MAX / d.X;
-			_quantizationFactor.Y = Common.Math.USHRT_MAX / d.Y;
+			_quantizationFactor.X = (float)BROADPHASE_MAX / d.X;
+			_quantizationFactor.Y = (float)BROADPHASE_MAX / d.Y;
 
 			for (uint i = 0; i < Settings.MaxProxies - 1; ++i)
 			{
@@ -631,10 +639,10 @@ namespace Box2DX.Collision
 			// Bump lower bounds downs and upper bounds up. This ensures correct sorting of
 			// lower/upper bounds that would have equal values.
 			// TODO_ERIN implement fast float to uint16 conversion.
-			lowerValues[0] = (ushort)((ushort)(_quantizationFactor.X * (minVertex.X - _worldAABB.LowerBound.X)) & (Common.Math.USHRT_MAX - 1));
+			lowerValues[0] = (ushort)((ushort)(_quantizationFactor.X * (minVertex.X - _worldAABB.LowerBound.X)) & (BROADPHASE_MAX - 1));
 			upperValues[0] = (ushort)((ushort)(_quantizationFactor.X * (maxVertex.X - _worldAABB.LowerBound.X)) | 1);
 
-			lowerValues[1] = (ushort)((ushort)(_quantizationFactor.Y * (minVertex.Y - _worldAABB.LowerBound.Y)) & (Common.Math.USHRT_MAX - 1));
+			lowerValues[1] = (ushort)((ushort)(_quantizationFactor.Y * (minVertex.Y - _worldAABB.LowerBound.Y)) & (BROADPHASE_MAX - 1));
 			upperValues[1] = (ushort)((ushort)(_quantizationFactor.Y * (maxVertex.Y - _worldAABB.LowerBound.Y)) | 1);
 		}
 
@@ -744,7 +752,7 @@ namespace Box2DX.Collision
 
 		private void IncrementTimeStamp()
 		{
-			if (_timeStamp == Common.Math.USHRT_MAX)
+			if (_timeStamp == BROADPHASE_MAX)
 			{
 				for (ushort i = 0; i < Settings.MaxProxies; ++i)
 				{

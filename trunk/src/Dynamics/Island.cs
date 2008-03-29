@@ -187,6 +187,19 @@ namespace Box2DX.Dynamics
 				b._angularVelocity *= Common.Math.Clamp(1.0f - step.Dt * b._angularDamping, 0.0f, 1.0f);
 
 				// Check for large velocities.
+#if TARGET_FLOAT32_IS_FIXED
+				// Fixed point code written this way to prevent
+				// overflows, float code is optimized for speed
+
+				float vMagnitude = b._linearVelocity.Length();
+				if(vMagnitude > Settings.MaxLinearVelocity)
+				{
+					b._linearVelocity *= Settings.MaxLinearVelocity/vMagnitude;
+				}
+				b._angularVelocity = Vector2.Clamp(b._angularVelocity, 
+					-Settings.MaxAngularVelocity, Settings.MaxAngularVelocity);
+
+#else
 				if (Vector2.Dot(b._linearVelocity, b._linearVelocity) > Settings.MaxLinearVelocitySquared)
 				{
 					b._linearVelocity.Normalize();
@@ -204,6 +217,7 @@ namespace Box2DX.Dynamics
 						b._angularVelocity = Settings.MaxAngularVelocity;
 					}
 				}
+#endif
 			}
 
 			ContactSolver contactSolver = new ContactSolver(step, _contacts, _contactCount);
@@ -284,10 +298,11 @@ namespace Box2DX.Dynamics
 
 			if (allowSleep)
 			{
-				float minSleepTime = Common.Math.FLT_MAX;
-
+				float minSleepTime = Common.Math.FLOAT32_MAX;
+#if !TARGET_FLOAT32_IS_FIXED
 				float linTolSqr = Settings.LinearSleepTolerance * Settings.LinearSleepTolerance;
 				float angTolSqr = Settings.AngularSleepTolerance * Settings.AngularSleepTolerance;
+#endif
 
 				for (int i = 0; i < _bodyCount; ++i)
 				{
@@ -304,8 +319,14 @@ namespace Box2DX.Dynamics
 					}
 
 					if ((b._flags & Body.BodyFlags.AllowSleep) == 0 ||
+#if TARGET_FLOAT32_IS_FIXED
+						Common.Math.Abs(b._angularVelocity) > Settings.AngularSleepTolerance ||
+						Common.Math.Abs(b._linearVelocity.X) > Settings.LinearSleepTolerance ||
+						Common.Math.Abs(b._linearVelocity.Y) > Settings.LinearSleepTolerance)
+#else
 						b._angularVelocity * b._angularVelocity > angTolSqr ||
 						Vector2.Dot(b._linearVelocity, b._linearVelocity) > linTolSqr)
+#endif
 					{
 						b._sleepTime = 0.0f;
 						minSleepTime = 0.0f;

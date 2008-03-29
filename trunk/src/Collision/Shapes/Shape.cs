@@ -352,18 +352,17 @@ namespace Box2DX.Collision
 
 		public void ResetProxy(BroadPhase broadPhase, XForm transform)
 		{
-			if (_proxyId != PairManager.NullProxy)
+			if (_proxyId == PairManager.NullProxy)
 			{
-				broadPhase.DestroyProxy(_proxyId);
+				return;
 			}
+
+			broadPhase.DestroyProxy(_proxyId);
 
 			AABB aabb;
 			ComputeAABB(out aabb, transform);
 
 			bool inRange = broadPhase.InRange(aabb);
-
-			// You are affecting a shape outside the world box.
-			Box2DXDebug.Assert(inRange);
 
 			if (inRange)
 			{
