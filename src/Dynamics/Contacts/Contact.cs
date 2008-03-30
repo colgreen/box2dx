@@ -170,11 +170,13 @@ namespace Box2DX.Dynamics
 			_prev = null;
 			_next = null;
 
+			_node1 = new ContactEdge();
 			_node1.Contact = null;
 			_node1.Prev = null;
 			_node1.Next = null;
 			_node1.Other = null;
 
+			_node2 = new ContactEdge();
 			_node2.Contact = null;
 			_node2.Prev = null;
 			_node2.Next = null;
