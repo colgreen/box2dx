@@ -78,6 +78,9 @@ namespace HelloWorld
 			// This is our little game loop.
 			for (int i = 0; i < 100; ++i)
 			{
+				bool b = true;
+				if (i == 45)
+					b = false;
 				// Instruct the world to perform a single step of simulation. It is
 				// generally best to keep the time step and iterations fixed.
 				world.Step(timeStep, iterations);

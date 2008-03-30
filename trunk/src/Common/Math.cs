@@ -139,7 +139,7 @@ namespace Box2DX.Common
 		public static Vector2 Abs(Vector2 a)
 		{
 			Vector2 b = new Vector2();
-			b.Set(Math.Abs(a.X), Math.Abs(a.X));
+			b.Set(Math.Abs(a.X), Math.Abs(a.Y));
 			return b;
 		}
 

@@ -106,7 +106,8 @@ namespace Box2DX.Dynamics
 			_gravity = gravity;
 
 			_lock = false;
-			
+
+			_contactManager = new ContactManager();
 			_contactManager._world = this;
 			_broadPhase = new BroadPhase(worldAABB, _contactManager);
 

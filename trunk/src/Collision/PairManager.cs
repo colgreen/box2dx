@@ -108,12 +108,14 @@ namespace Box2DX.Collision
 			_freePair = 0;
 			for (int i = 0; i < Settings.MaxPairs; ++i)
 			{
+				_pairs[i] = new Pair();
 				_pairs[i].ProxyId1 = PairManager.NullProxy;
 				_pairs[i].ProxyId2 = PairManager.NullProxy;
 				_pairs[i].UserData = null;
 				_pairs[i].Status = 0;
 				_pairs[i].Next = (ushort)(i + 1);
 			}
+			_pairs[Settings.MaxPairs - 1] = new Pair();
 			_pairs[Settings.MaxPairs - 1].Next = PairManager.NullPair;
 			_pairCount = 0;
 			_pairBufferCount = 0;
@@ -126,21 +128,21 @@ namespace Box2DX.Collision
 		}
 
 		/*
-As proxies are created and moved, many pairs are created and destroyed. Even worse, the same
-pair may be added and removed multiple times in a single time step of the physics engine. To reduce
-traffic in the pair manager, we try to avoid destroying pairs in the pair manager until the
-end of the physics step. This is done by buffering all the RemovePair requests. AddPair
-requests are processed immediately because we need the hash table entry for quick lookup.
+		As proxies are created and moved, many pairs are created and destroyed. Even worse, the same
+		pair may be added and removed multiple times in a single time step of the physics engine. To reduce
+		traffic in the pair manager, we try to avoid destroying pairs in the pair manager until the
+		end of the physics step. This is done by buffering all the RemovePair requests. AddPair
+		requests are processed immediately because we need the hash table entry for quick lookup.
 
-All user user callbacks are delayed until the buffered pairs are confirmed in Commit.
-This is very important because the user callbacks may be very expensive and client logic
-may be harmed if pairs are added and removed within the same time step.
+		All user user callbacks are delayed until the buffered pairs are confirmed in Commit.
+		This is very important because the user callbacks may be very expensive and client logic
+		may be harmed if pairs are added and removed within the same time step.
 
-Buffer a pair for addition.
-We may add a pair that is not in the pair manager or pair buffer.
-We may add a pair that is already in the pair manager and pair buffer.
-If the added pair is not a new pair, then it must be in the pair buffer (because RemovePair was called).
-*/
+		Buffer a pair for addition.
+		We may add a pair that is not in the pair manager or pair buffer.
+		We may add a pair that is already in the pair manager and pair buffer.
+		If the added pair is not a new pair, then it must be in the pair buffer (because RemovePair was called).
+		*/
 		public void AddBufferedPair(int id1, int id2)
 		{
 			Box2DXDebug.Assert(id1 != PairManager.NullProxy && id2 != PairManager.NullProxy);
@@ -455,6 +457,5 @@ If the added pair is not a new pair, then it must be in the pair buffer (because
 		{
 			return pair1.ProxyId1 == pair2.ProxyId1 && pair1.ProxyId2 == pair2.ProxyId2;
 		}
-
 	}
 }
