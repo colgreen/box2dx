@@ -187,15 +187,11 @@ namespace Box2DX.Collision
 				//memmove(bounds + lowerIndex + 1, bounds + lowerIndex, (upperIndex - lowerIndex) * sizeof(b2Bound));
 				for (int i = 0; i < (boundCount - upperIndex); i++)
 				{
-					Bound tmp = bounds[upperIndex + i];
-					bounds[upperIndex + i] = bounds[upperIndex + 2 + i];
-					bounds[upperIndex + 2 + i] = tmp;
+					bounds[upperIndex + 2 + i] = bounds[upperIndex + i];
 				}
 				for (int i = 0; i < (upperIndex - lowerIndex); i++)
 				{
-					Bound tmp = bounds[lowerIndex + i];
-					bounds[lowerIndex + i] = bounds[lowerIndex + 1 + i];
-					bounds[lowerIndex + 1 + i] = tmp;
+					bounds[lowerIndex + 1 + i] = bounds[lowerIndex + i];
 				}
 
 				// The upper index has increased because of the lower bound insertion.
@@ -280,15 +276,11 @@ namespace Box2DX.Collision
 				//memmove(bounds + upperIndex - 1, bounds + upperIndex + 1, (boundCount - upperIndex - 1) * sizeof(b2Bound));
 				for (int i = 0; i < (upperIndex - lowerIndex - 1); i++)
 				{
-					Bound tmp = _bounds[axis][lowerIndex + 1 + i];
-					_bounds[axis][lowerIndex + 1 + i] = _bounds[axis][lowerIndex + i];
-					_bounds[axis][lowerIndex + i] = tmp;
+					bounds[lowerIndex + i] = bounds[lowerIndex + 1 + i];
 				}
 				for (int i = 0; i < (boundCount - upperIndex - 1); i++)
 				{
-					Bound tmp = _bounds[axis][upperIndex + 1 + i];
-					_bounds[axis][upperIndex + 1 + i] = _bounds[axis][upperIndex - 1 + i];
-					_bounds[axis][upperIndex - 1 + i] = tmp;
+					bounds[upperIndex - 1 + i] = bounds[upperIndex + 1 + i];
 				}
 
 				// Fix bound indices.

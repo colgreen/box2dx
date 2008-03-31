@@ -274,7 +274,7 @@ namespace Box2DX.Collision
 		{
 			if (proxyId1 > proxyId2) Common.Math.Swap<int>(ref proxyId1, ref proxyId2);
 
-			uint hash = (uint)(Hash((uint)proxyId1, (uint)proxyId2) & PairManager.TableMask);
+			uint hash = Hash((uint)proxyId1, (uint)proxyId2) & (uint)PairManager.TableMask;
 
 			return Find(proxyId1, proxyId2, hash);
 		}
@@ -303,7 +303,7 @@ namespace Box2DX.Collision
 		{
 			if (proxyId1 > proxyId2) Common.Math.Swap<int>(ref proxyId1, ref proxyId2);
 
-			int hash = (int)(Hash((uint)proxyId1, (uint)proxyId2) & PairManager.TableMask);
+			int hash = (int)(Hash((uint)proxyId1, (uint)proxyId2) & (uint)PairManager.TableMask);
 
 			Pair pair = Find(proxyId1, proxyId2, (uint)hash);
 			if (pair != null)
@@ -335,9 +335,10 @@ namespace Box2DX.Collision
 		{
 			Box2DXDebug.Assert(_pairCount > 0);
 
-			if (proxyId1 > proxyId2) Common.Math.Swap<int>(ref proxyId1, ref proxyId2);
+			if (proxyId1 > proxyId2) 
+				Common.Math.Swap<int>(ref proxyId1, ref proxyId2);
 
-			int hash = (int)(Hash((uint)proxyId1, (uint)proxyId2) & PairManager.TableMask);
+			int hash = (int)(Hash((uint)proxyId1, (uint)proxyId2) & (uint)PairManager.TableMask);
 
 			ushort node = _hashTable[hash];
 			while (node != PairManager.NullPair)
