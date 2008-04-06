@@ -122,9 +122,9 @@ namespace Box2DX.Dynamics
 			Toi = 0x0008
 		}
 
-		public static ContactRegister[,] _registers =
-			new ContactRegister[(int)ShapeType.ShapeTypeCount,(int)ShapeType.ShapeTypeCount];
-		public static bool _initialized = false;
+		public static ContactRegister[][] s_registers =
+			new ContactRegister[(int)ShapeType.ShapeTypeCount][/*(int)ShapeType.ShapeTypeCount*/];
+		public static bool s_initialized = false;
 
 		public CollisionFlags _flags;
 		public int _manifoldCount;
@@ -189,15 +189,21 @@ namespace Box2DX.Dynamics
 			Box2DXDebug.Assert(ShapeType.UnknownShape < type1 && type1 < ShapeType.ShapeTypeCount);
 			Box2DXDebug.Assert(ShapeType.UnknownShape < type2 && type2 < ShapeType.ShapeTypeCount);
 
-			_registers[(int)type1,(int)type2].CreateFcn = createFcn;
-			_registers[(int)type1,(int)type2].DestroyFcn = destoryFcn;
-			_registers[(int)type1,(int)type2].Primary = true;
+			if (s_registers[(int)type1] == null)
+				s_registers[(int)type1] = new ContactRegister[(int)ShapeType.ShapeTypeCount];
+
+			s_registers[(int)type1][(int)type2].CreateFcn = createFcn;
+			s_registers[(int)type1][(int)type2].DestroyFcn = destoryFcn;
+			s_registers[(int)type1][(int)type2].Primary = true;
 
 			if (type1 != type2)
 			{
-				_registers[(int)type2,(int)type1].CreateFcn = createFcn;
-				_registers[(int)type2,(int)type1].DestroyFcn = destoryFcn;
-				_registers[(int)type2,(int)type1].Primary = false;
+				//if (_registers[(int)type2] == null)
+				//	_registers[(int)type2] = new ContactRegister[(int)ShapeType.ShapeTypeCount];
+
+				s_registers[(int)type2][(int)type1].CreateFcn = createFcn;
+				s_registers[(int)type2][(int)type1].DestroyFcn = destoryFcn;
+				s_registers[(int)type2][(int)type1].Primary = false;
 			}
 		}
 
@@ -210,10 +216,10 @@ namespace Box2DX.Dynamics
 
 		public static Contact Create(Shape shape1, Shape shape2)
 		{
-			if (_initialized == false)
+			if (s_initialized == false)
 			{
 				InitializeRegisters();
-				_initialized = true;
+				s_initialized = true;
 			}
 
 			ShapeType type1 = shape1._type;
@@ -222,10 +228,10 @@ namespace Box2DX.Dynamics
 			Box2DXDebug.Assert(ShapeType.UnknownShape < type1 && type1 < ShapeType.ShapeTypeCount);
 			Box2DXDebug.Assert(ShapeType.UnknownShape < type2 && type2 < ShapeType.ShapeTypeCount);
 
-			ContactCreateFcn createFcn = _registers[(int)type1,(int)type2].CreateFcn;
+			ContactCreateFcn createFcn = s_registers[(int)type1][(int)type2].CreateFcn;
 			if (createFcn != null)
 			{
-				if (_registers[(int)type1,(int)type2].Primary)
+				if (s_registers[(int)type1][(int)type2].Primary)
 				{
 					return createFcn(shape1, shape2);
 				}
@@ -250,7 +256,7 @@ namespace Box2DX.Dynamics
 
 		public static void Destroy(Contact contact)
 		{
-			Box2DXDebug.Assert(_initialized == true);
+			Box2DXDebug.Assert(s_initialized == true);
 
 			if (contact.GetManifoldCount() > 0)
 			{
@@ -264,7 +270,7 @@ namespace Box2DX.Dynamics
 			Box2DXDebug.Assert(ShapeType.UnknownShape < type1 && type1 < ShapeType.ShapeTypeCount);
 			Box2DXDebug.Assert(ShapeType.UnknownShape < type2 && type2 < ShapeType.ShapeTypeCount);
 
-			ContactDestroyFcn destroyFcn = _registers[(int)type1,(int)type2].DestroyFcn;
+			ContactDestroyFcn destroyFcn = s_registers[(int)type1][(int)type2].DestroyFcn;
 			destroyFcn(contact);
 		}
 
@@ -318,7 +324,7 @@ namespace Box2DX.Dynamics
 		/// <returns></returns>
 		public Shape GetShape2()
 		{
-			return _shape1;
+			return _shape2;
 		}
 
 		public void Update(ContactListener listener)
