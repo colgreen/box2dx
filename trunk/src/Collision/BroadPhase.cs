@@ -55,7 +55,7 @@ namespace Box2DX.Collision
 		public ushort[/*2*/] UpperValues = new ushort[2];
 	}
 #warning "CAS"
-	public class Bound
+	public class Bound : ICloneable
 	{
 		public bool IsLower { get { return (Value & (ushort)1) == (ushort)0; } }
 		public bool IsUpper { get { return (Value & (ushort)1) == (ushort)1; } }
@@ -63,6 +63,15 @@ namespace Box2DX.Collision
 		public ushort Value;
 		public ushort ProxyId;
 		public ushort StabbingCount;
+
+		public object Clone()
+		{
+			Bound newBound = new Bound();
+			newBound.Value = this.Value;
+			newBound.ProxyId = this.ProxyId;
+			newBound.StabbingCount = this.StabbingCount;
+			return newBound;
+		}
 	}
 #warning "CAS"
 	public class Proxy
@@ -187,12 +196,14 @@ namespace Box2DX.Collision
 				//memmove(bounds + lowerIndex + 1, bounds + lowerIndex, (upperIndex - lowerIndex) * sizeof(b2Bound));
 				for (int i = 0; i < (boundCount - upperIndex); i++)
 				{
-					bounds[upperIndex + 2 + i] = bounds[upperIndex + i];
+					bounds[upperIndex + 2 + i] = (Bound)bounds[upperIndex + i].Clone();
 				}
+				//Array.Copy(bounds, upperIndex, bounds, upperIndex + 2, boundCount - upperIndex);
 				for (int i = 0; i < (upperIndex - lowerIndex); i++)
 				{
-					bounds[lowerIndex + 1 + i] = bounds[lowerIndex + i];
+					bounds[lowerIndex + 1 + i] = (Bound)bounds[lowerIndex + i].Clone();
 				}
+				//Array.Copy(bounds, lowerIndex, bounds, lowerIndex + 1, upperIndex - lowerIndex);
 
 				// The upper index has increased because of the lower bound insertion.
 				++upperIndex;
@@ -274,13 +285,15 @@ namespace Box2DX.Collision
 #warning "Check this"
 				//memmove(bounds + lowerIndex, bounds + lowerIndex + 1, (upperIndex - lowerIndex - 1) * sizeof(b2Bound));
 				//memmove(bounds + upperIndex - 1, bounds + upperIndex + 1, (boundCount - upperIndex - 1) * sizeof(b2Bound));
+				//Array.Copy(bounds, lowerIndex + 1, bounds, lowerIndex, upperIndex - lowerIndex - 1);
 				for (int i = 0; i < (upperIndex - lowerIndex - 1); i++)
 				{
-					bounds[lowerIndex + i] = bounds[lowerIndex + 1 + i];
+					bounds[lowerIndex + i] = (Bound)bounds[lowerIndex + 1 + i].Clone();
 				}
+				//Array.Copy(bounds, upperIndex + 1, bounds, upperIndex - 1, boundCount - upperIndex - 1);
 				for (int i = 0; i < (boundCount - upperIndex - 1); i++)
 				{
-					bounds[upperIndex - 1 + i] = bounds[upperIndex + 1 + i];
+					bounds[upperIndex - 1 + i] = (Bound)bounds[upperIndex + 1 + i].Clone();
 				}
 
 				// Fix bound indices.
@@ -422,7 +435,8 @@ namespace Box2DX.Collision
 						}
 
 						--proxy.LowerBounds[axis];
-						Common.Math.Swap<Bound>(ref bound, ref prevBound);
+						//Common.Math.Swap<Bound>(ref bound, ref prevBound);
+						Common.Math.Swap<Bound>(ref bounds[index], ref bounds[index - 1]);
 						--index;
 					}
 				}
@@ -433,31 +447,32 @@ namespace Box2DX.Collision
 					int index = upperIndex;
 					while (index < boundCount - 1 && bounds[index + 1].Value <= upperValue)
 					{
-						Bound bound2 = bounds[index];
-						Bound nextBound2 = bounds[index + 1];
-						int nextProxyId = nextBound2.ProxyId;
-						Proxy nextProxy2 = _proxyPool[nextProxyId];
+						Bound bound = bounds[index];
+						Bound nextBound = bounds[index + 1];
+						int nextProxyId = nextBound.ProxyId;
+						Proxy nextProxy = _proxyPool[nextProxyId];
 
-						++nextBound2.StabbingCount;
+						++nextBound.StabbingCount;
 
-						if (nextBound2.IsLower == true)
+						if (nextBound.IsLower == true)
 						{
-							if (TestOverlap(newValues, nextProxy2))
+							if (TestOverlap(newValues, nextProxy))
 							{
 								_pairManager.AddBufferedPair(proxyId, nextProxyId);
 							}
 
-							--nextProxy2.LowerBounds[axis];
-							++bound2.StabbingCount;
+							--nextProxy.LowerBounds[axis];
+							++bound.StabbingCount;
 						}
 						else
 						{
-							--nextProxy2.UpperBounds[axis];
-							--bound2.StabbingCount;
+							--nextProxy.UpperBounds[axis];
+							--bound.StabbingCount;
 						}
 
 						++proxy.UpperBounds[axis];
-						Common.Math.Swap<Bound>(ref bound2, ref nextBound2);
+						//Common.Math.Swap<Bound>(ref bound, ref nextBound);
+						Common.Math.Swap<Bound>(ref bounds[index], ref bounds[index + 1]);
 						++index;
 					}
 				}
@@ -472,32 +487,33 @@ namespace Box2DX.Collision
 					int index = lowerIndex;
 					while (index < boundCount - 1 && bounds[index + 1].Value <= lowerValue)
 					{
-						Bound bound3 = bounds[index];
-						Bound nextBound3 = bounds[index + 1];
+						Bound bound = bounds[index];
+						Bound nextBound = bounds[index + 1];
 
-						int nextProxyId = nextBound3.ProxyId;
-						Proxy nextProxy3 = _proxyPool[nextProxyId];
+						int nextProxyId = nextBound.ProxyId;
+						Proxy nextProxy = _proxyPool[nextProxyId];
 
-						--nextBound3.StabbingCount;
+						--nextBound.StabbingCount;
 
-						if (nextBound3.IsUpper)
+						if (nextBound.IsUpper)
 						{
-							if (TestOverlap(oldValues, nextProxy3))
+							if (TestOverlap(oldValues, nextProxy))
 							{
 								_pairManager.RemoveBufferedPair(proxyId, nextProxyId);
 							}
 
-							--nextProxy3.UpperBounds[axis];
-							--bound3.StabbingCount;
+							--nextProxy.UpperBounds[axis];
+							--bound.StabbingCount;
 						}
 						else
 						{
-							--nextProxy3.LowerBounds[axis];
-							++bound3.StabbingCount;
+							--nextProxy.LowerBounds[axis];
+							++bound.StabbingCount;
 						}
 
 						++proxy.LowerBounds[axis];
-						Common.Math.Swap<Bound>(ref bound3, ref nextBound3);
+						//Common.Math.Swap<Bound>(ref bound, ref nextBound);
+						Common.Math.Swap<Bound>(ref bounds[index], ref bounds[index + 1]);
 						++index;
 					}
 				}
@@ -508,32 +524,33 @@ namespace Box2DX.Collision
 					int index = upperIndex;
 					while (index > 0 && upperValue < bounds[index - 1].Value)
 					{
-						Bound bound4 = bounds[index];
-						Bound prevBound4 = bounds[index - 1];
+						Bound bound = bounds[index];
+						Bound prevBound = bounds[index - 1];
 
-						int prevProxyId = prevBound4.ProxyId;
-						Proxy prevProxy4 = _proxyPool[prevProxyId];
+						int prevProxyId = prevBound.ProxyId;
+						Proxy prevProxy = _proxyPool[prevProxyId];
 
-						--prevBound4.StabbingCount;
+						--prevBound.StabbingCount;
 
-						if (prevBound4.IsLower == true)
+						if (prevBound.IsLower == true)
 						{
-							if (TestOverlap(oldValues, prevProxy4))
+							if (TestOverlap(oldValues, prevProxy))
 							{
 								_pairManager.RemoveBufferedPair(proxyId, prevProxyId);
 							}
 
-							++prevProxy4.LowerBounds[axis];
-							--bound4.StabbingCount;
+							++prevProxy.LowerBounds[axis];
+							--bound.StabbingCount;
 						}
 						else
 						{
-							++prevProxy4.UpperBounds[axis];
-							++bound4.StabbingCount;
+							++prevProxy.UpperBounds[axis];
+							++bound.StabbingCount;
 						}
 
 						--proxy.UpperBounds[axis];
-						Common.Math.Swap<Bound>(ref bound4, ref prevBound4);
+						//Common.Math.Swap<Bound>(ref bound, ref prevBound);
+						Common.Math.Swap<Bound>(ref bounds[index], ref bounds[index - 1]);
 						--index;
 					}
 				}

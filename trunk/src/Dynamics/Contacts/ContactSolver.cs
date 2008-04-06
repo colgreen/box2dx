@@ -56,6 +56,12 @@ namespace Box2DX.Dynamics
 		public float Friction;
 		public float Restitution;
 		public int PointCount;
+
+		public ContactConstraint()
+		{
+			for (int i = 0; i < Settings.MaxManifoldPoints; i++)
+				Points[i] = new ContactConstraintPoint();
+		}
 	}
 
 	public class ContactSolver : IDisposable
@@ -84,6 +90,8 @@ namespace Box2DX.Dynamics
 			}
 
 			_constraints = new ContactConstraint[_constraintCount];
+			for (int i = 0; i < _constraintCount; i++)
+				_constraints[i] = new ContactConstraint();
 
 			int count = 0;
 			for (int i = 0; i < contactCount; ++i)
