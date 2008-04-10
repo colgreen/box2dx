@@ -152,8 +152,8 @@ namespace Box2DX.Dynamics
 		public JointType _type;
 		public Joint _prev;
 		public Joint _next;
-		public JointEdge _node1;
-		public JointEdge _node2;
+		public JointEdge _node1 = new JointEdge();
+		public JointEdge _node2 = new JointEdge();
 		public Body _body1;
 		public Body _body2;
 
