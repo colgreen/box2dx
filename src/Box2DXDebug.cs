@@ -26,7 +26,7 @@ using System.Collections.Generic;
 
 namespace Box2DX
 {
-	internal static class Box2DXDebug
+	public static class Box2DXDebug
 	{
 		[Conditional("DEBUG")]
 		public static void Assert(bool condition)

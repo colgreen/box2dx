@@ -131,7 +131,7 @@ namespace Box2DX.Collision
 			_quantizationFactor.X = (float)BROADPHASE_MAX / d.X;
 			_quantizationFactor.Y = (float)BROADPHASE_MAX / d.Y;
 
-			for (uint i = 0; i < Settings.MaxProxies - 1; ++i)
+			for (ushort i = 0; i < Settings.MaxProxies - 1; ++i)
 			{
 				_proxyPool[i] = new Proxy();
 				_proxyPool[i].Next = (ushort)(i + 1);
@@ -140,7 +140,7 @@ namespace Box2DX.Collision
 				_proxyPool[i].UserData = null;
 			}
 			_proxyPool[Settings.MaxProxies - 1] = new Proxy();
-			_proxyPool[Settings.MaxProxies - 1].Next = (PairManager.NullProxy);
+			_proxyPool[Settings.MaxProxies - 1].Next = PairManager.NullProxy;
 			_proxyPool[Settings.MaxProxies - 1].TimeStamp = 0;
 			_proxyPool[Settings.MaxProxies - 1].OverlapCount = BroadPhase.Invalid;
 			_proxyPool[Settings.MaxProxies - 1].UserData = null;
@@ -153,8 +153,10 @@ namespace Box2DX.Collision
 			{
 				_bounds[i] = new Bound[(2 * Settings.MaxProxies)];				
 			}
+
+			int bCount = 2 * Settings.MaxProxies;
 			for (int j = 0; j < 2; j++)
-				for (int k = 0; k < (2 * Settings.MaxProxies); k++)
+				for (int k = 0; k < bCount; k++)
 					_bounds[j][k] = new Bound();
 		}
 
@@ -192,18 +194,37 @@ namespace Box2DX.Collision
 				Query(out lowerIndex, out upperIndex, lowerValues[axis], upperValues[axis], bounds, boundCount, axis);
 
 #warning "Check this"
-				//memmove(bounds + upperIndex + 2, bounds + upperIndex, (boundCount - upperIndex) * sizeof(b2Bound));
-				//memmove(bounds + lowerIndex + 1, bounds + lowerIndex, (upperIndex - lowerIndex) * sizeof(b2Bound));
+				//memmove(bounds + upperIndex + 2, bounds + upperIndex, (boundCount - upperIndex) * sizeof(b2Bound));				
+				Bound[] tmp1 = new Bound[boundCount - upperIndex];
 				for (int i = 0; i < (boundCount - upperIndex); i++)
 				{
-					bounds[upperIndex + 2 + i] = (Bound)bounds[upperIndex + i].Clone();
+					tmp1[i] = (Bound)bounds[upperIndex + i].Clone();
 				}
-				//Array.Copy(bounds, upperIndex, bounds, upperIndex + 2, boundCount - upperIndex);
+				for (int i = 0; i < (boundCount - upperIndex); i++)
+				{
+					bounds[upperIndex + 2 + i] = tmp1[i];
+				}
+				/*for (int i = 0; i < (boundCount - upperIndex); i++)
+				{
+					bounds[upperIndex + 2 + i] = null;
+					bounds[upperIndex + 2 + i] = (Bound)bounds[upperIndex + i].Clone();
+				}*/
+
+				//memmove(bounds + lowerIndex + 1, bounds + lowerIndex, (upperIndex - lowerIndex) * sizeof(b2Bound));
+				Bound[] tmp2 = new Bound[upperIndex - lowerIndex];
 				for (int i = 0; i < (upperIndex - lowerIndex); i++)
 				{
-					bounds[lowerIndex + 1 + i] = (Bound)bounds[lowerIndex + i].Clone();
+					tmp2[i] = (Bound)bounds[lowerIndex + i].Clone();
 				}
-				//Array.Copy(bounds, lowerIndex, bounds, lowerIndex + 1, upperIndex - lowerIndex);
+				for (int i = 0; i < (upperIndex - lowerIndex); i++)
+				{
+					bounds[lowerIndex + 1 + i] = tmp2[i];
+				}
+				/*for (int i = 0; i < (upperIndex - lowerIndex); i++)
+				{
+					bounds[lowerIndex + 1 + i] = null;
+					bounds[lowerIndex + 1 + i] = (Bound)bounds[lowerIndex + i].Clone();
+				}*/
 
 				// The upper index has increased because of the lower bound insertion.
 				++upperIndex;
@@ -284,17 +305,36 @@ namespace Box2DX.Collision
 
 #warning "Check this"
 				//memmove(bounds + lowerIndex, bounds + lowerIndex + 1, (upperIndex - lowerIndex - 1) * sizeof(b2Bound));
-				//memmove(bounds + upperIndex - 1, bounds + upperIndex + 1, (boundCount - upperIndex - 1) * sizeof(b2Bound));
-				//Array.Copy(bounds, lowerIndex + 1, bounds, lowerIndex, upperIndex - lowerIndex - 1);
+				Bound[] tmp1 = new Bound[upperIndex - lowerIndex - 1];
 				for (int i = 0; i < (upperIndex - lowerIndex - 1); i++)
 				{
-					bounds[lowerIndex + i] = (Bound)bounds[lowerIndex + 1 + i].Clone();
+					tmp1[i] = (Bound)bounds[lowerIndex + 1 + i].Clone();
 				}
-				//Array.Copy(bounds, upperIndex + 1, bounds, upperIndex - 1, boundCount - upperIndex - 1);
+				for (int i = 0; i < (upperIndex - lowerIndex - 1); i++)
+				{
+					bounds[lowerIndex + i] = tmp1[i];
+				}
+				/*for (int i = 0; i < (upperIndex - lowerIndex - 1); i++)
+				{
+					bounds[lowerIndex + i] = null;
+					bounds[lowerIndex + i] = (Bound)bounds[lowerIndex + 1 + i].Clone();
+				}*/
+
+				//memmove(bounds + upperIndex - 1, bounds + upperIndex + 1, (boundCount - upperIndex - 1) * sizeof(b2Bound));
+				Bound[] tmp2 = new Bound[boundCount - upperIndex - 1];
 				for (int i = 0; i < (boundCount - upperIndex - 1); i++)
 				{
-					bounds[upperIndex - 1 + i] = (Bound)bounds[upperIndex + 1 + i].Clone();
+					tmp2[i] = (Bound)bounds[upperIndex + 1 + i].Clone();
 				}
+				for (int i = 0; i < (boundCount - upperIndex - 1); i++)
+				{
+					bounds[upperIndex - 1 + i] = tmp2[i];
+				}
+				/*for (int i = 0; i < (boundCount - upperIndex - 1); i++)
+				{
+					bounds[upperIndex - 1 + i] = null;
+					bounds[upperIndex - 1 + i] = (Bound)bounds[upperIndex + 1 + i].Clone();
+				}*/
 
 				// Fix bound indices.
 				for (int index = lowerIndex; index < boundCount - 2; ++index)
@@ -435,7 +475,6 @@ namespace Box2DX.Collision
 						}
 
 						--proxy.LowerBounds[axis];
-						//Common.Math.Swap<Bound>(ref bound, ref prevBound);
 						Common.Math.Swap<Bound>(ref bounds[index], ref bounds[index - 1]);
 						--index;
 					}
@@ -471,7 +510,6 @@ namespace Box2DX.Collision
 						}
 
 						++proxy.UpperBounds[axis];
-						//Common.Math.Swap<Bound>(ref bound, ref nextBound);
 						Common.Math.Swap<Bound>(ref bounds[index], ref bounds[index + 1]);
 						++index;
 					}
@@ -512,7 +550,6 @@ namespace Box2DX.Collision
 						}
 
 						++proxy.LowerBounds[axis];
-						//Common.Math.Swap<Bound>(ref bound, ref nextBound);
 						Common.Math.Swap<Bound>(ref bounds[index], ref bounds[index + 1]);
 						++index;
 					}
@@ -549,7 +586,6 @@ namespace Box2DX.Collision
 						}
 
 						--proxy.UpperBounds[axis];
-						//Common.Math.Swap<Bound>(ref bound, ref prevBound);
 						Common.Math.Swap<Bound>(ref bounds[index], ref bounds[index - 1]);
 						--index;
 					}

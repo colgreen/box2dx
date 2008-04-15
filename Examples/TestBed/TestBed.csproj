@@ -77,8 +77,13 @@
     </Compile>
     <Compile Include="Render.cs" />
     <Compile Include="Test.cs" />
+    <Compile Include="Tests\Bridge.cs" />
+    <Compile Include="Tests\BroadPhaseTest.cs" />
+    <Compile Include="Tests\Gears.cs" />
+    <Compile Include="Tests\Pulleys.cs" />
     <Compile Include="Tests\SimpleTest.cs" />
     <Compile Include="Tests\Pyramid.cs" />
+    <Compile Include="Tests\VerticalStack.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Box2DX.csproj">

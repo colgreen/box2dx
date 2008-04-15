@@ -134,7 +134,6 @@ namespace Box2DX.Dynamics
 		// to overlap. We retire the Contact.
 		public override void PairRemoved(object proxyUserData1, object proxyUserData2, object pairUserData)
 		{
-#warning "???"
 			//B2_NOT_USED(proxyUserData1);
 			//B2_NOT_USED(proxyUserData2);
 

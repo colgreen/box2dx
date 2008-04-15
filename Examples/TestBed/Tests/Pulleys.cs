@@ -29,54 +29,74 @@ using Box2DX.Dynamics;
 
 namespace TestBed
 {
-	public class Pyramid : Test
+	public class Pulleys : Test
 	{
-		public Pyramid()
+		PulleyJoint _joint1;
+
+		public Pulleys()
 		{
+			Body ground = null;
 			{
 				PolygonDef sd = new PolygonDef();
 				sd.SetAsBox(50.0f, 10.0f);
 
 				BodyDef bd = new BodyDef();
 				bd.Position.Set(0.0f, -10.0f);
-				Body ground = _world.CreateStaticBody(bd);
+				ground = _world.CreateStaticBody(bd);
 				ground.CreateShape(sd);
 			}
 
 			{
+				float a = 2.0f;
+				float b = 4.0f;
+				float y = 16.0f;
+				float L = 12.0f;
+
 				PolygonDef sd = new PolygonDef();
-				float a = 0.5f;
-				sd.SetAsBox(a, a);
+				sd.SetAsBox(a, b);
 				sd.Density = 5.0f;
 
-				Vector2 x = new Vector2(-10.0f, 0.75f);
-				Vector2 y;
-				Vector2 deltaX = new Vector2(0.5625f, 2.0f);
-				Vector2 deltaY = new Vector2(1.125f, 0.0f);
+				BodyDef bd = new BodyDef();
 
-				for (int i = 0; i < 25; ++i)
-				{
-					y = x;
+				bd.Position.Set(-10.0f, y);
+				Body body1 = _world.CreateDynamicBody(bd);
+				body1.CreateShape(sd);
+				body1.SetMassFromShapes();
 
-					for (int j = i; j < 25; ++j)
-					{
-						BodyDef bd = new BodyDef();
-						bd.Position = y;
-						Body body = _world.CreateDynamicBody(bd);
-						body.CreateShape(sd);
-						body.SetMassFromShapes();
+				bd.Position.Set(10.0f, y);
+				Body body2 = _world.CreateDynamicBody(bd);
+				body2.CreateShape(sd);
+				body2.SetMassFromShapes();
 
-						y += deltaY;
-					}
+				PulleyJointDef pulleyDef = new PulleyJointDef();
+				Vector2 anchor1 = new Vector2(-10.0f, y + b);
+				Vector2 anchor2 = new Vector2(10.0f, y + b);
+				Vector2 groundAnchor1 = new Vector2(-10.0f, y + b + L);
+				Vector2 groundAnchor2 = new Vector2(10.0f, y + b + L);
+				pulleyDef.Initialize(body1, body2, groundAnchor1, groundAnchor2, anchor1, anchor2, 2.0f);
 
-					x += deltaX;
-				}
+				_joint1 = (PulleyJoint)_world.CreateJoint(pulleyDef);
 			}
+		}
+
+		public override void Step(Settings settings)
+		{
+			base.Step(settings);
+
+			float ratio = _joint1.Ratio;
+			float L = _joint1.Length1 + ratio * _joint1.Length2;
+			//DrawString(5, m_textLine, "L1 + %4.2f * L2 = %4.2f", (float) ratio, (float) L);
+			_textLine += 15;
+		}
+
+		public override void Keyboard(System.Windows.Forms.Keys key)
+		{
+			base.Keyboard(key);
 		}
 
 		public static Test Create()
 		{
-			return new Pyramid();
+			return new Pulleys();
 		}
 	}
 }

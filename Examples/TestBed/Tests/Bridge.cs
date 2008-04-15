@@ -29,54 +29,56 @@ using Box2DX.Dynamics;
 
 namespace TestBed
 {
-	public class Pyramid : Test
+	public class Bridge : Test
 	{
-		public Pyramid()
+		public Bridge()
 		{
+			Body ground = null;
 			{
 				PolygonDef sd = new PolygonDef();
 				sd.SetAsBox(50.0f, 10.0f);
 
 				BodyDef bd = new BodyDef();
 				bd.Position.Set(0.0f, -10.0f);
-				Body ground = _world.CreateStaticBody(bd);
+				ground = _world.CreateStaticBody(bd);
 				ground.CreateShape(sd);
 			}
 
 			{
 				PolygonDef sd = new PolygonDef();
-				float a = 0.5f;
-				sd.SetAsBox(a, a);
-				sd.Density = 5.0f;
+				sd.SetAsBox(0.5f, 0.125f);
+				sd.Density = 20.0f;
+				sd.Friction = 0.2f;
 
-				Vector2 x = new Vector2(-10.0f, 0.75f);
-				Vector2 y;
-				Vector2 deltaX = new Vector2(0.5625f, 2.0f);
-				Vector2 deltaY = new Vector2(1.125f, 0.0f);
 
-				for (int i = 0; i < 25; ++i)
+				RevoluteJointDef jd = new RevoluteJointDef();
+				const int numPlanks = 30;
+
+				Body prevBody = ground;
+				for (int i = 0; i < numPlanks; ++i)
 				{
-					y = x;
+					BodyDef bd = new BodyDef();
+					bd.Position.Set(-14.5f + 1.0f * i, 5.0f);
+					Body body = _world.CreateDynamicBody(bd);
+					body.CreateShape(sd);
+					body.SetMassFromShapes();
 
-					for (int j = i; j < 25; ++j)
-					{
-						BodyDef bd = new BodyDef();
-						bd.Position = y;
-						Body body = _world.CreateDynamicBody(bd);
-						body.CreateShape(sd);
-						body.SetMassFromShapes();
+					Vector2 anchor = new Vector2(-15.0f + 1.0f * i, 5.0f);
+					jd.Initialize(prevBody, body, anchor);
+					_world.CreateJoint(jd);
 
-						y += deltaY;
-					}
-
-					x += deltaX;
+					prevBody = body;
 				}
+
+				Vector2 anchor_ = new Vector2(-15.0f + 1.0f * numPlanks, 5.0f);
+				jd.Initialize(prevBody, ground, anchor_);
+				_world.CreateJoint(jd);
 			}
 		}
 
 		public static Test Create()
 		{
-			return new Pyramid();
+			return new Bridge();
 		}
 	}
 }

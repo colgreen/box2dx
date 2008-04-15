@@ -44,6 +44,9 @@ using Box2DX.Common;
 
 namespace Box2DX.Dynamics
 {
+	using Box2DXMath = Box2DX.Common.Math;
+	using SystemMath = System.Math;
+
 	/// <summary>
 	/// Prismatic joint definition. This requires defining a line of
 	/// motion using an axis and an anchor point. The definition uses local
@@ -365,20 +368,291 @@ namespace Box2DX.Dynamics
 			_enableMotor = def.EnableMotor;
 		}
 
-#warning "Not Implemented Yet!"
 		public override void InitVelocityConstraints(TimeStep step)
 		{
-			throw new NotImplementedException();
+			Body b1 = _body1;
+			Body b2 = _body2;
+
+			// Compute the effective masses.
+			Vector2 r1 = Box2DXMath.Mul(b1._xf.R, _localAnchor1 - b1.GetLocalCenter());
+			Vector2 r2 = Box2DXMath.Mul(b2._xf.R, _localAnchor2 - b2.GetLocalCenter());
+
+			float invMass1 = b1._invMass, invMass2 = b2._invMass;
+			float invI1 = b1._invI, invI2 = b2._invI;
+
+			// Compute point to line constraint effective mass.
+			// J = [-ay1 -cross(d+r1,ay1) ay1 cross(r2,ay1)]
+			Vector2 ay1 = Box2DXMath.Mul(b1._xf.R, _localYAxis1);
+			Vector2 e = b2._sweep.C + r2 - b1._sweep.C;	// e = d + r1
+
+			_linearJacobian.Set(-ay1, -Vector2.Cross(e, ay1), ay1, Vector2.Cross(r2, ay1));
+			_linearMass = invMass1 + invI1 * _linearJacobian.Angular1 * _linearJacobian.Angular1 +
+							invMass2 + invI2 * _linearJacobian.Angular2 * _linearJacobian.Angular2;
+			Box2DXDebug.Assert(_linearMass > Box2DXMath.FLOAT32_EPSILON);
+			_linearMass = 1.0f / _linearMass;
+
+			// Compute angular constraint effective mass.
+			_angularMass = invI1 + invI2;
+			if (_angularMass > Box2DXMath.FLOAT32_EPSILON)
+			{
+				_angularMass = 1.0f / _angularMass;
+			}
+
+			// Compute motor and limit terms.
+			if (_enableLimit || _enableMotor)
+			{
+				// The motor and limit share a Jacobian and effective mass.
+				Vector2 ax1 = Box2DXMath.Mul(b1._xf.R, _localXAxis1);
+				_motorJacobian.Set(-ax1, -Vector2.Cross(e, ax1), ax1, Vector2.Cross(r2, ax1));
+				_motorMass = invMass1 + invI1 * _motorJacobian.Angular1 * _motorJacobian.Angular1 +
+								invMass2 + invI2 * _motorJacobian.Angular2 * _motorJacobian.Angular2;
+				Box2DXDebug.Assert(_motorMass > Box2DXMath.FLOAT32_EPSILON);
+				_motorMass = 1.0f / _motorMass;
+
+				if (_enableLimit)
+				{
+					Vector2 d = e - r1;	// p2 - p1
+					float jointTranslation = Vector2.Dot(ax1, d);
+					if (Box2DXMath.Abs(_upperTranslation - _lowerTranslation) < 2.0f * Settings.LinearSlop)
+					{
+						_limitState = LimitState.EqualLimits;
+					}
+					else if (jointTranslation <= _lowerTranslation)
+					{
+						if (_limitState != LimitState.AtLowerLimit)
+						{
+							_limitForce = 0.0f;
+						}
+						_limitState = LimitState.AtLowerLimit;
+					}
+					else if (jointTranslation >= _upperTranslation)
+					{
+						if (_limitState != LimitState.AtUpperLimit)
+						{
+							_limitForce = 0.0f;
+						}
+						_limitState = LimitState.AtUpperLimit;
+					}
+					else
+					{
+						_limitState = LimitState.InactiveLimit;
+						_limitForce = 0.0f;
+					}
+				}
+			}
+
+			if (_enableMotor == false)
+			{
+				_motorForce = 0.0f;
+			}
+
+			if (_enableLimit == false)
+			{
+				_limitForce = 0.0f;
+			}
+
+			if (World.s_enableWarmStarting != 0)
+			{
+				Vector2 P1 = Settings.FORCE_SCALE(step.Dt) * (_force * _linearJacobian.Linear1 + (_motorForce + _limitForce) * _motorJacobian.Linear1);
+				Vector2 P2 = Settings.FORCE_SCALE(step.Dt) * (_force * _linearJacobian.Linear2 + (_motorForce + _limitForce) * _motorJacobian.Linear2);
+				float L1 = Settings.FORCE_SCALE(step.Dt) * (_force * _linearJacobian.Angular1 - _torque + (_motorForce + _limitForce) * _motorJacobian.Angular1);
+				float L2 = Settings.FORCE_SCALE(step.Dt) * (_force * _linearJacobian.Angular2 + _torque + (_motorForce + _limitForce) * _motorJacobian.Angular2);
+
+				b1._linearVelocity += invMass1 * P1;
+				b1._angularVelocity += invI1 * L1;
+
+				b2._linearVelocity += invMass2 * P2;
+				b2._angularVelocity += invI2 * L2;
+			}
+			else
+			{
+				_force = 0.0f;
+				_torque = 0.0f;
+				_limitForce = 0.0f;
+				_motorForce = 0.0f;
+			}
+
+			_limitPositionImpulse = 0.0f;
 		}
 
 		public override void SolveVelocityConstraints(TimeStep step)
 		{
-			throw new NotImplementedException();
+			Body b1 = _body1;
+			Body b2 = _body2;
+
+			float invMass1 = b1._invMass, invMass2 = b2._invMass;
+			float invI1 = b1._invI, invI2 = b2._invI;
+
+			// Solve linear constraint.
+			float linearCdot = _linearJacobian.Compute(b1._linearVelocity, b1._angularVelocity, b2._linearVelocity, b2._angularVelocity);
+			float force = -Settings.FORCE_INV_SCALE(step.Inv_Dt) * _linearMass * linearCdot;
+			_force += force;
+
+			float P = Settings.FORCE_SCALE(step.Dt) * force;
+			b1._linearVelocity += (invMass1 * P) * _linearJacobian.Linear1;
+			b1._angularVelocity += invI1 * P * _linearJacobian.Angular1;
+
+			b2._linearVelocity += (invMass2 * P) * _linearJacobian.Linear2;
+			b2._angularVelocity += invI2 * P * _linearJacobian.Angular2;
+
+			// Solve angular constraint.
+			float angularCdot = b2._angularVelocity - b1._angularVelocity;
+			float torque = -Settings.FORCE_INV_SCALE(step.Inv_Dt) * _angularMass * angularCdot;
+			_torque += torque;
+
+			float L = Settings.FORCE_SCALE(step.Dt) * torque;
+			b1._angularVelocity -= invI1 * L;
+			b2._angularVelocity += invI2 * L;
+
+			// Solve linear motor constraint.
+			if (_enableMotor && _limitState != LimitState.EqualLimits)
+			{
+				float motorCdot = _motorJacobian.Compute(b1._linearVelocity, b1._angularVelocity, b2._linearVelocity, b2._angularVelocity) - _motorSpeed;
+				float motorForce = -Settings.FORCE_INV_SCALE(step.Inv_Dt) * _motorMass * motorCdot;
+				float oldMotorForce = _motorForce;
+				_motorForce = Box2DXMath.Clamp(_motorForce + motorForce, -_maxMotorForce, _maxMotorForce);
+				motorForce = _motorForce - oldMotorForce;
+
+				float P_ = Settings.FORCE_SCALE(step.Dt) * motorForce;
+				b1._linearVelocity += (invMass1 * P_) * _motorJacobian.Linear1;
+				b1._angularVelocity += invI1 * P_ * _motorJacobian.Angular1;
+
+				b2._linearVelocity += (invMass2 * P_) * _motorJacobian.Linear2;
+				b2._angularVelocity += invI2 * P_ * _motorJacobian.Angular2;
+			}
+
+			// Solve linear limit constraint.
+			if (_enableLimit && _limitState != LimitState.InactiveLimit)
+			{
+				float limitCdot = _motorJacobian.Compute(b1._linearVelocity, b1._angularVelocity, b2._linearVelocity, b2._angularVelocity);
+				float limitForce = -Settings.FORCE_INV_SCALE(step.Inv_Dt) * _motorMass * limitCdot;
+
+				if (_limitState == LimitState.EqualLimits)
+				{
+					_limitForce += limitForce;
+				}
+				else if (_limitState == LimitState.AtLowerLimit)
+				{
+					float oldLimitForce = _limitForce;
+					_limitForce = Box2DXMath.Max(_limitForce + limitForce, 0.0f);
+					limitForce = _limitForce - oldLimitForce;
+				}
+				else if (_limitState == LimitState.AtUpperLimit)
+				{
+					float oldLimitForce = _limitForce;
+					_limitForce = Box2DXMath.Min(_limitForce + limitForce, 0.0f);
+					limitForce = _limitForce - oldLimitForce;
+				}
+
+				float P_ = Settings.FORCE_SCALE(step.Dt) * limitForce;
+
+				b1._linearVelocity += (invMass1 * P_) * _motorJacobian.Linear1;
+				b1._angularVelocity += invI1 * P_ * _motorJacobian.Angular1;
+
+				b2._linearVelocity += (invMass2 * P_) * _motorJacobian.Linear2;
+				b2._angularVelocity += invI2 * P_ * _motorJacobian.Angular2;
+			}
 		}
 
 		public override bool SolvePositionConstraints()
 		{
-			throw new NotImplementedException();
+			Body b1 = _body1;
+			Body b2 = _body2;
+
+			float invMass1 = b1._invMass, invMass2 = b2._invMass;
+			float invI1 = b1._invI, invI2 = b2._invI;
+
+			Vector2 r1 = Box2DXMath.Mul(b1._xf.R, _localAnchor1 - b1.GetLocalCenter());
+			Vector2 r2 = Box2DXMath.Mul(b2._xf.R, _localAnchor2 - b2.GetLocalCenter());
+			Vector2 p1 = b1._sweep.C + r1;
+			Vector2 p2 = b2._sweep.C + r2;
+			Vector2 d = p2 - p1;
+			Vector2 ay1 = Box2DXMath.Mul(b1._xf.R, _localYAxis1);
+
+			// Solve linear (point-to-line) constraint.
+			float linearC = Vector2.Dot(ay1, d);
+			// Prevent overly large corrections.
+			linearC = Box2DXMath.Clamp(linearC, -Settings.MaxLinearCorrection, Settings.MaxLinearCorrection);
+			float linearImpulse = -_linearMass * linearC;
+
+			b1._sweep.C += (invMass1 * linearImpulse) * _linearJacobian.Linear1;
+			b1._sweep.A += invI1 * linearImpulse * _linearJacobian.Angular1;
+			//b1->SynchronizeTransform(); // updated by angular constraint
+			b2._sweep.C += (invMass2 * linearImpulse) * _linearJacobian.Linear2;
+			b2._sweep.A += invI2 * linearImpulse * _linearJacobian.Angular2;
+			//b2->SynchronizeTransform(); // updated by angular constraint
+
+			float positionError = Box2DXMath.Abs(linearC);
+
+			// Solve angular constraint.
+			float angularC = b2._sweep.A - b1._sweep.A - _refAngle;
+			// Prevent overly large corrections.
+			angularC = Box2DXMath.Clamp(angularC, -Settings.MaxAngularCorrection, Settings.MaxAngularCorrection);
+			float angularImpulse = -_angularMass * angularC;
+
+			b1._sweep.A -= b1._invI * angularImpulse;
+			b2._sweep.A += b2._invI * angularImpulse;
+
+			b1.SynchronizeTransform();
+			b2.SynchronizeTransform();
+
+			float angularError = Box2DXMath.Abs(angularC);
+
+			// Solve linear limit constraint.
+			if (_enableLimit && _limitState != LimitState.InactiveLimit)
+			{
+				Vector2 r1_ = Box2DXMath.Mul(b1._xf.R, _localAnchor1 - b1.GetLocalCenter());
+				Vector2 r2_ = Box2DXMath.Mul(b2._xf.R, _localAnchor2 - b2.GetLocalCenter());
+				Vector2 p1_ = b1._sweep.C + r1_;
+				Vector2 p2_ = b2._sweep.C + r2_;
+				Vector2 d_ = p2_ - p1_;
+				Vector2 ax1 = Box2DXMath.Mul(b1._xf.R, _localXAxis1);
+
+				float translation = Vector2.Dot(ax1, d_);
+				float limitImpulse = 0.0f;
+
+				if (_limitState == LimitState.EqualLimits)
+				{
+					// Prevent large angular corrections
+					float limitC = Box2DXMath.Clamp(translation, -Settings.MaxLinearCorrection, Settings.MaxLinearCorrection);
+					limitImpulse = -_motorMass * limitC;
+					positionError = Box2DXMath.Max(positionError, Box2DXMath.Abs(angularC));
+				}
+				else if (_limitState == LimitState.AtLowerLimit)
+				{
+					float limitC = translation - _lowerTranslation;
+					positionError = Box2DXMath.Max(positionError, -limitC);
+
+					// Prevent large linear corrections and allow some slop.
+					limitC = Box2DXMath.Clamp(limitC + Settings.LinearSlop, -Settings.MaxLinearCorrection, 0.0f);
+					limitImpulse = -_motorMass * limitC;
+					float oldLimitImpulse = _limitPositionImpulse;
+					_limitPositionImpulse = Box2DXMath.Max(_limitPositionImpulse + limitImpulse, 0.0f);
+					limitImpulse = _limitPositionImpulse - oldLimitImpulse;
+				}
+				else if (_limitState == LimitState.AtUpperLimit)
+				{
+					float limitC = translation - _upperTranslation;
+					positionError = Box2DXMath.Max(positionError, limitC);
+
+					// Prevent large linear corrections and allow some slop.
+					limitC = Box2DXMath.Clamp(limitC - Settings.LinearSlop, 0.0f, Settings.MaxLinearCorrection);
+					limitImpulse = -_motorMass * limitC;
+					float oldLimitImpulse = _limitPositionImpulse;
+					_limitPositionImpulse = Box2DXMath.Min(_limitPositionImpulse + limitImpulse, 0.0f);
+					limitImpulse = _limitPositionImpulse - oldLimitImpulse;
+				}
+
+				b1._sweep.C += (invMass1 * limitImpulse) * _motorJacobian.Linear1;
+				b1._sweep.A += invI1 * limitImpulse * _motorJacobian.Angular1;
+				b2._sweep.C += (invMass2 * limitImpulse) * _motorJacobian.Linear2;
+				b2._sweep.A += invI2 * limitImpulse * _motorJacobian.Angular2;
+
+				b1.SynchronizeTransform();
+				b2.SynchronizeTransform();
+			}
+
+			return positionError <= Settings.LinearSlop && angularError <= Settings.AngularSlop;
 		}
 	}
 }

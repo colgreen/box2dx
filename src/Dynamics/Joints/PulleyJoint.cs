@@ -46,6 +46,9 @@ using Box2DX.Common;
 
 namespace Box2DX.Dynamics
 {
+	using Box2DXMath = Box2DX.Common.Math;
+	using SystemMath = System.Math;
+
 	/// <summary>
 	/// Pulley joint definition. This requires two ground anchors,
 	/// two dynamic body anchor points, max lengths for each side,
@@ -281,20 +284,298 @@ namespace Box2DX.Dynamics
 			_limitForce2 = 0.0f;
 		}
 
-#warning "Not Implemented Yet!"
 		public override void InitVelocityConstraints(TimeStep step)
 		{
-			throw new NotImplementedException();
+			Body b1 = _body1;
+			Body b2 = _body2;
+
+			Vector2 r1 = Box2DXMath.Mul(b1._xf.R, _localAnchor1 - b1.GetLocalCenter());
+			Vector2 r2 = Box2DXMath.Mul(b2._xf.R, _localAnchor2 - b2.GetLocalCenter());
+
+			Vector2 p1 = b1._sweep.C + r1;
+			Vector2 p2 = b2._sweep.C + r2;
+
+			Vector2 s1 = _ground._xf.Position + _groundAnchor1;
+			Vector2 s2 = _ground._xf.Position + _groundAnchor2;
+
+			// Get the pulley axes.
+			_u1 = p1 - s1;
+			_u2 = p2 - s2;
+
+			float length1 = _u1.Length();
+			float length2 = _u2.Length();
+
+			if (length1 > Settings.LinearSlop)
+			{
+				_u1 *= 1.0f / length1;
+			}
+			else
+			{
+				_u1.SetZero();
+			}
+
+			if (length2 > Settings.LinearSlop)
+			{
+				_u2 *= 1.0f / length2;
+			}
+			else
+			{
+				_u2.SetZero();
+			}
+
+			float C = _constant - length1 - _ratio * length2;
+			if (C > 0.0f)
+			{
+				_state = LimitState.InactiveLimit;
+				_force = 0.0f;
+			}
+			else
+			{
+				_state = LimitState.AtUpperLimit;
+				_positionImpulse = 0.0f;
+			}
+
+			if (length1 < _maxLength1)
+			{
+				_limitState1 = LimitState.InactiveLimit;
+				_limitForce1 = 0.0f;
+			}
+			else
+			{
+				_limitState1 = LimitState.AtUpperLimit;
+				_limitPositionImpulse1 = 0.0f;
+			}
+
+			if (length2 < _maxLength2)
+			{
+				_limitState2 = LimitState.InactiveLimit;
+				_limitForce2 = 0.0f;
+			}
+			else
+			{
+				_limitState2 = LimitState.AtUpperLimit;
+				_limitPositionImpulse2 = 0.0f;
+			}
+
+			// Compute effective mass.
+			float cr1u1 = Vector2.Cross(r1, _u1);
+			float cr2u2 = Vector2.Cross(r2, _u2);
+
+			_limitMass1 = b1._invMass + b1._invI * cr1u1 * cr1u1;
+			_limitMass2 = b2._invMass + b2._invI * cr2u2 * cr2u2;
+			_pulleyMass = _limitMass1 + _ratio * _ratio * _limitMass2;
+			Box2DXDebug.Assert(_limitMass1 > Box2DXMath.FLOAT32_EPSILON);
+			Box2DXDebug.Assert(_limitMass2 > Box2DXMath.FLOAT32_EPSILON);
+			Box2DXDebug.Assert(_pulleyMass > Box2DXMath.FLOAT32_EPSILON);
+			_limitMass1 = 1.0f / _limitMass1;
+			_limitMass2 = 1.0f / _limitMass2;
+			_pulleyMass = 1.0f / _pulleyMass;
+
+			if (World.s_enableWarmStarting != 0)
+			{
+				// Warm starting.
+				Vector2 P1 = Settings.FORCE_SCALE(step.Dt) * (-_force - _limitForce1) * _u1;
+				Vector2 P2 = Settings.FORCE_SCALE(step.Dt) * (-_ratio * _force - _limitForce2) * _u2;
+				b1._linearVelocity += b1._invMass * P1;
+				b1._angularVelocity += b1._invI * Vector2.Cross(r1, P1);
+				b2._linearVelocity += b2._invMass * P2;
+				b2._angularVelocity += b2._invI * Vector2.Cross(r2, P2);
+			}
+			else
+			{
+				_force = 0.0f;
+				_limitForce1 = 0.0f;
+				_limitForce2 = 0.0f;
+			}
 		}
 
 		public override void SolveVelocityConstraints(TimeStep step)
 		{
-			throw new NotImplementedException();
+			Body b1 = _body1;
+			Body b2 = _body2;
+
+			Vector2 r1 = Box2DXMath.Mul(b1._xf.R, _localAnchor1 - b1.GetLocalCenter());
+			Vector2 r2 = Box2DXMath.Mul(b2._xf.R, _localAnchor2 - b2.GetLocalCenter());
+
+			if (_state == LimitState.AtUpperLimit)
+			{
+				Vector2 v1 = b1._linearVelocity + Vector2.Cross(b1._angularVelocity, r1);
+				Vector2 v2 = b2._linearVelocity + Vector2.Cross(b2._angularVelocity, r2);
+
+				float Cdot = -Vector2.Dot(_u1, v1) - _ratio * Vector2.Dot(_u2, v2);
+				float force = -Settings.FORCE_INV_SCALE(step.Inv_Dt) * _pulleyMass * Cdot;
+				float oldForce = _force;
+				_force = Box2DXMath.Max(0.0f, _force + force);
+				force = _force - oldForce;
+
+				Vector2 P1 = -Settings.FORCE_SCALE(step.Dt) * force * _u1;
+				Vector2 P2 = -Settings.FORCE_SCALE(step.Dt) * _ratio * force * _u2;
+				b1._linearVelocity += b1._invMass * P1;
+				b1._angularVelocity += b1._invI * Vector2.Cross(r1, P1);
+				b2._linearVelocity += b2._invMass * P2;
+				b2._angularVelocity += b2._invI * Vector2.Cross(r2, P2);
+			}
+
+			if (_limitState1 == LimitState.AtUpperLimit)
+			{
+				Vector2 v1 = b1._linearVelocity + Vector2.Cross(b1._angularVelocity, r1);
+
+				float Cdot = -Vector2.Dot(_u1, v1);
+				float force = -Settings.FORCE_INV_SCALE(step.Inv_Dt) * _limitMass1 * Cdot;
+				float oldForce = _limitForce1;
+				_limitForce1 = Box2DXMath.Max(0.0f, _limitForce1 + force);
+				force = _limitForce1 - oldForce;
+
+				Vector2 P1 = -Settings.FORCE_SCALE(step.Dt) * force * _u1;
+				b1._linearVelocity += b1._invMass * P1;
+				b1._angularVelocity += b1._invI * Vector2.Cross(r1, P1);
+			}
+
+			if (_limitState2 == LimitState.AtUpperLimit)
+			{
+				Vector2 v2 = b2._linearVelocity + Vector2.Cross(b2._angularVelocity, r2);
+
+				float Cdot = -Vector2.Dot(_u2, v2);
+				float force = -Settings.FORCE_INV_SCALE(step.Inv_Dt) * _limitMass2 * Cdot;
+				float oldForce = _limitForce2;
+				_limitForce2 = Box2DXMath.Max(0.0f, _limitForce2 + force);
+				force = _limitForce2 - oldForce;
+
+				Vector2 P2 = -Settings.FORCE_SCALE(step.Dt) * force * _u2;
+				b2._linearVelocity += b2._invMass * P2;
+				b2._angularVelocity += b2._invI * Vector2.Cross(r2, P2);
+			}
 		}
 
 		public override bool SolvePositionConstraints()
 		{
-			throw new NotImplementedException();
+			Body b1 = _body1;
+			Body b2 = _body2;
+
+			Vector2 s1 = _ground._xf.Position + _groundAnchor1;
+			Vector2 s2 = _ground._xf.Position + _groundAnchor2;
+
+			float linearError = 0.0f;
+
+			if (_state == LimitState.AtUpperLimit)
+			{
+				Vector2 r1 = Box2DXMath.Mul(b1._xf.R, _localAnchor1 - b1.GetLocalCenter());
+				Vector2 r2 = Box2DXMath.Mul(b2._xf.R, _localAnchor2 - b2.GetLocalCenter());
+
+				Vector2 p1 = b1._sweep.C + r1;
+				Vector2 p2 = b2._sweep.C + r2;
+
+				// Get the pulley axes.
+				_u1 = p1 - s1;
+				_u2 = p2 - s2;
+
+				float length1 = _u1.Length();
+				float length2 = _u2.Length();
+
+				if (length1 > Settings.LinearSlop)
+				{
+					_u1 *= 1.0f / length1;
+				}
+				else
+				{
+					_u1.SetZero();
+				}
+
+				if (length2 > Settings.LinearSlop)
+				{
+					_u2 *= 1.0f / length2;
+				}
+				else
+				{
+					_u2.SetZero();
+				}
+
+				float C = _constant - length1 - _ratio * length2;
+				linearError = Box2DXMath.Max(linearError, -C);
+
+				C = Box2DXMath.Clamp(C + Settings.LinearSlop, -Settings.MaxLinearCorrection, 0.0f);
+				float impulse = -_pulleyMass * C;
+				float oldImpulse = _positionImpulse;
+				_positionImpulse = Box2DXMath.Max(0.0f, _positionImpulse + impulse);
+				impulse = _positionImpulse - oldImpulse;
+
+				Vector2 P1 = -impulse * _u1;
+				Vector2 P2 = -_ratio * impulse * _u2;
+
+				b1._sweep.C += b1._invMass * P1;
+				b1._sweep.A += b1._invI * Vector2.Cross(r1, P1);
+				b2._sweep.C += b2._invMass * P2;
+				b2._sweep.A += b2._invI * Vector2.Cross(r2, P2);
+
+				b1.SynchronizeTransform();
+				b2.SynchronizeTransform();
+			}
+
+			if (_limitState1 == LimitState.AtUpperLimit)
+			{
+				Vector2 r1 = Box2DXMath.Mul(b1._xf.R, _localAnchor1 - b1.GetLocalCenter());
+				Vector2 p1 = b1._sweep.C + r1;
+
+				_u1 = p1 - s1;
+				float length1 = _u1.Length();
+
+				if (length1 > Settings.LinearSlop)
+				{
+					_u1 *= 1.0f / length1;
+				}
+				else
+				{
+					_u1.SetZero();
+				}
+
+				float C = _maxLength1 - length1;
+				linearError = Box2DXMath.Max(linearError, -C);
+				C = Box2DXMath.Clamp(C + Settings.LinearSlop, -Settings.MaxLinearCorrection, 0.0f);
+				float impulse = -_limitMass1 * C;
+				float oldLimitPositionImpulse = _limitPositionImpulse1;
+				_limitPositionImpulse1 = Box2DXMath.Max(0.0f, _limitPositionImpulse1 + impulse);
+				impulse = _limitPositionImpulse1 - oldLimitPositionImpulse;
+
+				Vector2 P1 = -impulse * _u1;
+				b1._sweep.C += b1._invMass * P1;
+				b1._sweep.A += b1._invI * Vector2.Cross(r1, P1);
+
+				b1.SynchronizeTransform();
+			}
+
+			if (_limitState2 == LimitState.AtUpperLimit)
+			{
+				Vector2 r2 = Box2DXMath.Mul(b2._xf.R, _localAnchor2 - b2.GetLocalCenter());
+				Vector2 p2 = b2._sweep.C + r2;
+
+				_u2 = p2 - s2;
+				float length2 = _u2.Length();
+
+				if (length2 > Settings.LinearSlop)
+				{
+					_u2 *= 1.0f / length2;
+				}
+				else
+				{
+					_u2.SetZero();
+				}
+
+				float C = _maxLength2 - length2;
+				linearError = Box2DXMath.Max(linearError, -C);
+				C = Box2DXMath.Clamp(C + Settings.LinearSlop, -Settings.MaxLinearCorrection, 0.0f);
+				float impulse = -_limitMass2 * C;
+				float oldLimitPositionImpulse = _limitPositionImpulse2;
+				_limitPositionImpulse2 = Box2DXMath.Max(0.0f, _limitPositionImpulse2 + impulse);
+				impulse = _limitPositionImpulse2 - oldLimitPositionImpulse;
+
+				Vector2 P2 = -impulse * _u2;
+				b2._sweep.C += b2._invMass * P2;
+				b2._sweep.A += b2._invI * Vector2.Cross(r2, P2);
+
+				b2.SynchronizeTransform();
+			}
+
+			return linearError < Settings.LinearSlop;
 		}
 	}
 }

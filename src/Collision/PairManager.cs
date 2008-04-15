@@ -26,6 +26,7 @@
 #define DEBUG
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 
@@ -113,9 +114,8 @@ namespace Box2DX.Collision
 				_pairs[i].ProxyId2 = PairManager.NullProxy;
 				_pairs[i].UserData = null;
 				_pairs[i].Status = 0;
-				_pairs[i].Next = (ushort)(i + 1);
+				_pairs[i].Next = (ushort)(i + (ushort)1);
 			}
-			_pairs[Settings.MaxPairs - 1] = new Pair();
 			_pairs[Settings.MaxPairs - 1].Next = PairManager.NullPair;
 			_pairCount = 0;
 			_pairBufferCount = 0;
@@ -272,9 +272,10 @@ namespace Box2DX.Collision
 
 		private Pair Find(int proxyId1, int proxyId2)
 		{
-			if (proxyId1 > proxyId2) Common.Math.Swap<int>(ref proxyId1, ref proxyId2);
+			if (proxyId1 > proxyId2)
+				Common.Math.Swap<int>(ref proxyId1, ref proxyId2);
 
-			uint hash = Hash((uint)proxyId1, (uint)proxyId2) & (uint)PairManager.TableMask;
+			uint hash = (uint)(Hash((uint)proxyId1, (uint)proxyId2) & PairManager.TableMask);
 
 			return Find(proxyId1, proxyId2, hash);
 		}
@@ -301,9 +302,10 @@ namespace Box2DX.Collision
 		// Returns existing pair or creates a new one.
 		private Pair AddPair(int proxyId1, int proxyId2)
 		{
-			if (proxyId1 > proxyId2) Common.Math.Swap<int>(ref proxyId1, ref proxyId2);
+			if (proxyId1 > proxyId2)
+				Common.Math.Swap<int>(ref proxyId1, ref proxyId2);
 
-			int hash = (int)(Hash((uint)proxyId1, (uint)proxyId2) & (uint)PairManager.TableMask);
+			int hash = (int)(Hash((uint)proxyId1, (uint)proxyId2) & PairManager.TableMask);
 
 			Pair pair = Find(proxyId1, proxyId2, (uint)hash);
 			if (pair != null)
@@ -338,7 +340,7 @@ namespace Box2DX.Collision
 			if (proxyId1 > proxyId2) 
 				Common.Math.Swap<int>(ref proxyId1, ref proxyId2);
 
-			int hash = (int)(Hash((uint)proxyId1, (uint)proxyId2) & (uint)PairManager.TableMask);
+			int hash = (int)(Hash((uint)proxyId1, (uint)proxyId2) & PairManager.TableMask);
 
 			ushort node = _hashTable[hash];
 			while (node != PairManager.NullPair)
@@ -347,6 +349,7 @@ namespace Box2DX.Collision
 				{
 					ushort index = node;
 					node = _pairs[node].Next;
+					_hashTable[hash] = node;
 
 					Pair pair = _pairs[index];
 					object userData = pair.UserData;
@@ -365,6 +368,7 @@ namespace Box2DX.Collision
 				else
 				{
 					node = _pairs[node].Next;
+					_hashTable[hash] = node;
 				}
 			}
 
@@ -377,10 +381,13 @@ namespace Box2DX.Collision
 #if DEBUG
 			Box2DXDebug.Assert(_pairBufferCount <= _pairCount);
 
-#warning "???"
+#warning "check this"
 			//std::sort(m_pairBuffer, m_pairBuffer + m_pairBufferCount);
-			Array.Sort(_pairBuffer, 0, _pairBufferCount);
-			
+			BufferedPair[] tmp = new BufferedPair[_pairBufferCount];
+			Array.Copy(_pairBuffer, 0, tmp, 0, _pairBufferCount);
+			Array.Sort<BufferedPair>(tmp, BufferedPairSortPredicate);
+			Array.Copy(tmp, 0, _pairBuffer, 0, _pairBufferCount);
+
 			for (int i = 0; i < _pairBufferCount; ++i)
 			{
 				if (i > 0)
@@ -457,6 +464,28 @@ namespace Box2DX.Collision
 		private bool Equals(ref BufferedPair pair1, ref BufferedPair pair2)
 		{
 			return pair1.ProxyId1 == pair2.ProxyId1 && pair1.ProxyId2 == pair2.ProxyId2;
+		}
+
+		public static int BufferedPairSortPredicate(BufferedPair pair1, BufferedPair pair2)
+		{
+			/*if (pair1.ProxyId1 == 0 && pair1.ProxyId2 == 0)
+				return 1;
+			if (pair2.ProxyId1 == 0 && pair2.ProxyId2 == 0)
+				return -1;*/
+
+			if (pair1.ProxyId1 > pair2.ProxyId1)
+				return 1;
+			else if (pair1.ProxyId1 < pair2.ProxyId1)
+				return -1;
+			else
+			{
+				if (pair1.ProxyId2 > pair2.ProxyId2)
+					return 1;
+				else if (pair1.ProxyId2 < pair2.ProxyId2)
+					return -1;
+			}
+
+			return 0;
 		}
 	}
 }
