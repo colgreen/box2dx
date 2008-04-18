@@ -195,14 +195,14 @@ namespace Box2DX.Collision
 
 #warning "Check this"
 				//memmove(bounds + upperIndex + 2, bounds + upperIndex, (boundCount - upperIndex) * sizeof(b2Bound));				
-				Bound[] tmp1 = new Bound[boundCount - upperIndex];
+				Bound[] tmp = new Bound[boundCount - upperIndex];
 				for (int i = 0; i < (boundCount - upperIndex); i++)
 				{
-					tmp1[i] = (Bound)bounds[upperIndex + i].Clone();
+					tmp[i] = (Bound)bounds[upperIndex + i].Clone();
 				}
 				for (int i = 0; i < (boundCount - upperIndex); i++)
 				{
-					bounds[upperIndex + 2 + i] = tmp1[i];
+					bounds[upperIndex + 2 + i] = tmp[i];
 				}
 				/*for (int i = 0; i < (boundCount - upperIndex); i++)
 				{
@@ -211,14 +211,14 @@ namespace Box2DX.Collision
 				}*/
 
 				//memmove(bounds + lowerIndex + 1, bounds + lowerIndex, (upperIndex - lowerIndex) * sizeof(b2Bound));
-				Bound[] tmp2 = new Bound[upperIndex - lowerIndex];
+				tmp = new Bound[upperIndex - lowerIndex];
 				for (int i = 0; i < (upperIndex - lowerIndex); i++)
 				{
-					tmp2[i] = (Bound)bounds[lowerIndex + i].Clone();
+					tmp[i] = (Bound)bounds[lowerIndex + i].Clone();
 				}
 				for (int i = 0; i < (upperIndex - lowerIndex); i++)
 				{
-					bounds[lowerIndex + 1 + i] = tmp2[i];
+					bounds[lowerIndex + 1 + i] = tmp[i];
 				}
 				/*for (int i = 0; i < (upperIndex - lowerIndex); i++)
 				{
@@ -305,14 +305,14 @@ namespace Box2DX.Collision
 
 #warning "Check this"
 				//memmove(bounds + lowerIndex, bounds + lowerIndex + 1, (upperIndex - lowerIndex - 1) * sizeof(b2Bound));
-				Bound[] tmp1 = new Bound[upperIndex - lowerIndex - 1];
+				Bound[] tmp = new Bound[upperIndex - lowerIndex - 1];
 				for (int i = 0; i < (upperIndex - lowerIndex - 1); i++)
 				{
-					tmp1[i] = (Bound)bounds[lowerIndex + 1 + i].Clone();
+					tmp[i] = (Bound)bounds[lowerIndex + 1 + i].Clone();
 				}
 				for (int i = 0; i < (upperIndex - lowerIndex - 1); i++)
 				{
-					bounds[lowerIndex + i] = tmp1[i];
+					bounds[lowerIndex + i] = tmp[i];
 				}
 				/*for (int i = 0; i < (upperIndex - lowerIndex - 1); i++)
 				{
@@ -321,14 +321,14 @@ namespace Box2DX.Collision
 				}*/
 
 				//memmove(bounds + upperIndex - 1, bounds + upperIndex + 1, (boundCount - upperIndex - 1) * sizeof(b2Bound));
-				Bound[] tmp2 = new Bound[boundCount - upperIndex - 1];
+				tmp = new Bound[boundCount - upperIndex - 1];
 				for (int i = 0; i < (boundCount - upperIndex - 1); i++)
 				{
-					tmp2[i] = (Bound)bounds[upperIndex + 1 + i].Clone();
+					tmp[i] = (Bound)bounds[upperIndex + 1 + i].Clone();
 				}
 				for (int i = 0; i < (boundCount - upperIndex - 1); i++)
 				{
-					bounds[upperIndex - 1 + i] = tmp2[i];
+					bounds[upperIndex - 1 + i] = tmp[i];
 				}
 				/*for (int i = 0; i < (boundCount - upperIndex - 1); i++)
 				{
@@ -691,11 +691,11 @@ namespace Box2DX.Collision
 			// Bump lower bounds downs and upper bounds up. This ensures correct sorting of
 			// lower/upper bounds that would have equal values.
 			// TODO_ERIN implement fast float to uint16 conversion.
-			lowerValues[0] = (ushort)((ushort)(_quantizationFactor.X * (minVertex.X - _worldAABB.LowerBound.X)) & (ushort)(BROADPHASE_MAX - 1));
-			upperValues[0] = (ushort)((ushort)(_quantizationFactor.X * (maxVertex.X - _worldAABB.LowerBound.X)) | (ushort)1);
+			lowerValues[0] = (ushort)((ushort)(_quantizationFactor.X * (minVertex.X - _worldAABB.LowerBound.X)) & (BROADPHASE_MAX - 1));
+			upperValues[0] = (ushort)((ushort)(_quantizationFactor.X * (maxVertex.X - _worldAABB.LowerBound.X)) | 1);
 
-			lowerValues[1] = (ushort)((ushort)(_quantizationFactor.Y * (minVertex.Y - _worldAABB.LowerBound.Y)) & (ushort)(BROADPHASE_MAX - 1));
-			upperValues[1] = (ushort)((ushort)(_quantizationFactor.Y * (maxVertex.Y - _worldAABB.LowerBound.Y)) | (ushort)1);
+			lowerValues[1] = (ushort)((ushort)(_quantizationFactor.Y * (minVertex.Y - _worldAABB.LowerBound.Y)) & (BROADPHASE_MAX - 1));
+			upperValues[1] = (ushort)((ushort)(_quantizationFactor.Y * (maxVertex.Y - _worldAABB.LowerBound.Y)) | 1);
 		}
 
 		// This one is only used for validation.
@@ -784,7 +784,8 @@ namespace Box2DX.Collision
 			lowerQueryOut = lowerQuery;
 			upperQueryOut = upperQuery;
 		}
-
+		int qi1 = 0;
+		int qi2 = 0;
 		private void IncrementOverlapCount(int proxyId)
 		{
 			Proxy proxy = _proxyPool[proxyId];
@@ -792,6 +793,7 @@ namespace Box2DX.Collision
 			{
 				proxy.TimeStamp = _timeStamp;
 				proxy.OverlapCount = 1;
+				qi1++;
 			}
 			else
 			{
@@ -799,6 +801,7 @@ namespace Box2DX.Collision
 				Box2DXDebug.Assert(_queryResultCount < Settings.MaxProxies);
 				_queryResults[_queryResultCount] = (ushort)proxyId;
 				++_queryResultCount;
+				qi2++;
 			}
 		}
 

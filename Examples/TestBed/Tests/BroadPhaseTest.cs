@@ -135,6 +135,9 @@ namespace TestBed
 
 			for (int i = 0; i < k_actorCount; ++i)
 			{
+				bool s = false;
+				if (i == 91)
+					s = true;
 				Actor actor = _actors[i];
 				GetRandomAABB(ref actor.aabb);
 				//actor->aabb.minVertex.Set(0.0f, 0.0f);
@@ -202,7 +205,7 @@ namespace TestBed
 
 			//char buffer[64];
 			//sprintf(buffer, "overlaps = %d, exact = %d, diff = %d", m_overlapCount, m_overlapCountExact, m_overlapCount - m_overlapCountExact);
-			//DrawString(5, 30, buffer);
+			//OpenGLDebugDraw.DrawString(5, 30, "AAA");
 			Validate();
 
 			++_stepCount;
@@ -262,7 +265,7 @@ namespace TestBed
 			Random rnd = new Random(888);
 			for (int i = 0; i < k_actorCount; ++i)
 			{
-				int j = (int)(rnd.NextDouble() % k_actorCount);
+				int j = (rnd.Next() % k_actorCount);
 				Actor actor = _actors[j];
 				if (actor.proxyId == PairManager.NullProxy)
 				{
@@ -278,7 +281,7 @@ namespace TestBed
 			Random rnd = new Random(888);
 			for (int i = 0; i < k_actorCount; ++i)
 			{
-				int j = (int)(rnd.NextDouble() % k_actorCount);
+				int j = (rnd.Next() % k_actorCount);
 				Actor actor = _actors[j];
 				if (actor.proxyId != PairManager.NullProxy)
 				{
@@ -295,7 +298,7 @@ namespace TestBed
 			Random rnd = new Random(888);
 			for (int i = 0; i < k_actorCount; ++i)
 			{
-				int j = (int)(rnd.NextDouble() % k_actorCount);
+				int j = (rnd.Next() % k_actorCount);
 				//int32 j = 1;
 				Actor actor = _actors[j];
 				if (actor.proxyId == PairManager.NullProxy)
@@ -312,7 +315,7 @@ namespace TestBed
 		private void Action()
 		{
 			Random rnd = new Random(888);
-			int choice = (int)(rnd.NextDouble() % 20);
+			int choice = rnd.Next() % 20;
 
 			switch (choice)
 			{
