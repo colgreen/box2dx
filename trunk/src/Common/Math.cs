@@ -28,10 +28,11 @@ namespace Box2DX.Common
 	public class Math
 	{
 		//public static float FLT_EPSILON = 1.192092896e-07f; //smallest such that 1.0f+FLT_EPSILON != 1.0f
-		public static float FLOAT32_EPSILON = 1.192092896e-07f;
+		public static readonly float FLOAT32_EPSILON = 1.192092896e-07f;
 		//public static float FLT_MAX = 3.402823466e+38F;
-		public static float FLOAT32_MAX = 3.402823466e+38F;
-		public static ushort USHRT_MAX = 0xffff;
+		public static readonly float FLOAT32_MAX = 3.402823466e+38F;
+		public static readonly ushort USHRT_MAX = 0xffff;
+		public static readonly int RAND_LIMIT = 32767;
 
 		/// <summary>
 		/// This function is used to ensure that a floating point number is
@@ -81,15 +82,13 @@ namespace Box2DX.Common
 		/// <returns></returns>
 		public static float Random()
 		{
-			float RAND_MAX = 0x7fff;
 			Random rnd = new Random();
-			float r = (float)rnd.NextDouble();
-			r /= RAND_MAX;
+			float r = (float)(rnd.Next() & RAND_LIMIT);
+			r /= RAND_LIMIT;
 			r = 2.0f * r - 1.0f;
 			return r;
 		}
 
-#warning: "check perf"
 		/// <summary>
 		/// Random floating point number in range [lo, hi]
 		/// </summary>
@@ -98,10 +97,9 @@ namespace Box2DX.Common
 		/// <returns></returns>
 		public static float Random(float lo, float hi)
 		{
-			float RAND_MAX = 0x7fff;
 			Random rnd = new Random();
-			float r = (float)rnd.NextDouble();
-			r /= RAND_MAX;
+			float r = (float)(rnd.Next() & RAND_LIMIT);
+			r /= RAND_LIMIT;
 			r = (hi - lo) * r + lo;
 			return r;
 		}

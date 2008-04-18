@@ -342,14 +342,25 @@ namespace Box2DX.Collision
 
 			int hash = (int)(Hash((uint)proxyId1, (uint)proxyId2) & PairManager.TableMask);
 
+			//uint16* node = &m_hashTable[hash];
 			ushort node = _hashTable[hash];
+			bool ion = false;
+			int ni = 0;
 			while (node != PairManager.NullPair)
 			{
 				if (Equals(_pairs[node], proxyId1, proxyId2))
 				{
+					//uint16 index = *node;
+					//*node = m_pairs[*node].next;
+
 					ushort index = node;
-					node = _pairs[node].Next;
-					_hashTable[hash] = node;
+					node = _pairs[node].Next;										
+					if (ion)
+						_pairs[ni].Next = node;
+					else
+					{
+						_hashTable[hash] = node;
+					}
 
 					Pair pair = _pairs[index];
 					object userData = pair.UserData;
@@ -367,8 +378,10 @@ namespace Box2DX.Collision
 				}
 				else
 				{
+					//node = &m_pairs[*node].next;
+					ni = node;
 					node = _pairs[node].Next;
-					_hashTable[hash] = node;
+					ion = true;		
 				}
 			}
 
@@ -381,7 +394,6 @@ namespace Box2DX.Collision
 #if DEBUG
 			Box2DXDebug.Assert(_pairBufferCount <= _pairCount);
 
-#warning "check this"
 			//std::sort(m_pairBuffer, m_pairBuffer + m_pairBufferCount);
 			BufferedPair[] tmp = new BufferedPair[_pairBufferCount];
 			Array.Copy(_pairBuffer, 0, tmp, 0, _pairBufferCount);
@@ -468,11 +480,6 @@ namespace Box2DX.Collision
 
 		public static int BufferedPairSortPredicate(BufferedPair pair1, BufferedPair pair2)
 		{
-			/*if (pair1.ProxyId1 == 0 && pair1.ProxyId2 == 0)
-				return 1;
-			if (pair2.ProxyId1 == 0 && pair2.ProxyId2 == 0)
-				return -1;*/
-
 			if (pair1.ProxyId1 > pair2.ProxyId1)
 				return 1;
 			else if (pair1.ProxyId1 < pair2.ProxyId1)

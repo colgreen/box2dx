@@ -181,8 +181,8 @@ namespace TestBed
 			Gl.glLoadIdentity();
 			//int w = Glut.glutGet(Glut.GLUT_WINDOW_WIDTH);
 			//int h = Glut.glutGet(Glut.GLUT_WINDOW_HEIGHT);
-			int w = 640;
-			int h = 480;
+			int w = 100;
+			int h = 100;
 			Glu.gluOrtho2D(0, w, h, 0);
 			Gl.glMatrixMode(Gl.GL_MODELVIEW);
 			Gl.glPushMatrix();
@@ -193,8 +193,8 @@ namespace TestBed
 			int length = buffer.Length;
 			for (int i = 0; i < length; ++i)
 			{
-				Glut.glutBitmapCharacter(Glut.GLUT_BITMAP_8_BY_13, buffer[i]);
-				//Glut.glutBitmapString(Glut.GLUT_BITMAP_TIMES_ROMAN_10, str);
+				//Glut.glutBitmapCharacter(Glut.GLUT_BITMAP_8_BY_13, buffer[i]);
+				Glut.glutBitmapString(Glut.GLUT_BITMAP_TIMES_ROMAN_10, str);
 			}
 
 			Gl.glPopMatrix();
