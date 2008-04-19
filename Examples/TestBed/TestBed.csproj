@@ -82,12 +82,20 @@
     </Compile>
     <Compile Include="Render.cs" />
     <Compile Include="Test.cs" />
+    <Compile Include="Tests\ApplyForce.cs" />
+    <Compile Include="Tests\Biped.cs" />
+    <Compile Include="Tests\BipedDef.cs" />
+    <Compile Include="Tests\BipedTest.cs" />
     <Compile Include="Tests\Bridge.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Tests\BroadPhaseTest.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Tests\Car.cs" />
+    <Compile Include="Tests\CCDTest.cs" />
+    <Compile Include="Tests\Chain.cs" />
+    <Compile Include="Tests\Dominos.cs" />
     <Compile Include="Tests\Gears.cs">
       <SubType>Code</SubType>
     </Compile>
