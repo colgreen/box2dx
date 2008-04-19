@@ -44,7 +44,7 @@ namespace Box2DX.Collision
 			Vector2 d = points[0] - points[1];
 			float length = d.Normalize();
 			float lambda = Vector2.Dot(r, d);
-			if (lambda <= 0.0f || length < Common.Math.FLOAT32_EPSILON)
+			if (lambda <= 0.0f || length < Common.Settings.FLT_EPSILON)
 			{
 				// The simplex is reduced to a point.
 				x1 = p1s[1];
@@ -95,7 +95,7 @@ namespace Box2DX.Collision
 			}
 
 			// Should not be in vertex a or b region.
-#warning "???"
+
 			//B2_NOT_USED(sd);
 			//B2_NOT_USED(sn);			
 			Box2DXDebug.Assert(sn > 0.0f || tn > 0.0f);
@@ -158,7 +158,7 @@ namespace Box2DX.Collision
 
 		public static bool InPoints(Vector2 w, Vector2[] points, int pointCount)
 		{
-			float k_tolerance = 100.0f * Common.Math.FLOAT32_EPSILON;
+			float k_tolerance = 100.0f * Common.Settings.FLT_EPSILON;
 			for (int i = 0; i < pointCount; ++i)
 			{
 				Vector2 d = Common.Math.Abs(w - points[i]);
@@ -252,16 +252,16 @@ namespace Box2DX.Collision
 					return 0.0f;
 				}
 
-				float maxSqr = -Common.Math.FLOAT32_MAX;
+				float maxSqr = -Common.Settings.FLT_MAX;
 				for (int i = 0; i < pointCount; ++i)
 				{
 					maxSqr = Common.Math.Max(maxSqr, Vector2.Dot(points[i], points[i]));
 				}
 
 #if TARGET_FLOAT32_IS_FIXED
-				if (pointCount == 3 || vSqr <= 5.0*Common.Math.FLOAT32_EPSILON * maxSqr)
+				if (pointCount == 3 || vSqr <= 5.0*Common.Settings.FLT_EPSILON * maxSqr)
 #else
-				if (pointCount == 3 || vSqr <= 100.0f * Common.Math.FLOAT32_EPSILON * maxSqr)
+				if (pointCount == 3 || vSqr <= 100.0f * Common.Settings.FLT_EPSILON * maxSqr)
 #endif
 				{
 					Collision.GJKIterations = iter;
@@ -279,13 +279,13 @@ namespace Box2DX.Collision
 		public static float DistanceCC(out Vector2 x1, out Vector2 x2,
 			CircleShape circle1, XForm xf1, CircleShape circle2, XForm xf2)
 		{
-			Vector2 p1 = Common.Math.Mul(xf1, circle1._localPosition);
-			Vector2 p2 = Common.Math.Mul(xf2, circle2._localPosition);
+			Vector2 p1 = Common.Math.Mul(xf1, circle1.GetLocalPosition());
+			Vector2 p2 = Common.Math.Mul(xf2, circle2.GetLocalPosition());
 
 			Vector2 d = p2 - p1;
 			float dSqr = Vector2.Dot(d, d);
-			float r1 = circle1._radius - Settings.ToiSlop;
-			float r2 = circle2._radius - Settings.ToiSlop;
+			float r1 = circle1.GetRadius() - Settings.ToiSlop;
+			float r2 = circle2.GetRadius() - Settings.ToiSlop;
 			float r = r1 + r2;
 			if (dSqr > r * r)
 			{
@@ -295,7 +295,7 @@ namespace Box2DX.Collision
 				x2 = p2 - r2 * d;
 				return distance;
 			}
-			else if (dSqr > Common.Math.FLOAT32_EPSILON * Common.Math.FLOAT32_EPSILON)
+			else if (dSqr > Common.Settings.FLT_EPSILON * Common.Settings.FLT_EPSILON)
 			{
 				d.Normalize();
 				x1 = p1 + r1 * d;
@@ -331,11 +331,11 @@ namespace Box2DX.Collision
 			PolygonShape polygon, XForm xf1, CircleShape circle, XForm xf2)
 		{
 			Point point = new Point();
-			point.p = Common.Math.Mul(xf2, circle._localPosition);
+			point.p = Common.Math.Mul(xf2, circle.GetLocalPosition());
 
 			float distance = DistanceGeneric<PolygonShape, Point>(out x1, out x2, polygon, xf1, point, XForm.Identity);
 
-			float r = circle._radius - Settings.ToiSlop;
+			float r = circle.GetRadius() - Settings.ToiSlop;
 
 			if (distance > r)
 			{

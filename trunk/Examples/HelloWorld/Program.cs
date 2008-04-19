@@ -57,7 +57,7 @@ namespace HelloWorld
 
 			// Call the body factory which creates the ground box shape.
 			// The body is also added to the world.
-			Body groundBody = world.CreateStaticBody(groundBodyDef);
+			Body groundBody = world.CreateBody(groundBodyDef);
 
 			// Define the ground box shape.
 			PolygonDef groundShapeDef = new PolygonDef();
@@ -71,7 +71,7 @@ namespace HelloWorld
 			// Define the dynamic body. We set its position and call the body factory.
 			BodyDef bodyDef = new BodyDef();
 			bodyDef.Position.Set(0.0f, 4.0f);
-			Body body = world.CreateDynamicBody(bodyDef);
+			Body body = world.CreateBody(bodyDef);
 
 			// Define another box shape for our dynamic body.
 			PolygonDef shapeDef = new PolygonDef();

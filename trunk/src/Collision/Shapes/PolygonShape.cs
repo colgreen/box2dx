@@ -93,7 +93,7 @@ namespace Box2DX.Collision
 	public class PolygonShape : Shape, Collision.IGenericShape
 	{
 		// Local position of the polygon centroid.
-		public Vector2 _centroid;
+		private Vector2 _centroid;
 		/// <summary>
 		/// Get local centroid relative to the parent body.
 		/// </summary>
@@ -101,23 +101,27 @@ namespace Box2DX.Collision
 		//public Vector2 Centroid { get { return _centroid; } }
 		public Vector2 GetCentroid() { return _centroid; }
 
-		public OBB _obb;
+		private OBB _obb;
 		/// <summary>
 		/// Get the oriented bounding box relative to the parent body.
 		/// </summary>
 		//public OBB OBB { get { return _obb; } }
 		public OBB GetOBB() { return _obb; }
 
-		public Vector2[] _vertices = new Vector2[Settings.MaxPolygonVertices];
+		private int _vertexCount;
+		/// <summary>
+		/// Get the vertex count.
+		/// </summary>
+		public int VertexCount { get { return _vertexCount; } }
+
+		private Vector2[] _vertices = new Vector2[Settings.MaxPolygonVertices];
 		/// <summary>
 		/// Get the vertices in local coordinates.
 		/// </summary>
 		//public Vector2[] Vertices { get { return _vertices; } }
 		public Vector2[] GetVertices() { return _vertices; }
 
-		public Vector2[] _normals = new Vector2[Settings.MaxPolygonVertices];
-
-		public Vector2[] _coreVertices = new Vector2[Settings.MaxPolygonVertices];
+		private Vector2[] _coreVertices = new Vector2[Settings.MaxPolygonVertices];
 		/// <summary>
 		/// Get the core vertices in local coordinates. These vertices
 		/// represent a smaller polygon that is used for time of impact
@@ -126,14 +130,59 @@ namespace Box2DX.Collision
 		//public Vector2[] CoreVertices { get { return _coreVertices; } }
 		public Vector2[] GetCoreVertices() { return _coreVertices; }
 
-		public int _vertexCount;
+		private Vector2[] _normals = new Vector2[Settings.MaxPolygonVertices];
 		/// <summary>
-		/// Get the vertex count.
+		/// Get the edge normal vectors. There is one for each vertex.
 		/// </summary>
-		public int VertexCount { get { return _vertexCount; } }
-		//public int GetVertexCount() { return _vertexCount; }
+		public Vector2[] Normals { get { return _normals; } }
 
-		public PolygonShape(ShapeDef def)
+		/// <summary>
+		/// Get the first vertex and apply the supplied transform.
+		/// </summary>
+		/// <param name="xf"></param>
+		/// <returns></returns>
+		public Vector2 GetFirstVertex(XForm xf)
+		{
+			return Common.Math.Mul(xf, _coreVertices[0]);
+		}
+
+		/// <summary>
+		/// Get the centroid and apply the supplied transform.
+		/// </summary>
+		/// <param name="xf"></param>
+		/// <returns></returns>
+		public Vector2 Centroid(XForm xf)
+		{
+			return Common.Math.Mul(xf, _centroid);
+		}		
+
+		/// <summary>
+		/// Get the support point in the given world direction.
+		/// Use the supplied transform.
+		/// </summary>
+		/// <param name="xf"></param>
+		/// <param name="d"></param>
+		/// <returns></returns>
+		public Vector2 Support(XForm xf, Vector2 d)
+		{
+			Vector2 dLocal = Common.Math.MulT(xf.R, d);
+
+			int bestIndex = 0;
+			float bestValue = Vector2.Dot(_coreVertices[0], dLocal);
+			for (int i = 1; i < _vertexCount; ++i)
+			{
+				float value = Vector2.Dot(_coreVertices[i], dLocal);
+				if (value > bestValue)
+				{
+					bestIndex = i;
+					bestValue = value;
+				}
+			}
+
+			return Common.Math.Mul(xf, _coreVertices[bestIndex]);
+		}
+
+		internal PolygonShape(ShapeDef def)
 			: base(def)
 		{
 			Box2DXDebug.Assert(def.Type == ShapeType.PolygonShape);
@@ -156,7 +205,7 @@ namespace Box2DX.Collision
 				int i1 = i;
 				int i2 = i + 1 < _vertexCount ? i + 1 : 0;
 				Vector2 edge = _vertices[i2] - _vertices[i1];
-				Box2DXDebug.Assert(edge.LengthSquared() > Common.Math.FLOAT32_EPSILON * Common.Math.FLOAT32_EPSILON);
+				Box2DXDebug.Assert(edge.LengthSquared() > Common.Settings.FLT_EPSILON * Common.Settings.FLT_EPSILON);
 				_normals[i] = Vector2.Cross(edge, 1.0f);
 				_normals[i].Normalize();
 			}
@@ -228,7 +277,7 @@ namespace Box2DX.Collision
 			}
 		}
 
-		public override void UpdateSweepRadius(Vector2 center)
+		internal override void UpdateSweepRadius(Vector2 center)
 		{
 			// Update the sweep radius (maximum radius) as measured from
 			// a local center point.
@@ -238,36 +287,7 @@ namespace Box2DX.Collision
 				Vector2 d = _coreVertices[i] - center;
 				_sweepRadius = Common.Math.Max(_sweepRadius, d.Length());
 			}
-		}
-
-		public Vector2 GetFirstVertex(XForm xf)
-		{
-			return Common.Math.Mul(xf, _coreVertices[0]);
-		}
-
-		public Vector2 Centroid(XForm xf)
-		{
-			return Common.Math.Mul(xf, _centroid);
-		}
-
-		public Vector2 Support(XForm xf, Vector2 d)
-		{
-			Vector2 dLocal = Common.Math.MulT(xf.R, d);
-
-			int bestIndex = 0;
-			float bestValue = Vector2.Dot(_coreVertices[0], dLocal);
-			for (int i = 1; i < _vertexCount; ++i)
-			{
-				float value = Vector2.Dot(_coreVertices[i], dLocal);
-				if (value > bestValue)
-				{
-					bestIndex = i;
-					bestValue = value;
-				}
-			}
-
-			return Common.Math.Mul(xf, _coreVertices[bestIndex]);
-		}
+		}						
 
 		public override bool TestPoint(XForm xf, Vector2 p)
 		{
@@ -441,7 +461,7 @@ namespace Box2DX.Collision
 			massData.Mass = _density * area;
 
 			// Center of mass
-			Box2DXDebug.Assert(area > Common.Math.FLOAT32_EPSILON);
+			Box2DXDebug.Assert(area > Common.Settings.FLT_EPSILON);
 			center *= 1.0f / area;
 			massData.Center = center;
 
@@ -490,7 +510,7 @@ namespace Box2DX.Collision
 			}
 
 			// Centroid
-			Box2DXDebug.Assert(area > Common.Math.FLOAT32_EPSILON);
+			Box2DXDebug.Assert(area > Common.Settings.FLT_EPSILON);
 			c *= 1.0f / area;
 			return c;
 		}
@@ -508,17 +528,17 @@ namespace Box2DX.Collision
 			}
 			p[count] = p[0];
 
-			float minArea = Common.Math.FLOAT32_MAX;
+			float minArea = Common.Settings.FLT_MAX;
 
 			for (int i = 1; i <= count; ++i)
 			{
 				Vector2 root = p[i - 1];
 				Vector2 ux = p[i] - root;
 				float length = ux.Normalize();
-				Box2DXDebug.Assert(length > Common.Math.FLOAT32_EPSILON);
+				Box2DXDebug.Assert(length > Common.Settings.FLT_EPSILON);
 				Vector2 uy = new Vector2(-ux.Y, ux.X);
-				Vector2 lower = new Vector2(Common.Math.FLOAT32_MAX, Common.Math.FLOAT32_MAX);
-				Vector2 upper = new Vector2(-Common.Math.FLOAT32_MAX, -Common.Math.FLOAT32_MAX);
+				Vector2 lower = new Vector2(Common.Settings.FLT_MAX, Common.Settings.FLT_MAX);
+				Vector2 upper = new Vector2(-Common.Settings.FLT_MAX, -Common.Settings.FLT_MAX);
 
 				for (int j = 0; j < count; ++j)
 				{
@@ -542,7 +562,7 @@ namespace Box2DX.Collision
 				}
 			}
 
-			Box2DXDebug.Assert(minArea < Common.Math.FLOAT32_MAX);
+			Box2DXDebug.Assert(minArea < Common.Settings.FLT_MAX);
 		}
 	}
 }

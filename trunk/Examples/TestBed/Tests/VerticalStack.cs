@@ -41,7 +41,7 @@ namespace TestBed
 
 				BodyDef bd = new BodyDef();
 				bd.Position.Set(0.0f, 0.0f);
-				Body ground = _world.CreateStaticBody(bd);
+				Body ground = _world.CreateBody(bd);
 				ground.CreateShape(sd);
 
 				sd.SetAsBox(0.1f, 10.0f, new Vector2(20.0f, 10.0f), 0.0f);
@@ -66,7 +66,7 @@ namespace TestBed
 					// performance reasons.
 					bd.AllowSleep = true;
 					bd.Position.Set(xs[j], 0.752f + 1.54f * i);
-					Body body = _world.CreateDynamicBody(bd);
+					Body body = _world.CreateBody(bd);
 
 					body.CreateShape(sd);
 					body.SetMassFromShapes();
@@ -102,7 +102,7 @@ namespace TestBed
 						bd.AllowSleep = false;
 						bd.Position.Set(-31.0f, 5.0f);
 
-						_bullet = _world.CreateDynamicBody(bd);
+						_bullet = _world.CreateBody(bd);
 						_bullet.CreateShape(sd);
 						_bullet.SetMassFromShapes();
 

@@ -79,12 +79,15 @@ namespace Box2DX.Dynamics
 		/// <returns></returns>
 		public virtual bool ShouldCollide(Shape shape1, Shape shape2)
 		{
-			if (shape1._groupIndex == shape2._groupIndex && shape1._groupIndex != 0)
+			FilterData filter1 = shape1.FilterData;
+			FilterData filter2 = shape2.FilterData;
+
+			if (filter1.GroupIndex == filter2.GroupIndex && filter1.GroupIndex != 0)
 			{
-				return shape1._groupIndex > 0;
+				return filter1.GroupIndex > 0;
 			}
 
-			bool collide = (shape1._maskBits & shape2._categoryBits) != 0 && (shape1._categoryBits & shape2._maskBits) != 0;
+			bool collide = (filter1.MaskBits & filter2.CategoryBits) != 0 && (filter1.CategoryBits & filter2.MaskBits) != 0;
 			return collide;
 		}
 	}
@@ -109,28 +112,34 @@ namespace Box2DX.Dynamics
 	/// @warning The contact separation is the last computed value.
 	/// @warning You cannot create/destroy Box2D entities inside these callbacks.
 	/// </summary>
-	public abstract class ContactListener
+	public class ContactListener
 	{
 		/// <summary>
 		/// Called when a contact point is added. This includes the geometry
 		/// and the forces.
 		/// </summary>
 		/// <param name="point"></param>
-		public abstract void Add(ContactPoint point);
+		public virtual void Add(ContactPoint point) { return; }
 
 		/// <summary>
 		/// Called when a contact point persists. This includes the geometry
 		/// and the forces.
 		/// </summary>
 		/// <param name="point"></param>
-		public abstract void Persist(ContactPoint point);
+		public virtual void Persist(ContactPoint point) { return; }
 
 		/// <summary>
 		/// Called when a contact point is removed. This includes the last
 		/// computed geometry and forces.
 		/// </summary>
 		/// <param name="point"></param>
-		public abstract void Remove(ContactPoint point);
+		public virtual void Remove(ContactPoint point) { return; }
+
+		/// <summary>
+		/// Called after a contact point is solved.
+		/// </summary>
+		/// <param name="point"></param>
+		public virtual void Result(ContactResult point) { return; }
 	}
 
 	/// <summary>

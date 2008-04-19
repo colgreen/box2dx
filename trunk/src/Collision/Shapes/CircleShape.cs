@@ -49,11 +49,11 @@ namespace Box2DX.Collision
 	public class CircleShape : Shape
 	{
 		// Local position in parent body
-		public Vector2 _localPosition;
+		private Vector2 _localPosition;
 		// Radius of this circle.
-		public float _radius;
+		private float _radius;
 
-		public CircleShape(ShapeDef def)
+		internal CircleShape(ShapeDef def)
 			: base(def)
 		{
 			Box2DXDebug.Assert(def.Type == ShapeType.CircleShape);
@@ -64,7 +64,7 @@ namespace Box2DX.Collision
 			_radius = circleDef.Radius;
 		}
 
-		public override void UpdateSweepRadius(Vector2 center)
+		internal override void UpdateSweepRadius(Vector2 center)
 		{
 			// Update the sweep radius (maximum radius) as measured from
 			// a local center point.
@@ -105,7 +105,7 @@ namespace Box2DX.Collision
 			float sigma = c * c - rr * b;
 
 			// Check for negative discriminant and short segment.
-			if (sigma < 0.0f || rr < Common.Math.FLOAT32_EPSILON)
+			if (sigma < 0.0f || rr < Common.Settings.FLT_EPSILON)
 			{
 				return false;
 			}

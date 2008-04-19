@@ -32,6 +32,6 @@ namespace Box2DX.Dynamics
 	{
 		public NullContact() { }
 		public override void Evaluate(ContactListener listener) { }
-		public override Manifold GetManifolds() { return null; }
+		public override Manifold[] GetManifolds() { return null; }
 	}
 }

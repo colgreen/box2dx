@@ -62,7 +62,7 @@ namespace Box2DX.Dynamics
 				return _nullContact;
 			}
 
-			if (shape1._body == shape2._body)
+			if (shape1.GetBody() == shape2.GetBody())
 			{
 				return _nullContact;
 			}
@@ -162,24 +162,30 @@ namespace Box2DX.Dynamics
 			int manifoldCount = c.GetManifoldCount();
 			if (manifoldCount > 0 && _world._contactListener!=null)
 			{
+				Body b1 = shape1.GetBody();
+				Body b2 = shape2.GetBody();
+
+				Manifold[] manifolds = c.GetManifolds();
 				ContactPoint cp = new ContactPoint();
 				cp.Shape1 = c.GetShape1();
 				cp.Shape2 = c.GetShape2();
-				Body b1 = cp.Shape1.GetBody();
-#warning "manifold array"
-				Manifold manifolds = c.GetManifolds();
+				cp.Friction = c._friction;
+				cp.Restitution = c._restitution;
+
 				for (int i = 0; i < manifoldCount; ++i)
 				{
-					Manifold manifold = manifolds;
+					Manifold manifold = manifolds[i];
 					cp.Normal = manifold.Normal;
+
 					for (int j = 0; j < manifold.PointCount; ++j)
 					{
-						ManifoldPoint point = manifold.Points[j];
-						cp.Position = Common.Math.Mul(b1.GetXForm(), point.LocalPoint1);
-						cp.Separation = point.Separation;
-						cp.NormalForce = point.NormalForce;
-						cp.TangentForce = point.TangentForce;
-						cp.ID = point.ID;
+						ManifoldPoint mp = manifold.Points[j];
+						cp.Position = b1.GetWorldPoint(mp.LocalPoint1);
+						Vector2 v1 = b1.GetLinearVelocityFromLocalPoint(mp.LocalPoint1);
+						Vector2 v2 = b2.GetLinearVelocityFromLocalPoint(mp.LocalPoint2);
+						cp.Velocity = v2 - v1;
+						cp.Separation = mp.Separation;
+						cp.ID = mp.ID;
 						_world._contactListener.Remove(cp);
 					}
 				}
@@ -257,48 +263,6 @@ namespace Box2DX.Dynamics
 				}
 
 				c.Update(_world._contactListener);
-
-				if (c.IsSolid() == false && _world._contactListener != null)
-				{
-					// report the sensor.
-					ContactPoint cp = new ContactPoint();
-					cp.Shape1 = c.GetShape1();
-					cp.Shape2 = c.GetShape2();
-
-					// sensors have no force.
-					cp.NormalForce = 0.0f;
-					cp.TangentForce = 0.0f;
-
-					Body b1 = cp.Shape1.GetBody();
-					int manifoldCount = c.GetManifoldCount();
-					Manifold manifolds = c.GetManifolds();
-#warning "manifold array"
-					//for (int i = 0; i < manifoldCount; ++i)
-					if(manifoldCount>0)
-					{
-						Manifold manifold = manifolds;
-						cp.Normal = manifold.Normal;
-						for (int j = 0; j < manifold.PointCount; ++j)
-						{
-							ManifoldPoint point = manifold.Points[j];
-							cp.Position = Common.Math.Mul(b1.GetXForm(), point.LocalPoint1);
-							cp.Separation = point.Separation;
-
-							if ((point.ID.Features.Flip & Collision.Collision.NewPoint) != 0)
-							{
-#warning "TC"
-								point.ID.Features.Flip &= (byte)~Collision.Collision.NewPoint;
-								cp.ID = point.ID;
-								_world._contactListener.Add(cp);
-							}
-							else
-							{
-								cp.ID = point.ID;
-								_world._contactListener.Persist(cp);
-							}
-						}
-					}
-				}
 			}
 		}
 	}

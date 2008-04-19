@@ -50,6 +50,30 @@ namespace Box2DX.Collision
 	}
 
 	/// <summary>
+	/// This holds contact filtering data.
+	/// </summary>
+	public struct FilterData
+	{
+		/// <summary>
+		/// The collision category bits. Normally you would just set one bit.
+		/// </summary>
+		public ushort CategoryBits;
+
+		/// <summary>
+		/// The collision mask bits. This states the categories that this
+		/// shape would accept for collision.
+		/// </summary>
+		public ushort MaskBits;
+
+		/// <summary>
+		/// Collision groups allow a certain group of objects to never collide (negative)
+		/// or always collide (positive). Zero means no collision group. Non-zero group
+		/// filtering always wins against the mask bits.
+		/// </summary>
+		public short GroupIndex;
+	}
+
+	/// <summary>
 	/// The various collision shape types supported by Box2D.
 	/// </summary>
 	public enum ShapeType
@@ -93,28 +117,15 @@ namespace Box2DX.Collision
 		public float Density;
 
 		/// <summary>
-		/// The collision category bits. Normally you would just set one bit.
-		/// </summary>
-		public ushort CategoryBits;
-
-		/// <summary>
-		/// The collision mask bits. This states the categories that this
-		/// shape would accept for collision.
-		/// </summary>
-		public ushort MaskBits;
-
-		/// <summary>
-		/// Collision groups allow a certain group of objects to never collide (negative)
-		/// or always collide (positive). Zero means no collision group. Non-zero group
-		/// filtering always wins against the mask bits.
-		/// </summary>
-		public short GroupIndex;
-
-		/// <summary>
 		/// A sensor shape collects contact information but never generates a collision
 		/// response.
 		/// </summary>
 		public bool IsSensor;
+
+		/// <summary>
+		/// Contact filtering data.
+		/// </summary>
+		public FilterData Filter;
 
 		/// <summary>
 		/// The constructor sets the default shape definition values.
@@ -126,9 +137,9 @@ namespace Box2DX.Collision
 			Friction = 0.2f;
 			Restitution = 0.0f;
 			Density = 0.0f;
-			CategoryBits = 0x0001;
-			MaskBits = 0xFFFF;
-			GroupIndex = 0;
+			Filter.CategoryBits = 0x0001;
+			Filter.MaskBits = 0xFFFF;
+			Filter.GroupIndex = 0;
 			IsSensor = false;
 		}
 	}
@@ -140,57 +151,77 @@ namespace Box2DX.Collision
 	/// </summary>
 	public abstract class Shape : IDisposable
 	{
-		public ShapeType _type;
+		#region Fields and Properties
+
+		protected ShapeType _type;
 		/// <summary>
 		/// Get the type of this shape. You can use this to down cast to the concrete shape.
 		/// </summary>
 		//public ShapeType Type { get { return _type; } }
 		public new ShapeType GetType() { return _type; }
 
-		public Shape _next;
+		internal Shape _next;
 		/// <summary>
 		/// Get the next shape in the parent body's shape list.
 		/// </summary>
 		//public Shape Next { get { return _next; } }
 		public Shape GetNext() { return _next; }
 
-		public Body _body;
+		internal Body _body;
 		/// <summary>
 		/// Get the parent body of this shape. This is NULL if the shape is not attached.
 		/// </summary>
 		//public Body Body { get { return _body; } }
 		public Body GetBody() { return _body; }
 
-		public float _sweepRadius;
+		// Sweep radius relative to the parent body's center of mass.
+		protected float _sweepRadius;
 		/// <summary>
-		/// Sweep radius relative to the parent body's center of mass.
+		/// Get the maximum radius about the parent body's center of mass.
 		/// </summary>
-		//public float SweepRadius { get { return _sweepRadius; } }
 		public float GetSweepRadius() { return _sweepRadius; }
 
-		public float _density;
-		public float _friction;
-		public float _restitution;
-		public ushort _proxyId;
-		public ushort _categoryBits;
-		public ushort _maskBits;
-		public short _groupIndex;
+		protected float _density;
 
-		public bool _isSensor;
+		protected float _friction;
+		public float Friction { get { return _friction; } }
+
+		protected float _restitution;
+		public float Restitution { get { return _restitution; } }
+
+		protected ushort _proxyId;
+
+		protected bool _isSensor;
 		/// <summary>
 		/// Is this shape a sensor (non-solid)?
 		/// </summary>
 		public bool IsSensor { get { return _isSensor; } }
 
-		public object _userData;
+		protected FilterData _filter;
+		/// <summary>
+		/// Get\Set the contact filtering data. You must call World.Refilter to correct
+		/// existing contacts/non-contacts.
+		/// </summary>
+		public FilterData FilterData
+		{
+			get { return _filter; }
+			set { _filter = value; }
+		}
+
+		protected object _userData;
 		/// <summary>
 		/// Get the user data that was assigned in the shape definition. Use this to
 		/// store your application specific data.
 		/// </summary>
-		//public object UserData { get { return _userData; } }
-		public object GetUserData() { return _userData; }
+		public object UserData
+		{
+			get { return _userData; }
+			set { _userData = value; }
+		}
 
-		public Shape(ShapeDef def)
+		#endregion Fields and Properties
+
+		protected Shape(ShapeDef def)
 		{
 			_userData = def.UserData;
 			_friction = def.Friction;
@@ -198,15 +229,9 @@ namespace Box2DX.Collision
 			_density = def.Density;
 			_body = null;
 			_sweepRadius = 0.0f;
-
 			_next = null;
-
 			_proxyId = PairManager.NullProxy;
-
-			_categoryBits = def.CategoryBits;
-			_maskBits = def.MaskBits;
-			_groupIndex = def.GroupIndex;
-
+			_filter = def.Filter;
 			_isSensor = def.IsSensor;
 		}
 
@@ -253,9 +278,9 @@ namespace Box2DX.Collision
 		/// <param name="massData">Returns the mass data for this shape</param>
 		public abstract void ComputeMass(out MassData massData);
 
-		public abstract void UpdateSweepRadius(Vector2 center);
+		internal abstract void UpdateSweepRadius(Vector2 center);
 
-		public static Shape Create(ShapeDef def)
+		internal static Shape Create(ShapeDef def)
 		{
 			switch (def.Type)
 			{
@@ -275,7 +300,7 @@ namespace Box2DX.Collision
 			}
 		}
 
-		public static void Destroy(Shape s)
+		internal static void Destroy(Shape s)
 		{
 			switch (s.GetType())
 			{
@@ -297,7 +322,7 @@ namespace Box2DX.Collision
 			}
 		}
 
-		public void CreateProxy(BroadPhase broadPhase, XForm transform)
+		internal void CreateProxy(BroadPhase broadPhase, XForm transform)
 		{
 			Box2DXDebug.Assert(_proxyId == PairManager.NullProxy);
 
@@ -319,7 +344,7 @@ namespace Box2DX.Collision
 			}
 		}
 
-		public void DestroyProxy(BroadPhase broadPhase)
+		internal void DestroyProxy(BroadPhase broadPhase)
 		{
 			if (_proxyId != PairManager.NullProxy)
 			{
@@ -328,7 +353,7 @@ namespace Box2DX.Collision
 			}
 		}
 
-		public bool Synchronize(BroadPhase broadPhase, XForm transform1, XForm transform2)
+		internal bool Synchronize(BroadPhase broadPhase, XForm transform1, XForm transform2)
 		{
 			if (_proxyId == PairManager.NullProxy)
 			{
@@ -350,7 +375,7 @@ namespace Box2DX.Collision
 			}
 		}
 
-		public void ResetProxy(BroadPhase broadPhase, XForm transform)
+		internal void RefilterProxy(BroadPhase broadPhase, XForm transform)
 		{
 			if (_proxyId == PairManager.NullProxy)
 			{
@@ -374,7 +399,7 @@ namespace Box2DX.Collision
 			}
 		}
 
-		public void Dispose()
+		public virtual void Dispose()
 		{
 			Box2DXDebug.Assert(_proxyId == PairManager.NullProxy);
 		}

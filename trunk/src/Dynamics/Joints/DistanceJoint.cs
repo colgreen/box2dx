@@ -19,6 +19,14 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
+// 1-D constrained system
+// m (v2 - v1) = lambda
+// v2 + (beta/h) * x1 + gamma * lambda = 0, gamma has units of inverse mass.
+// x2 = x1 + h * v2
+
+// 1-D mass-damper-spring system
+// m (v2 - v1) + h * d * v2 + h * k * 
+
 // C = norm(p2 - p1) - L
 // u = (p2 - p1) / norm(p2 - p1)
 // Cdot = dot(u, v2 + cross(w2, r2) - v1 - cross(w1, r1))
@@ -50,6 +58,8 @@ namespace Box2DX.Dynamics
 			LocalAnchor1.Set(0.0f, 0.0f);
 			LocalAnchor2.Set(0.0f, 0.0f);
 			Length = 1.0f;
+			FrequencyHz = 0.0f;
+			DampingRatio = 0.0f;
 		}
 
 		/// <summary>
@@ -83,6 +93,16 @@ namespace Box2DX.Dynamics
 		/// The equilibrium length between the anchor points.
 		/// </summary>
 		public float Length;
+
+		/// <summary>
+		/// The response speed.
+		/// </summary>
+		public float FrequencyHz;
+
+		/// <summary>
+		/// The damping ratio. 0 = no damping, 1 = critical damping.
+		/// </summary>
+		public float DampingRatio;
 	}
 
 	/// <summary>
@@ -95,7 +115,11 @@ namespace Box2DX.Dynamics
 		public Vector2 _localAnchor1;
 		public Vector2 _localAnchor2;
 		public Vector2 _u;
-		public float _force;
+		public float _frequencyHz;
+		public float _dampingRatio;
+		public float _gamma;
+		public float _bias;
+		public float _impulse;
 		public float _mass;		// effective mass for the constraint.
 		public float _length;
 
@@ -111,7 +135,7 @@ namespace Box2DX.Dynamics
 
 		public override Vector2 ReactionForce
 		{
-			get { return Settings.FORCE_SCALE(_force) * _u; }
+			get { return (_inv_dt * _impulse) * _u; }
 		}
 
 		public override float ReactionTorque
@@ -125,17 +149,24 @@ namespace Box2DX.Dynamics
 			_localAnchor1 = def.LocalAnchor1;
 			_localAnchor2 = def.LocalAnchor2;
 			_length = def.Length;
-			_force = 0.0f;
+			_frequencyHz = def.FrequencyHz;
+			_dampingRatio = def.DampingRatio;
+			_impulse = 0.0f;
+			_gamma = 0.0f;
+			_bias = 0.0f;
+			_inv_dt = 0.0f;
 		}
 
-		public override void InitVelocityConstraints(TimeStep step)
+		internal override void InitVelocityConstraints(TimeStep step)
 		{
+			_inv_dt = step.Inv_Dt;
+
 			Body b1 = _body1;
 			Body b2 = _body2;
 
 			// Compute the effective mass matrix.
-			Vector2 r1 = Common.Math.Mul(b1._xf.R, _localAnchor1 - b1.GetLocalCenter());
-			Vector2 r2 = Common.Math.Mul(b2._xf.R, _localAnchor2 - b2.GetLocalCenter());
+			Vector2 r1 = Common.Math.Mul(b1.GetXForm().R, _localAnchor1 - b1.GetLocalCenter());
+			Vector2 r2 = Common.Math.Mul(b2.GetXForm().R, _localAnchor2 - b2.GetLocalCenter());
 			_u = b2._sweep.C + r2 - b1._sweep.C - r1;
 
 			// Handle singularity.
@@ -151,13 +182,34 @@ namespace Box2DX.Dynamics
 
 			float cr1u = Vector2.Cross(r1, _u);
 			float cr2u = Vector2.Cross(r2, _u);
-			_mass = b1._invMass + b1._invI * cr1u * cr1u + b2._invMass + b2._invI * cr2u * cr2u;
-			Box2DXDebug.Assert(_mass > Common.Math.FLOAT32_EPSILON);
-			_mass = 1.0f / _mass;
+			float invMass = b1._invMass + b1._invI * cr1u * cr1u + b2._invMass + b2._invI * cr2u * cr2u;
+			Box2DXDebug.Assert(invMass > Settings.FLT_EPSILON);
+			_mass = 1.0f / invMass;
 
-			if (World.s_enableWarmStarting!=0)
+			if (_frequencyHz > 0.0f)
 			{
-				Vector2 P = Settings.FORCE_SCALE(step.Dt) * _force * _u;
+				float C = length - _length;
+
+				// Frequency
+				float omega = 2.0f * Settings.Pi * _frequencyHz;
+
+				// Damping coefficient
+				float d = 2.0f * _mass * _dampingRatio * omega;
+
+				// Spring stiffness
+				float k = _mass * omega * omega;
+
+				// magic formulas
+				_gamma = 1.0f / (step.Dt * (d + step.Dt * k));
+				_bias = C * step.Dt * k * _gamma;
+
+				_mass = 1.0f / (invMass + _gamma);
+			}
+
+			if (step.WarmStarting)
+			{
+				_impulse *= step.DtRatio;
+				Vector2 P = _impulse * _u;
 				b1._linearVelocity -= b1._invMass * P;
 				b1._angularVelocity -= b1._invI * Vector2.Cross(r1, P);
 				b2._linearVelocity += b2._invMass * P;
@@ -165,17 +217,22 @@ namespace Box2DX.Dynamics
 			}
 			else
 			{
-				_force = 0.0f;
+				_impulse = 0.0f;
 			}
 		}
 
-		public override bool SolvePositionConstraints()
+		internal override bool SolvePositionConstraints()
 		{
+			if (_frequencyHz > 0.0f)
+			{
+				return true;
+			}
+
 			Body b1 = _body1;
 			Body b2 = _body2;
 
-			Vector2 r1 = Common.Math.Mul(b1._xf.R, _localAnchor1 - b1.GetLocalCenter());
-			Vector2 r2 = Common.Math.Mul(b2._xf.R, _localAnchor2 - b2.GetLocalCenter());
+			Vector2 r1 = Common.Math.Mul(b1.GetXForm().R, _localAnchor1 - b1.GetLocalCenter());
+			Vector2 r2 = Common.Math.Mul(b2.GetXForm().R, _localAnchor2 - b2.GetLocalCenter());
 
 			Vector2 d = b2._sweep.C + r2 - b1._sweep.C - r1;
 
@@ -198,22 +255,24 @@ namespace Box2DX.Dynamics
 			return System.Math.Abs(C) < Settings.LinearSlop;
 		}
 
-		public override void SolveVelocityConstraints(TimeStep step)
+		internal override void SolveVelocityConstraints(TimeStep step)
 		{
+			//B2_NOT_USED(step);
+
 			Body b1 = _body1;
 			Body b2 = _body2;
 
-			Vector2 r1 = Common.Math.Mul(b1._xf.R, _localAnchor1 - b1.GetLocalCenter());
-			Vector2 r2 = Common.Math.Mul(b2._xf.R, _localAnchor2 - b2.GetLocalCenter());
+			Vector2 r1 = Common.Math.Mul(b1.GetXForm().R, _localAnchor1 - b1.GetLocalCenter());
+			Vector2 r2 = Common.Math.Mul(b2.GetXForm().R, _localAnchor2 - b2.GetLocalCenter());
 
 			// Cdot = dot(u, v + cross(w, r))
 			Vector2 v1 = b1._linearVelocity + Vector2.Cross(b1._angularVelocity, r1);
 			Vector2 v2 = b2._linearVelocity + Vector2.Cross(b2._angularVelocity, r2);
 			float Cdot = Vector2.Dot(_u, v2 - v1);
-			float force = -Settings.FORCE_INV_SCALE(step.Inv_Dt) * _mass * Cdot;
-			_force += force;
+			float impulse = -_mass * (Cdot + _bias + _gamma * _impulse);
+			_impulse += impulse;
 
-			Vector2 P = Settings.FORCE_SCALE(step.Dt) * force * _u;
+			Vector2 P = impulse * _u;
 			b1._linearVelocity -= b1._invMass * P;
 			b1._angularVelocity -= b1._invI * Vector2.Cross(r1, P);
 			b2._linearVelocity += b2._invMass * P;

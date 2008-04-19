@@ -138,7 +138,7 @@ namespace Box2DX.Dynamics
 			get
 			{
 				// TODO_ERIN not tested
-				Vector2 r = Common.Math.Mul(_body2._xf.R, _localAnchor2 - _body2.GetLocalCenter());
+				Vector2 r = Common.Math.Mul(_body2.GetXForm().R, _localAnchor2 - _body2.GetLocalCenter());
 				Vector2 F = _force * _J.Linear2;
 				float T = Settings.FORCE_SCALE(_force * _J.Angular2 - Vector2.Cross(r, F));
 				return T;
@@ -153,10 +153,13 @@ namespace Box2DX.Dynamics
 		public GearJoint(GearJointDef def)
 			: base(def)
 		{
-			Box2DXDebug.Assert(def.Joint1._type == JointType.RevoluteJoint || def.Joint1._type == JointType.PrismaticJoint);
-			Box2DXDebug.Assert(def.Joint2._type == JointType.RevoluteJoint || def.Joint2._type == JointType.PrismaticJoint);
-			Box2DXDebug.Assert(def.Joint1._body1.IsStatic());
-			Box2DXDebug.Assert(def.Joint2._body1.IsStatic());
+			JointType type1 = def.Joint1.GetType();
+			JointType type2 = def.Joint2.GetType();
+
+			Box2DXDebug.Assert(type1 == JointType.RevoluteJoint || type1 == JointType.PrismaticJoint);
+			Box2DXDebug.Assert(type2 == JointType.RevoluteJoint || type2 == JointType.PrismaticJoint);
+			Box2DXDebug.Assert(def.Joint1.GetBody1().IsStatic());
+			Box2DXDebug.Assert(def.Joint2.GetBody1().IsStatic());
 
 			_revolute1 = null;
 			_prismatic1 = null;
@@ -165,9 +168,9 @@ namespace Box2DX.Dynamics
 
 			float coordinate1, coordinate2;
 
-			_ground1 = def.Joint1._body1;
-			_body1 = def.Joint1._body2;
-			if (def.Joint1._type == JointType.RevoluteJoint)
+			_ground1 = def.Joint1.GetBody1();
+			_body1 = def.Joint1.GetBody2();
+			if (type1 == JointType.RevoluteJoint)
 			{
 				_revolute1 = (RevoluteJoint)def.Joint1;
 				_groundAnchor1 = _revolute1._localAnchor1;
@@ -182,9 +185,9 @@ namespace Box2DX.Dynamics
 				coordinate1 = _prismatic1.JointTranslation;
 			}
 
-			_ground2 = def.Joint2._body1;
-			_body2 = def.Joint2._body2;
-			if (def.Joint2._type == JointType.RevoluteJoint)
+			_ground2 = def.Joint2.GetBody1();
+			_body2 = def.Joint2.GetBody2();
+			if (type2 == JointType.RevoluteJoint)
 			{
 				_revolute2 = (RevoluteJoint)def.Joint2;
 				_groundAnchor2 = _revolute2._localAnchor1;
@@ -206,7 +209,7 @@ namespace Box2DX.Dynamics
 			_force = 0.0f;
 		}
 
-		public override void InitVelocityConstraints(TimeStep step)
+		internal override void InitVelocityConstraints(TimeStep step)
 		{
 			Body g1 = _ground1;
 			Body g2 = _ground2;
@@ -223,8 +226,8 @@ namespace Box2DX.Dynamics
 			}
 			else
 			{
-				Vector2 ug = Common.Math.Mul(g1._xf.R, _prismatic1._localXAxis1);
-				Vector2 r = Common.Math.Mul(b1._xf.R, _localAnchor1 - b1.GetLocalCenter());
+				Vector2 ug = Common.Math.Mul(g1.GetXForm().R, _prismatic1._localXAxis1);
+				Vector2 r = Common.Math.Mul(b1.GetXForm().R, _localAnchor1 - b1.GetLocalCenter());
 				float crug = Vector2.Cross(r, ug);
 				_J.Linear1 = -ug;
 				_J.Angular1 = -crug;
@@ -238,8 +241,8 @@ namespace Box2DX.Dynamics
 			}
 			else
 			{
-				Vector2 ug = Common.Math.Mul(g2._xf.R, _prismatic2._localXAxis1);
-				Vector2 r = Common.Math.Mul(b2._xf.R, _localAnchor2 - b2.GetLocalCenter());
+				Vector2 ug = Common.Math.Mul(g2.GetXForm().R, _prismatic2._localXAxis1);
+				Vector2 r = Common.Math.Mul(b2.GetXForm().R, _localAnchor2 - b2.GetLocalCenter());
 				float crug = Vector2.Cross(r, ug);
 				_J.Linear2 = -_ratio * ug;
 				_J.Angular2 = -_ratio * crug;
@@ -250,7 +253,7 @@ namespace Box2DX.Dynamics
 			Box2DXDebug.Assert(K > 0.0f);
 			_mass = 1.0f / K;
 
-			if (World.s_enableWarmStarting!=0)
+			if (step.WarmStarting)
 			{
 				// Warm starting.
 				float P = Settings.FORCE_SCALE(step.Dt) * _force;
@@ -265,7 +268,7 @@ namespace Box2DX.Dynamics
 			}
 		}
 
-		public override void SolveVelocityConstraints(TimeStep step)
+		internal override void SolveVelocityConstraints(TimeStep step)
 		{
 			Body b1 = _body1;
 			Body b2 = _body2;
@@ -283,7 +286,7 @@ namespace Box2DX.Dynamics
 			b2._angularVelocity += b2._invI * P * _J.Angular2;
 		}
 
-		public override bool SolvePositionConstraints()
+		internal override bool SolvePositionConstraints()
 		{
 			float linearError = 0.0f;
 

@@ -43,7 +43,7 @@ namespace TestBed
 			{
 				BodyDef bd = new BodyDef();
 				bd.Position.Set(0.0f, -10.0f);
-				ground = _world.CreateStaticBody(bd);
+				ground = _world.CreateBody(bd);
 
 				PolygonDef sd = new PolygonDef();
 				sd.SetAsBox(50.0f, 10.0f);
@@ -65,7 +65,7 @@ namespace TestBed
 
 				BodyDef bd1 = new BodyDef();
 				bd1.Position.Set(-3.0f, 12.0f);
-				Body body1 = _world.CreateDynamicBody(bd1);
+				Body body1 = _world.CreateBody(bd1);
 				body1.CreateShape(circle1);
 				body1.SetMassFromShapes();
 
@@ -79,7 +79,7 @@ namespace TestBed
 
 				BodyDef bd2 = new BodyDef();
 				bd2.Position.Set(0.0f, 12.0f);
-				Body body2 = _world.CreateDynamicBody(bd2);
+				Body body2 = _world.CreateBody(bd2);
 				body2.CreateShape(circle2);
 				body2.SetMassFromShapes();
 
@@ -89,7 +89,7 @@ namespace TestBed
 
 				BodyDef bd3 = new BodyDef();
 				bd3.Position.Set(2.5f, 12.0f);
-				Body body3 = _world.CreateDynamicBody(bd3);
+				Body body3 = _world.CreateBody(bd3);
 				body3.CreateShape(box);
 				body3.SetMassFromShapes();
 

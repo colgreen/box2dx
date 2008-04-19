@@ -149,18 +149,20 @@ namespace Box2DX.Dynamics
 	/// </summary>
 	public abstract class Joint
 	{
-		public JointType _type;
-		public Joint _prev;
-		public Joint _next;
-		public JointEdge _node1 = new JointEdge();
-		public JointEdge _node2 = new JointEdge();
-		public Body _body1;
-		public Body _body2;
+		protected JointType _type;
+		internal Joint _prev;
+		internal Joint _next;
+		internal JointEdge _node1 = new JointEdge();
+		internal JointEdge _node2 = new JointEdge();
+		internal Body _body1;
+		internal Body _body2;
 
-		public bool _islandFlag;
-		public bool _collideConnected;
+		protected float _inv_dt;
 
-		public object _userData;
+		internal bool _islandFlag;
+		internal bool _collideConnected;
+
+		protected object _userData;
 
 		/// <summary>
 		/// Get the type of the concrete joint.
@@ -223,15 +225,16 @@ namespace Box2DX.Dynamics
 		}
 
 		/// <summary>
-		/// Get the user data pointer.
+		/// Get/Set the user data pointer.
 		/// </summary>
 		/// <returns></returns>
-		public object GetUserData()
+		public object UserData
 		{
-			return _userData;
+			get { return _userData; }
+			set { _userData = value; }
 		}
 
-		public Joint(JointDef def)
+		protected Joint(JointDef def)
 		{
 			_type = def.Type;
 			_prev = null;
@@ -243,7 +246,7 @@ namespace Box2DX.Dynamics
 			_userData = def.UserData;
 		}
 
-		public static Joint Create(JointDef def)
+		internal static Joint Create(JointDef def)
 		{
 			Joint joint = null;
 
@@ -293,18 +296,16 @@ namespace Box2DX.Dynamics
 			return joint;
 		}
 
-		public static void Destroy(Joint joint)
+		internal static void Destroy(Joint joint)
 		{
-			if (joint is IDisposable)
-				(joint as IDisposable).Dispose();
 			joint = null;
 		}
 
-		public abstract void InitVelocityConstraints(TimeStep step);
-		public abstract void SolveVelocityConstraints(TimeStep step);
+		internal abstract void InitVelocityConstraints(TimeStep step);
+		internal abstract void SolveVelocityConstraints(TimeStep step);
 
 		// This returns true if the position errors are within tolerance.
-		public virtual void InitPositionConstraints() { }
-		public abstract bool SolvePositionConstraints();
+		internal virtual void InitPositionConstraints() { }
+		internal abstract bool SolvePositionConstraints();
 	}
 }

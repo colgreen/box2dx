@@ -39,7 +39,7 @@ namespace TestBed
 
 			// Call the body factory which creates the ground box shape.
 			// The body is also added to the world.
-			Body groundBody = _world.CreateStaticBody(groundBodyDef);
+			Body groundBody = _world.CreateBody(groundBodyDef);
 
 			// Define the ground box shape.
 			PolygonDef groundShapeDef = new PolygonDef();
@@ -55,7 +55,7 @@ namespace TestBed
 				// Define the dynamic body. We set its position and call the body factory.
 				BodyDef bodyDef = new BodyDef();
 				bodyDef.Position.Set(0.0f, 4.0f *(i+1));
-				Body body = _world.CreateDynamicBody(bodyDef);
+				Body body = _world.CreateBody(bodyDef);
 
 				// Define another box shape for our dynamic body.
 				PolygonDef shapeDef = new PolygonDef();

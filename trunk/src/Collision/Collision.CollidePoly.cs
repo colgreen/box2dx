@@ -85,18 +85,25 @@ namespace Box2DX.Collision
 		public static float EdgeSeparation(PolygonShape poly1, XForm xf1, int edge1,
 			PolygonShape poly2, XForm xf2)
 		{
-			Box2DXDebug.Assert(0 <= edge1 && edge1 < poly1.VertexCount);
+			int count1 = poly1.VertexCount;
+			Vector2[] vertices1 = poly1.GetVertices();
+			Vector2[] normals1 = poly1.Normals;
+
+			int count2 = poly2.VertexCount;
+			Vector2[] vertices2 = poly2.GetVertices();
+
+			Box2DXDebug.Assert(0 <= edge1 && edge1 < count1);
 
 			// Convert normal from poly1's frame into poly2's frame.
-			Vector2 normal1World = Common.Math.Mul(xf1.R, poly1._normals[edge1]);
+			Vector2 normal1World = Common.Math.Mul(xf1.R, normals1[edge1]);
 			Vector2 normal1 = Common.Math.MulT(xf2.R, normal1World);
 
 			// Find support vertex on poly2 for -normal.
 			int index = 0;
-			float minDot = Common.Math.FLOAT32_MAX;
-			for (int i = 0; i < poly2.VertexCount; ++i)
+			float minDot = Common.Settings.FLT_MAX;
+			for (int i = 0; i < count2; ++i)
 			{
-				float dot = Vector2.Dot(poly2._vertices[i], normal1);
+				float dot = Vector2.Dot(vertices2[i], normal1);
 				if (dot < minDot)
 				{
 					minDot = dot;
@@ -104,8 +111,8 @@ namespace Box2DX.Collision
 				}
 			}
 
-			Vector2 v1 = Common.Math.Mul(xf1, poly1._vertices[edge1]);
-			Vector2 v2 = Common.Math.Mul(xf2, poly2._vertices[index]);
+			Vector2 v1 = Common.Math.Mul(xf1, vertices1[edge1]);
+			Vector2 v2 = Common.Math.Mul(xf2, vertices2[index]);
 			float separation = Vector2.Dot(v2 - v1, normal1World);
 			return separation;
 		}
@@ -123,17 +130,18 @@ namespace Box2DX.Collision
 			PolygonShape poly1, XForm xf1, PolygonShape poly2, XForm xf2)
 		{
 			int count1 = poly1.VertexCount;
+			Vector2[] normals1 = poly1.Normals;
 
 			// Vector pointing from the centroid of poly1 to the centroid of poly2.
-			Vector2 d = Common.Math.Mul(xf2, poly2._centroid) - Common.Math.Mul(xf1, poly1._centroid);
+			Vector2 d = Common.Math.Mul(xf2, poly2.GetCentroid()) - Common.Math.Mul(xf1, poly1.GetCentroid());
 			Vector2 dLocal1 = Common.Math.MulT(xf1.R, d);
 
 			// Find edge normal on poly1 that has the largest projection onto d.
 			int edge = 0;
-			float maxDot = -Common.Math.FLOAT32_MAX;
+			float maxDot = -Common.Settings.FLT_MAX;
 			for (int i = 0; i < count1; ++i)
 			{
-				float dot = Vector2.Dot(poly1._normals[i], dLocal1);
+				float dot = Vector2.Dot(normals1[i], dLocal1);
 				if (dot > maxDot)
 				{
 					maxDot = dot;
@@ -218,19 +226,24 @@ namespace Box2DX.Collision
 		public static void FindIncidentEdge(out ClipVertex[] c,
 			PolygonShape poly1, XForm xf1, int edge1, PolygonShape poly2, XForm xf2)
 		{
-			c = new ClipVertex[2];
+			int count1 = poly1.VertexCount;
+			Vector2[] normals1 = poly1.Normals;
 
-			Box2DXDebug.Assert(0 <= edge1 && edge1 < poly1.VertexCount);
+			int count2 = poly2.VertexCount;
+			Vector2[] vertices2 = poly2.GetVertices();
+			Vector2[] normals2 = poly2.Normals;
+
+			Box2DXDebug.Assert(0 <= edge1 && edge1 < count1);
 
 			// Get the normal of the reference edge in poly2's frame.
-			Vector2 normal1 = Common.Math.MulT(xf2.R, Common.Math.Mul(xf1.R, poly1._normals[edge1]));
+			Vector2 normal1 = Common.Math.MulT(xf2.R, Common.Math.Mul(xf1.R, normals1[edge1]));
 
 			// Find the incident edge on poly2.
 			int index = 0;
-			float minDot = Common.Math.FLOAT32_MAX;
-			for (int i = 0; i < poly2.VertexCount; ++i)
+			float minDot = Settings.FLT_MAX;
+			for (int i = 0; i < count2; ++i)
 			{
-				float dot = Vector2.Dot(normal1, poly2._normals[i]);
+				float dot = Vector2.Dot(normal1, normals2[i]);
 				if (dot < minDot)
 				{
 					minDot = dot;
@@ -240,14 +253,16 @@ namespace Box2DX.Collision
 
 			// Build the clip vertices for the incident edge.
 			int i1 = index;
-			int i2 = i1 + 1 < poly2.VertexCount ? i1 + 1 : 0;
+			int i2 = i1 + 1 < count2 ? i1 + 1 : 0;
 
-			c[0].V = Common.Math.Mul(xf2, poly2._vertices[i1]);
+			c = new ClipVertex[2];
+
+			c[0].V = Common.Math.Mul(xf2, vertices2[i1]);
 			c[0].ID.Features.ReferenceEdge = (byte)edge1;
 			c[0].ID.Features.IncidentEdge = (byte)i1;
 			c[0].ID.Features.IncidentVertex = 0;
 
-			c[1].V = Common.Math.Mul(xf2, poly2._vertices[i2]);
+			c[1].V = Common.Math.Mul(xf2, vertices2[i2]);
 			c[1].ID.Features.ReferenceEdge = (byte)edge1;
 			c[1].ID.Features.IncidentEdge = (byte)i2;
 			c[1].ID.Features.IncidentVertex = 1;
@@ -306,10 +321,10 @@ namespace Box2DX.Collision
 			Collision.FindIncidentEdge(out incidentEdge, poly1, xf1, edge1, poly2, xf2);
 
 			int count1 = poly1.VertexCount;
-			Vector2[] vert1s = poly1._vertices;
+			Vector2[] vertices1 = poly1.GetVertices();
 
-			Vector2 v11 = vert1s[edge1];
-			Vector2 v12 = edge1 + 1 < count1 ? vert1s[edge1 + 1] : vert1s[0];
+			Vector2 v11 = vertices1[edge1];
+			Vector2 v12 = edge1 + 1 < count1 ? vertices1[edge1 + 1] : vertices1[0];
 
 			Vector2 dv = v12 - v11;
 			Vector2 sideNormal = Common.Math.Mul(xf1.R, v12 - v11);

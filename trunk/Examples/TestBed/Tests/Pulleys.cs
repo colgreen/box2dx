@@ -42,7 +42,7 @@ namespace TestBed
 
 				BodyDef bd = new BodyDef();
 				bd.Position.Set(0.0f, -10.0f);
-				ground = _world.CreateStaticBody(bd);
+				ground = _world.CreateBody(bd);
 				ground.CreateShape(sd);
 			}
 
@@ -59,12 +59,12 @@ namespace TestBed
 				BodyDef bd = new BodyDef();
 
 				bd.Position.Set(-10.0f, y);
-				Body body1 = _world.CreateDynamicBody(bd);
+				Body body1 = _world.CreateBody(bd);
 				body1.CreateShape(sd);
 				body1.SetMassFromShapes();
 
 				bd.Position.Set(10.0f, y);
-				Body body2 = _world.CreateDynamicBody(bd);
+				Body body2 = _world.CreateBody(bd);
 				body2.CreateShape(sd);
 				body2.SetMassFromShapes();
 

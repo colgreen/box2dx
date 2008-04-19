@@ -141,43 +141,44 @@ namespace Box2DX.Dynamics
 			MaxTypes
 		}
 
-		public BodyFlags _flags;
-		public BodyType _type;
+		internal BodyFlags _flags;
+		private BodyType _type;
 
-		public XForm _xf;		// the body origin transform
+		private XForm _xf;		// the body origin transform
 
-		public Sweep _sweep;	// the swept motion for CCD
+		internal Sweep _sweep;	// the swept motion for CCD
 
-		public Vector2 _linearVelocity;
-		public float _angularVelocity;
+		internal Vector2 _linearVelocity;
+		internal float _angularVelocity;
 
-		public Vector2 _force;
-		public float _torque;
+		internal Vector2 _force;
+		internal float _torque;
 
-		public World _world;
-		public Body _prev;
-		public Body _next;
+		private World _world;
+		internal Body _prev;
+		internal Body _next;
 
-		public Shape _shapeList;
-		public int _shapeCount;
+		internal Shape _shapeList;
+		internal int _shapeCount;
 
-		public JointEdge _jointList;
-		public ContactEdge _contactList;
+		internal JointEdge _jointList;
+		internal ContactEdge _contactList;
 
-		public float _mass, _invMass;
-		public float _I, _invI;
+		internal float _mass;
+		internal float _invMass;
+		private float _I;
+		internal float _invI;
 
-		public float _linearDamping;
-		public float _angularDamping;
+		internal float _linearDamping;
+		internal float _angularDamping;
 
-		public float _sleepTime;
+		internal float _sleepTime;
 
-		public object _userData;
+		private object _userData;
 
-		public Body(BodyDef bd, BodyType type, World world)
+		internal Body(BodyDef bd, World world)
 		{
 			Box2DXDebug.Assert(world._lock == false);
-			Box2DXDebug.Assert(type < BodyType.MaxTypes);
 
 			_flags = 0;
 
@@ -197,8 +198,6 @@ namespace Box2DX.Dynamics
 			{
 				_flags |= BodyFlags.Sleep;
 			}
-
-			_type = type;
 
 			_world = world;
 
@@ -226,23 +225,18 @@ namespace Box2DX.Dynamics
 
 			_sleepTime = 0.0f;
 
-			_mass = 0.0f;
 			_invMass = 0.0f;
 			_I = 0.0f;
 			_invI = 0.0f;
 
-			if (_type == BodyType.Dynamic)
-			{
-				_mass = bd.MassData.Mass;
-			}
+			_mass = bd.MassData.Mass;
 
 			if (_mass > 0.0f)
 			{
 				_invMass = 1.0f / _mass;
 			}
 
-			if ((_flags & BodyFlags.FixedRotation) == 0 &&
-				_type == BodyType.Dynamic)
+			if ((_flags & BodyFlags.FixedRotation) == 0)
 			{
 				_I = bd.MassData.I;
 			}
@@ -250,6 +244,15 @@ namespace Box2DX.Dynamics
 			if (_I > 0.0f)
 			{
 				_invI = 1.0f / _I;
+			}
+
+			if (_invMass == 0.0f && _invI == 0.0f)
+			{
+				_type = BodyType.Static;
+			}
+			else
+			{
+				_type = BodyType.Dynamic;
 			}
 
 			_userData = bd.UserData;
@@ -310,7 +313,7 @@ namespace Box2DX.Dynamics
 				return;
 			}
 
-			Box2DXDebug.Assert(shape._body == this);
+			Box2DXDebug.Assert(shape.GetBody() == this);
 			shape.DestroyProxy(_world._broadPhase);
 
 			Box2DXDebug.Assert(_shapeCount > 0);
@@ -355,12 +358,6 @@ namespace Box2DX.Dynamics
 				return;
 			}
 
-			if (_type == BodyType.Static)
-			{
-				return;
-			}
-
-			_mass = 0.0f;
 			_invMass = 0.0f;
 			_I = 0.0f;
 			_invI = 0.0f;
@@ -391,6 +388,25 @@ namespace Box2DX.Dynamics
 			{
 				s.UpdateSweepRadius(_sweep.LocalCenter);
 			}
+
+			BodyType oldType = _type;
+			if (_invMass == 0.0f && _invI == 0.0f)
+			{
+				_type = BodyType.Static;
+			}
+			else
+			{
+				_type = BodyType.Dynamic;
+			}
+
+			// If the body type changed, we need to refilter the broad-phase proxies.
+			if (oldType != _type)
+			{
+				for (Shape s = _shapeList; s!=null; s = s._next)
+				{
+					s.RefilterProxy(_world._broadPhase, _xf);
+				}
+			}
 		}
 
 		// TODO_ERIN adjust linear velocity and torque to account for movement of center.
@@ -403,11 +419,6 @@ namespace Box2DX.Dynamics
 		{
 			Box2DXDebug.Assert(_world._lock == false);
 			if (_world._lock == true)
-			{
-				return;
-			}
-
-			if (_type == BodyType.Static)
 			{
 				return;
 			}
@@ -434,11 +445,6 @@ namespace Box2DX.Dynamics
 				_invMass = 1.0f / _mass;
 				center *= _invMass;
 			}
-			else
-			{
-				_invMass = 0.0f;
-				_invI = 0.0f;
-			}
 
 			if (_I > 0.0f && (_flags & BodyFlags.FixedRotation) == 0)
 			{
@@ -461,6 +467,25 @@ namespace Box2DX.Dynamics
 			for (Shape s = _shapeList; s != null; s = s._next)
 			{
 				s.UpdateSweepRadius(_sweep.LocalCenter);
+			}
+
+			BodyType oldType = _type;
+			if (_invMass == 0.0f && _invI == 0.0f)
+			{
+				_type = BodyType.Static;
+			}
+			else
+			{
+				_type = BodyType.Dynamic;
+			}
+
+			// If the body type changed, we need to refilter the broad-phase proxies.
+			if (oldType != _type)
+			{
+				for (Shape s = _shapeList; s!=null; s = s._next)
+				{
+					s.RefilterProxy(_world._broadPhase, _xf);
+				}
 			}
 		}
 
@@ -712,6 +737,26 @@ namespace Box2DX.Dynamics
 		}
 
 		/// <summary>
+		/// Get the world linear velocity of a world point attached to this body.
+		/// </summary>
+		/// <param name="worldPoint">A point in world coordinates.</param>
+		/// <returns>The world velocity of a point.</returns>
+		public Vector2 GetLinearVelocityFromWorldPoint(Vector2 worldPoint)
+		{
+			return _linearVelocity + Vector2.Cross(_angularVelocity, worldPoint - _sweep.C);
+		}
+
+		/// <summary>
+		/// Get the world velocity of a local point.
+		/// </summary>
+		/// <param name="localPoint">A point in local coordinates.</param>
+		/// <returns>The world velocity of a point.</returns>
+		public Vector2 GetLinearVelocityFromLocalPoint(Vector2 localPoint)
+		{
+			return GetLinearVelocityFromWorldPoint(GetWorldPoint(localPoint));
+		}
+
+		/// <summary>
 		/// Is this body treated like a bullet for continuous collision detection?
 		/// </summary>
 		/// <returns></returns>
@@ -799,6 +844,20 @@ namespace Box2DX.Dynamics
 		}
 
 		/// <summary>
+		/// Put this body to sleep so it will stop simulating.
+		/// This also sets the velocity to zero.
+		/// </summary>
+		public void PutToSleep()
+		{
+			_flags |= BodyFlags.Sleep;
+			_sleepTime = 0.0f;
+			_linearVelocity.SetZero();
+			_angularVelocity = 0.0f;
+			_force.SetZero();
+			_torque = 0.0f;
+		}
+
+		/// <summary>
 		/// Get the list of all shapes attached to this body.
 		/// </summary>
 		/// <returns></returns>
@@ -816,14 +875,6 @@ namespace Box2DX.Dynamics
 			return _jointList;
 		}
 
-		/// <summary>
-		/// Get the list of all contacts attached to this body.
-		/// </summary>
-		/// <returns></returns>
-		public ContactEdge GetContactList()
-		{
-			return _contactList;
-		}
 
 		/// <summary>
 		/// Get the next body in the world's body list.
@@ -843,7 +894,19 @@ namespace Box2DX.Dynamics
 			return _userData;
 		}
 
-		public bool SynchronizeShapes()
+		/// <summary>
+		/// Set the user data. Use this to store your application specific data.
+		/// </summary>
+		/// <param name="data"></param>
+		public void SetUserData(object data) { _userData = data; }
+
+		/// <summary>
+		/// Get the parent world of this body.
+		/// </summary>
+		/// <returns></returns>
+		public World GetWorld() { return _world; }
+
+		internal bool SynchronizeShapes()
 		{
 			XForm xf1 = new XForm();
 			xf1.R.Set(_sweep.A0);
@@ -877,7 +940,7 @@ namespace Box2DX.Dynamics
 			return true;
 		}
 
-		public void SynchronizeTransform()
+		internal void SynchronizeTransform()
 		{
 			_xf.R.Set(_sweep.A);
 			_xf.Position = _sweep.C - Common.Math.Mul(_xf.R, _sweep.LocalCenter);
@@ -885,7 +948,7 @@ namespace Box2DX.Dynamics
 
 		// This is used to prevent connected bodies from colliding.
 		// It may lie, depending on the collideConnected flag.
-		public bool IsConnected(Body other)
+		internal bool IsConnected(Body other)
 		{
 			for (JointEdge jn = _jointList; jn != null; jn = jn.Next)
 			{
@@ -896,7 +959,7 @@ namespace Box2DX.Dynamics
 			return false;
 		}
 
-		public void Advance(float t)
+		internal void Advance(float t)
 		{
 			// Advance to the new safe time.
 			_sweep.Advance(t);

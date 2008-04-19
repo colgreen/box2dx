@@ -32,60 +32,92 @@ namespace Box2DX.Dynamics
 	{
 		public Manifold _manifold = new Manifold();
 
-		public override Manifold GetManifolds()
+		public override Manifold[] GetManifolds()
 		{
-			return _manifold;
+			return new Manifold[] { _manifold };
 		}
 
 		public CircleContact(Shape s1, Shape s2)
 			: base(s1, s2)
 		{
-			Box2DXDebug.Assert(_shape1._type == ShapeType.CircleShape);
-			Box2DXDebug.Assert(_shape2._type == ShapeType.CircleShape);
+			Box2DXDebug.Assert(_shape1.GetType() == ShapeType.CircleShape);
+			Box2DXDebug.Assert(_shape2.GetType() == ShapeType.CircleShape);
 			_manifold.PointCount = 0;
-			_manifold.Points[0].NormalForce = 0.0f;
-			_manifold.Points[0].TangentForce = 0.0f;
+			_manifold.Points[0].NormalImpulse = 0.0f;
+			_manifold.Points[0].TangentImpulse = 0.0f;
 		}
 
 		public override void Evaluate(ContactListener listener)
 		{
-			Body b1 = _shape1._body;
-			Body b2 = _shape2._body;
-
+			Body b1 = _shape1.GetBody();
+			Body b2 = _shape2.GetBody();
+#warning "needfix"
 			//memcpy(&m0, &m_manifold, sizeof(b2Manifold));
-			Manifold m0 = new Manifold();
-			m0.Normal = _manifold.Normal;
-			m0.PointCount = _manifold.PointCount;
-			m0.Points = _manifold.Points;
+			Manifold m0 = _manifold.Clone();
 
-			Collision.Collision.CollideCircles(ref _manifold, (CircleShape)_shape1, b1._xf, (CircleShape)_shape2, b2._xf);
+			Collision.Collision.CollideCircles(ref _manifold, (CircleShape)_shape1, b1.GetXForm(), 
+				(CircleShape)_shape2, b2.GetXForm());
+
+			ContactPoint cp = new ContactPoint();
+			cp.Shape1 = _shape1;
+			cp.Shape2 = _shape2;
+			cp.Friction = _friction;
+			cp.Restitution = _restitution;
 
 			if (_manifold.PointCount > 0)
 			{
 				_manifoldCount = 1;
+				ManifoldPoint mp = _manifold.Points[0];
+
 				if (m0.PointCount == 0)
 				{
-					_manifold.Points[0].ID.Features.Flip |= Collision.Collision.NewPoint;
+					mp.NormalImpulse = 0.0f;
+					mp.TangentImpulse = 0.0f;
+
+					if (listener!=null)
+					{
+						cp.Position = b1.GetWorldPoint(mp.LocalPoint1);
+						Vector2 v1 = b1.GetLinearVelocityFromLocalPoint(mp.LocalPoint1);
+						Vector2 v2 = b2.GetLinearVelocityFromLocalPoint(mp.LocalPoint2);
+						cp.Velocity = v2 - v1;
+						cp.Normal = _manifold.Normal;
+						cp.Separation = mp.Separation;
+						cp.ID = mp.ID;
+						listener.Add(cp);
+					}
 				}
 				else
 				{
-					_manifold.Points[0].ID.Features.Flip &= (byte)~Collision.Collision.NewPoint;
+					ManifoldPoint mp0 = m0.Points[0];
+					mp.NormalImpulse = mp0.NormalImpulse;
+					mp.TangentImpulse = mp0.TangentImpulse;
+
+					if (listener!=null)
+					{
+						cp.Position = b1.GetWorldPoint(mp.LocalPoint1);
+						Vector2 v1 = b1.GetLinearVelocityFromLocalPoint(mp.LocalPoint1);
+						Vector2 v2 = b2.GetLinearVelocityFromLocalPoint(mp.LocalPoint2);
+						cp.Velocity = v2 - v1;
+						cp.Normal = _manifold.Normal;
+						cp.Separation = mp.Separation;
+						cp.ID = mp.ID;
+						listener.Persist(cp);
+					}
 				}
 			}
 			else
 			{
 				_manifoldCount = 0;
-				if (m0.PointCount > 0 && listener != null)
+				if (m0.PointCount > 0 && listener!=null)
 				{
-					ContactPoint cp = new ContactPoint();
-					cp.Shape1 = _shape1;
-					cp.Shape2 = _shape2;
+					ManifoldPoint mp0 = m0.Points[0];
+					cp.Position = b1.GetWorldPoint(mp0.LocalPoint1);
+					Vector2 v1 = b1.GetLinearVelocityFromLocalPoint(mp0.LocalPoint1);
+					Vector2 v2 = b2.GetLinearVelocityFromLocalPoint(mp0.LocalPoint2);
+					cp.Velocity = v2 - v1;
 					cp.Normal = m0.Normal;
-					cp.Position = Common.Math.Mul(b1._xf, m0.Points[0].LocalPoint1);
-					cp.Separation = m0.Points[0].Separation;
-					cp.NormalForce = m0.Points[0].NormalForce;
-					cp.TangentForce = m0.Points[0].TangentForce;
-					cp.ID = m0.Points[0].ID;
+					cp.Separation = mp0.Separation;
+					cp.ID = mp0.ID;
 					listener.Remove(cp);
 				}
 			}
@@ -98,8 +130,6 @@ namespace Box2DX.Dynamics
 
 		new public static void Destroy(Contact contact)
 		{
-			if (contact is IDisposable)
-				(contact as IDisposable).Dispose();
 			contact = null;
 		}
 	}

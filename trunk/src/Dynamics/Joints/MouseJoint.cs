@@ -90,7 +90,7 @@ namespace Box2DX.Dynamics
 	{
 		public Vector2 _localAnchor;
 		public Vector2 _target;
-		public Vector2 _force;
+		public Vector2 _impulse;
 
 		public Mat22 _mass;		// effective mass for point-to-point constraint.
 		public Vector2 _C;				// position error
@@ -110,7 +110,7 @@ namespace Box2DX.Dynamics
 
 		public override Vector2 ReactionForce
 		{
-			get { return Settings.FORCE_SCALE(1.0f) * _force; }
+			get { return Settings.FORCE_SCALE(1.0f) * _impulse; }
 		}
 
 		public override float ReactionTorque
@@ -135,10 +135,10 @@ namespace Box2DX.Dynamics
 			: base(def)
 		{
 			_target = def.Target;
-			_localAnchor = Common.Math.MulT(_body2._xf, _target);
+			_localAnchor = Common.Math.MulT(_body2.GetXForm(), _target);
 
 			_maxForce = Settings.FORCE_INV_SCALE(def.MaxForce);
-			_force.SetZero();
+			_impulse.SetZero();
 
 			float mass = _body2._mass;
 
@@ -152,16 +152,17 @@ namespace Box2DX.Dynamics
 			float k = (def.TimeStep * mass) * (omega * omega);
 
 			// magic formulas
+			Box2DXDebug.Assert(d + k > Settings.FLT_EPSILON);
 			_gamma = 1.0f / (d + k);
 			_beta = k / (d + k);
 		}
 
-		public override void InitVelocityConstraints(TimeStep step)
+		internal override void InitVelocityConstraints(TimeStep step)
 		{
 			Body b = _body2;
 
 			// Compute the effective mass matrix.
-			Vector2 r = Common.Math.Mul(b._xf.R, _localAnchor - b.GetLocalCenter());
+			Vector2 r = Common.Math.Mul(b.GetXForm().R, _localAnchor - b.GetLocalCenter());
 
 			// K    = [(1/m1 + 1/m2) * eye(2) - skew(r1) * invI1 * skew(r1) - skew(r2) * invI2 * skew(r2)]
 			//      = [1/m1+1/m2     0    ] + invI1 * [r1.y*r1.y -r1.x*r1.y] + invI2 * [r1.y*r1.y -r1.x*r1.y]
@@ -189,37 +190,37 @@ namespace Box2DX.Dynamics
 			b._angularVelocity *= 0.98f;
 
 			// Warm starting.
-			Vector2 P = Settings.FORCE_SCALE(step.Dt) * _force;
+			Vector2 P = Settings.FORCE_SCALE(step.Dt) * _impulse;
 			b._linearVelocity += invMass * P;
 			b._angularVelocity += invI * Vector2.Cross(r, P);
 		}
 
-		public override void SolveVelocityConstraints(TimeStep step)
+		internal override void SolveVelocityConstraints(TimeStep step)
 		{
 			Body b = _body2;
 
-			Vector2 r = Common.Math.Mul(b._xf.R, _localAnchor - b.GetLocalCenter());
+			Vector2 r = Common.Math.Mul(b.GetXForm().R, _localAnchor - b.GetLocalCenter());
 
 			// Cdot = v + cross(w, r)
 			Vector2 Cdot = b._linearVelocity + Vector2.Cross(b._angularVelocity, r);
 			Vector2 force = -Settings.FORCE_INV_SCALE(step.Inv_Dt) * Common.Math.Mul(_mass, Cdot + 
-				(_beta * step.Inv_Dt) * _C + Settings.FORCE_SCALE(step.Dt) * (_gamma * _force));
+				(_beta * step.Inv_Dt) * _C + Settings.FORCE_SCALE(step.Dt) * (_gamma * _impulse));
 
-			Vector2 oldForce = _force;
-			_force += force;
-			float forceMagnitude = _force.Length();
+			Vector2 oldForce = _impulse;
+			_impulse += force;
+			float forceMagnitude = _impulse.Length();
 			if (forceMagnitude > _maxForce)
 			{
-				_force *= _maxForce / forceMagnitude;
+				_impulse *= _maxForce / forceMagnitude;
 			}
-			force = _force - oldForce;
+			force = _impulse - oldForce;
 
 			Vector2 P = Settings.FORCE_SCALE(step.Dt) * force;
 			b._linearVelocity += b._invMass * P;
 			b._angularVelocity += b._invI * Vector2.Cross(r, P);
 		}
 
-		public override bool SolvePositionConstraints()
+		internal override bool SolvePositionConstraints()
 		{
 			return true;
 		}

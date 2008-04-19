@@ -318,14 +318,14 @@ namespace Box2DX.Dynamics
 			_enableMotor = def.EnableMotor;
 		}
 
-		public override void InitVelocityConstraints(TimeStep step)
+		internal override void InitVelocityConstraints(TimeStep step)
 		{
 			Body b1 = _body1;
 			Body b2 = _body2;
 
 			// Compute the effective mass matrix.
-			Vector2 r1 = Box2DXMath.Mul(b1._xf.R, _localAnchor1 - b1.GetLocalCenter());
-			Vector2 r2 = Box2DXMath.Mul(b2._xf.R, _localAnchor2 - b2.GetLocalCenter());
+			Vector2 r1 = Box2DXMath.Mul(b1.GetXForm().R, _localAnchor1 - b1.GetLocalCenter());
+			Vector2 r2 = Box2DXMath.Mul(b2.GetXForm().R, _localAnchor2 - b2.GetLocalCenter());
 
 			// K    = [(1/m1 + 1/m2) * eye(2) - skew(r1) * invI1 * skew(r1) - skew(r2) * invI2 * skew(r2)]
 			//      = [1/m1+1/m2     0    ] + invI1 * [r1.y*r1.y -r1.x*r1.y] + invI2 * [r1.y*r1.y -r1.x*r1.y]
@@ -389,7 +389,7 @@ namespace Box2DX.Dynamics
 				_limitForce = 0.0f;
 			}
 
-			if (World.s_enableWarmStarting != 0)
+			if (step.WarmStarting)
 			{
 				b1._linearVelocity -= Settings.FORCE_SCALE(step.Dt) * invMass1 * _pivotForce;
 				b1._angularVelocity -= Settings.FORCE_SCALE(step.Dt) * invI1 * (Vector2.Cross(r1, _pivotForce) + Settings.FORCE_INV_SCALE(_motorForce + _limitForce));
@@ -407,13 +407,13 @@ namespace Box2DX.Dynamics
 			_limitPositionImpulse = 0.0f;
 		}
 
-		public override void SolveVelocityConstraints(TimeStep step)
+		internal override void SolveVelocityConstraints(TimeStep step)
 		{
 			Body b1 = _body1;
 			Body b2 = _body2;
 
-			Vector2 r1 = Box2DXMath.Mul(b1._xf.R, _localAnchor1 - b1.GetLocalCenter());
-			Vector2 r2 = Box2DXMath.Mul(b2._xf.R, _localAnchor2 - b2.GetLocalCenter());
+			Vector2 r1 = Box2DXMath.Mul(b1.GetXForm().R, _localAnchor1 - b1.GetLocalCenter());
+			Vector2 r2 = Box2DXMath.Mul(b2.GetXForm().R, _localAnchor2 - b2.GetLocalCenter());
 
 			// Solve point-to-point constraint
 			Vector2 pivotCdot = b2._linearVelocity + Vector2.Cross(b2._angularVelocity, r2) - b1._linearVelocity -
@@ -469,7 +469,7 @@ namespace Box2DX.Dynamics
 			}
 		}
 
-		public override bool SolvePositionConstraints()
+		internal override bool SolvePositionConstraints()
 		{
 			Body b1 = _body1;
 			Body b2 = _body2;
@@ -477,8 +477,8 @@ namespace Box2DX.Dynamics
 			float positionError = 0.0f;
 
 			// Solve point-to-point position error.
-			Vector2 r1 = Box2DXMath.Mul(b1._xf.R, _localAnchor1 - b1.GetLocalCenter());
-			Vector2 r2 = Box2DXMath.Mul(b2._xf.R, _localAnchor2 - b2.GetLocalCenter());
+			Vector2 r1 = Box2DXMath.Mul(b1.GetXForm().R, _localAnchor1 - b1.GetLocalCenter());
+			Vector2 r2 = Box2DXMath.Mul(b2.GetXForm().R, _localAnchor2 - b2.GetLocalCenter());
 
 			Vector2 p1 = b1._sweep.C + r1;
 			Vector2 p2 = b2._sweep.C + r2;
