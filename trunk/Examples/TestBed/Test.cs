@@ -216,9 +216,15 @@ namespace TestBed
 			new TestEntry("Vertical Stack", VerticalStack.Create),
 			new TestEntry("Pyramid", Pyramid.Create),
 			new TestEntry("Bridge", Bridge.Create),
-			new TestEntry("Pulleys", Pulleys.Create),
+			new TestEntry("Dominos", Dominos.Create),
+			new TestEntry("CCD Test", CCDTest.Create),
+			//new TestEntry("Biped Test", BipedTest.Create),
+			new TestEntry("Car", Car.Create),
 			new TestEntry("Gears", Gears.Create),
-			new TestEntry("Broad Phase", BroadPhaseTest.Create)
+			new TestEntry("Chain", Chain.Create),
+			new TestEntry("Apply Force", ApplyForce.Create),
+			new TestEntry("Pulleys", Pulleys.Create),
+			//new TestEntry("Broad Phase", BroadPhaseTest.Create)
 		};
 		public static int k_maxContactPoints = 2048;
 

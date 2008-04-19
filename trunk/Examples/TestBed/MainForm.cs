@@ -368,6 +368,7 @@ namespace TestBed
 		{
 			testEntry = cmbbTests.SelectedItem as TestEntry;
 			CurrentTest = testEntry.CreateFcn();
+			this.Text = "Box2DX " + Application.ProductVersion + " - " + testEntry.ToString();
 		}
 
 		#endregion Controls Events Handlers
