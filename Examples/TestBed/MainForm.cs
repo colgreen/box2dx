@@ -306,7 +306,7 @@ namespace TestBed
 
 		private void chkbShapes_CheckedChanged(object sender, EventArgs e)
 		{
-			settings.enableTOI = chkbToi.Checked ? 1 : 0;
+			settings.drawShapes = chkbShapes.Checked ? 1 : 0;
 		}
 
 		private void chkbJoints_CheckedChanged(object sender, EventArgs e)

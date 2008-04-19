@@ -40,7 +40,7 @@ namespace TestBed
 
 				BodyDef bd = new BodyDef();
 				bd.Position.Set(0.0f, -10.0f);
-				ground = _world.CreateStaticBody(bd);
+				ground = _world.CreateBody(bd);
 				ground.CreateShape(sd);
 			}
 
@@ -50,7 +50,6 @@ namespace TestBed
 				sd.Density = 20.0f;
 				sd.Friction = 0.2f;
 
-
 				RevoluteJointDef jd = new RevoluteJointDef();
 				const int numPlanks = 30;
 
@@ -59,7 +58,7 @@ namespace TestBed
 				{
 					BodyDef bd = new BodyDef();
 					bd.Position.Set(-14.5f + 1.0f * i, 5.0f);
-					Body body = _world.CreateDynamicBody(bd);
+					Body body = _world.CreateBody(bd);
 					body.CreateShape(sd);
 					body.SetMassFromShapes();
 

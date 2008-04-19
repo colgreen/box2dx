@@ -32,62 +32,130 @@ namespace Box2DX.Dynamics
 	{
 		public Manifold _manifold = new Manifold();
 
-		public override Manifold GetManifolds()
+		public override Manifold[] GetManifolds()
 		{
-			return _manifold;
+			return new Manifold[] { _manifold };
 		}
 
 		public PolyAndCircleContact(Shape s1, Shape s2)
 			: base(s1, s2)
 		{
-			Box2DXDebug.Assert(_shape1._type == ShapeType.PolygonShape);
-			Box2DXDebug.Assert(_shape2._type == ShapeType.CircleShape);
+			Box2DXDebug.Assert(_shape1.GetType() == ShapeType.PolygonShape);
+			Box2DXDebug.Assert(_shape2.GetType() == ShapeType.CircleShape);
 			_manifold.PointCount = 0;
-			_manifold.Points[0].NormalForce = 0.0f;
-			_manifold.Points[0].TangentForce = 0.0f;
+			_manifold.Points[0].NormalImpulse = 0.0f;
+			_manifold.Points[0].TangentImpulse = 0.0f;
 		}
 
 		public override void Evaluate(ContactListener listener)
 		{
 			Body b1 = _shape1.GetBody();
 			Body b2 = _shape2.GetBody();
-
+#warning "needfix"
 			//memcpy(&m0, &m_manifold, sizeof(b2Manifold));
-			Manifold m0 = new Manifold();
-			m0.Normal = _manifold.Normal;
-			m0.PointCount = _manifold.PointCount;
-			m0.Points = _manifold.Points;
+			Manifold m0 = _manifold.Clone();
 
-			Collision.Collision.CollidePolygonAndCircle(ref _manifold, (PolygonShape)_shape1, b1._xf, (CircleShape)_shape2, b2._xf);
+			Collision.Collision.CollidePolygonAndCircle(ref _manifold, (PolygonShape)_shape1, b1.GetXForm(),
+				(CircleShape)_shape2, b2.GetXForm());
 
+			bool[] persisted = new bool[] { false, false };
+
+			ContactPoint cp = new ContactPoint();
+			cp.Shape1 = _shape1;
+			cp.Shape2 = _shape2;
+			cp.Friction = _friction;
+			cp.Restitution = _restitution;
+
+			// Match contact ids to facilitate warm starting.
 			if (_manifold.PointCount > 0)
 			{
+				// Match old contact ids to new contact ids and copy the
+				// stored impulses to warm start the solver.
+				for (int i = 0; i < _manifold.PointCount; ++i)
+				{
+					ManifoldPoint mp = _manifold.Points[i];
+					mp.NormalImpulse = 0.0f;
+					mp.TangentImpulse = 0.0f;
+					bool found = false;
+					ContactID id = mp.ID;
+
+					for (int j = 0; j < m0.PointCount; ++j)
+					{
+						if (persisted[j] == true)
+						{
+							continue;
+						}
+
+						ManifoldPoint mp0 = m0.Points[j];
+
+						if (mp0.ID.Key == id.Key)
+						{
+							persisted[j] = true;
+							mp.NormalImpulse = mp0.NormalImpulse;
+							mp.TangentImpulse = mp0.TangentImpulse;
+
+							// A persistent point.
+							found = true;
+
+							// Report persistent point.
+							if (listener != null)
+							{
+								cp.Position = b1.GetWorldPoint(mp.LocalPoint1);
+								Vector2 v1 = b1.GetLinearVelocityFromLocalPoint(mp.LocalPoint1);
+								Vector2 v2 = b2.GetLinearVelocityFromLocalPoint(mp.LocalPoint2);
+								cp.Velocity = v2 - v1;
+								cp.Normal = _manifold.Normal;
+								cp.Separation = mp.Separation;
+								cp.ID = id;
+								listener.Persist(cp);
+							}
+							break;
+						}
+					}
+
+					// Report added point.
+					if (found == false && listener != null)
+					{
+						cp.Position = b1.GetWorldPoint(mp.LocalPoint1);
+						Vector2 v1 = b1.GetLinearVelocityFromLocalPoint(mp.LocalPoint1);
+						Vector2 v2 = b2.GetLinearVelocityFromLocalPoint(mp.LocalPoint2);
+						cp.Velocity = v2 - v1;
+						cp.Normal = _manifold.Normal;
+						cp.Separation = mp.Separation;
+						cp.ID = id;
+						listener.Add(cp);
+					}
+				}
+
 				_manifoldCount = 1;
-				if (m0.PointCount == 0)
-				{
-					_manifold.Points[0].ID.Features.Flip |= Collision.Collision.NewPoint;
-				}
-				else
-				{
-					_manifold.Points[0].ID.Features.Flip &= (byte)~Collision.Collision.NewPoint;
-				}
 			}
 			else
 			{
 				_manifoldCount = 0;
-				if (m0.PointCount > 0 && listener != null)
+			}
+
+			if (listener == null)
+			{
+				return;
+			}
+
+			// Report removed points.
+			for (int i = 0; i < m0.PointCount; ++i)
+			{
+				if (persisted[i])
 				{
-					ContactPoint cp = new ContactPoint();
-					cp.Shape1 = _shape1;
-					cp.Shape2 = _shape2;
-					cp.Normal = m0.Normal;
-					cp.Position = Common.Math.Mul(b1._xf, m0.Points[0].LocalPoint1);
-					cp.Separation = m0.Points[0].Separation;
-					cp.NormalForce = m0.Points[0].NormalForce;
-					cp.TangentForce = m0.Points[0].TangentForce;
-					cp.ID = m0.Points[0].ID;
-					listener.Remove(cp);
+					continue;
 				}
+
+				ManifoldPoint mp0 = m0.Points[i];
+				cp.Position = b1.GetWorldPoint(mp0.LocalPoint1);
+				Vector2 v1 = b1.GetLinearVelocityFromLocalPoint(mp0.LocalPoint1);
+				Vector2 v2 = b2.GetLinearVelocityFromLocalPoint(mp0.LocalPoint2);
+				cp.Velocity = v2 - v1;
+				cp.Normal = m0.Normal;
+				cp.Separation = mp0.Separation;
+				cp.ID = mp0.ID;
+				listener.Remove(cp);
 			}
 		}
 
@@ -98,13 +166,6 @@ namespace Box2DX.Dynamics
 
 		new public static void Destroy(Contact contact)
 		{
-			Box2DXDebug.Assert(contact._shape1._body._contactList != contact._node1);
-			Box2DXDebug.Assert(contact._shape1._body._contactList != contact._node2);
-			Box2DXDebug.Assert(contact._shape2._body._contactList != contact._node1);
-			Box2DXDebug.Assert(contact._shape2._body._contactList != contact._node2);
-
-			if (contact is IDisposable)
-				(contact as IDisposable).Dispose();
 			contact = null;
 		}
 	}

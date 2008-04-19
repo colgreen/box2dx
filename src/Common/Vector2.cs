@@ -53,7 +53,7 @@ namespace Box2DX.Common
 		/// </summary>
 		/// <param name="x_"></param>
 		/// <param name="y_"></param>
-		public void Set(float x_, float y_) { X = x_; Y = y_; }
+		public void Set(float x, float y) { X = x; Y = y; }
 
 		/// <summary>
 		///  Get the length of this vector (the norm).

@@ -97,15 +97,22 @@ namespace TestBed
 		}
 	}
 
+	public enum ContactState
+	{
+		ContactAdded,
+		ContactPersisted,
+		ContactRemoved
+	}
+
 	public struct MyContactPoint
 	{
 		public Shape shape1;
 		public Shape shape2;
 		public Vector2 normal;
 		public Vector2 position;
-		public float normalForce;
-		public float tangentForce;
-		public int state; // 0-add, 1-persist, 2-remove
+		public Vector2 velocity;
+		public ContactID id;
+		public ContactState state;
 	}
 
 	// This is called when a joint in the world is implicitly destroyed
@@ -156,9 +163,8 @@ namespace TestBed
 			cp.shape2 = point.Shape2;
 			cp.position = point.Position;
 			cp.normal = point.Normal;
-			cp.normalForce = point.NormalForce;
-			cp.tangentForce = point.TangentForce;
-			cp.state = 0;
+			cp.id = point.ID;
+			cp.state =  ContactState.ContactAdded;
 
 			++test._pointCount;
 		}
@@ -175,9 +181,8 @@ namespace TestBed
 			cp.shape2 = point.Shape2;
 			cp.position = point.Position;
 			cp.normal = point.Normal;
-			cp.normalForce = point.NormalForce;
-			cp.tangentForce = point.TangentForce;
-			cp.state = 1;
+			cp.id = point.ID;
+			cp.state = ContactState.ContactPersisted;
 
 			++test._pointCount;
 		}
@@ -194,9 +199,8 @@ namespace TestBed
 			cp.shape2 = point.Shape2;
 			cp.position = point.Position;
 			cp.normal = point.Normal;
-			cp.normalForce = point.NormalForce;
-			cp.tangentForce = point.TangentForce;
-			cp.state = 2;
+			cp.id = point.ID;
+			cp.state = ContactState.ContactRemoved;
 
 			++test._pointCount;
 		}
@@ -247,9 +251,9 @@ namespace TestBed
 			_destructionListener.test = this;
 			_boundaryListener.test = this;
 			_contactListener.test = this;
-			_world.SetListener(_destructionListener);
-			_world.SetListener(_boundaryListener);
-			_world.SetListener(_contactListener);
+			_world.SetDestructionListener(_destructionListener);
+			_world.SetBoundaryListener(_boundaryListener);
+			_world.SetContactListener(_contactListener);
 			_world.SetDebugDraw(_debugDraw);
 		}
 
@@ -296,12 +300,12 @@ namespace TestBed
 			for (int i = 0; i < count; ++i)
 			{
 				Body shapeBody = shapes[i].GetBody();
-				if (shapeBody.IsStatic() == false)
+				if (shapeBody.IsStatic() == false && shapeBody.GetMass() > 0.0f)
 				{
 					bool inside = shapes[i].TestPoint(shapeBody.GetXForm(), p);
 					if (inside)
 					{
-						body = shapes[i]._body;
+						body = shapes[i].GetBody();
 						break;
 					}
 				}
@@ -310,14 +314,14 @@ namespace TestBed
 			if (body != null)
 			{
 				MouseJointDef md = new MouseJointDef();
-				md.Body1 = _world._groundBody;
+				md.Body1 = _world.GetGroundBody();
 				md.Body2 = body;
 				md.Target = p;
 #if TARGET_FLOAT32_IS_FIXED
-				md.MaxForce = (body._mass < 16.0f)? 
-					(1000.0f * body._mass) : 16000.0f;
+				md.MaxForce = (body.GetMass() < 16.0f)? 
+					(1000.0f * body.GetMass()) : 16000.0f;
 #else
-				md.MaxForce = 1000.0f * body._mass;
+				md.MaxForce = 1000.0f * body.GetMass();
 #endif
 				_mouseJoint = (MouseJoint)_world.CreateJoint(md);
 				body.WakeUp();
@@ -353,7 +357,7 @@ namespace TestBed
 			bd.AllowSleep = true;
 			bd.Position.Set(Box2DX.Common.Math.Random(-15.0f, 15.0f), 30.0f);
 			bd.IsBullet = true;
-			_bomb = _world.CreateDynamicBody(bd);
+			_bomb = _world.CreateBody(bd);
 			_bomb.SetLinearVelocity(-5.0f * bd.Position);
 
 			CircleDef sd = new CircleDef();
@@ -394,15 +398,15 @@ namespace TestBed
 			flags += (uint)settings.drawCOMs * (uint)DebugDraw.DrawFlags.CenterOfMass;
 			_debugDraw.Flags = (DebugDraw.DrawFlags)flags;
 
-			World.s_enableWarmStarting = settings.enableWarmStarting;
-			World.s_enablePositionCorrection = settings.enablePositionCorrection;
-			World.s_enableTOI = settings.enableTOI;
+			_world.SetWarmStarting(settings.enableWarmStarting > 0);
+			_world.SetPositionCorrection(settings.enablePositionCorrection > 0);
+			_world.SetContinuousPhysics(settings.enableTOI > 0);
 
 			_pointCount = 0;
 
 			_world.Step(timeStep, settings.iterationCount);
 
-			_world._broadPhase.Validate();
+			_world.Validate();
 
 			if (_bomb != null && _bomb.IsFrozen())
 			{
@@ -413,22 +417,18 @@ namespace TestBed
 			if (settings.drawStats != 0)
 			{
 				OpenGLDebugDraw.DrawString(5, _textLine, String.Format("proxies(max) = {0}({1}), pairs(max) = {2}({3})",
-					new object[]{_world._broadPhase._proxyCount, Box2DX.Common.Settings.MaxProxies,
-						_world._broadPhase._pairManager._pairCount, Box2DX.Common.Settings.MaxProxies}));
+					new object[]{_world.GetProxyCount(), Box2DX.Common.Settings.MaxProxies,
+						_world.GetPairCount(), Box2DX.Common.Settings.MaxProxies}));
 				_textLine += 15;
 
 				OpenGLDebugDraw.DrawString(5, _textLine, String.Format("bodies/contacts/joints = {0}/{1}/{2}",
-					new object[] { _world._bodyCount, _world._contactCount, _world._jointCount }));
-				_textLine += 15;
-
-				OpenGLDebugDraw.DrawString(5, _textLine, String.Format("position iterations = {0}",
-					new object[] { _world._positionIterationCount }));
+					new object[] { _world.GetBodyCount(), _world.GetContactCount(), _world.GetJointCount() }));
 				_textLine += 15;
 			}
 
 			if (_mouseJoint != null)
 			{
-				Body body = _mouseJoint._body2;
+				Body body = _mouseJoint.GetBody2();
 				Vector2 p1 = body.GetWorldPoint(_mouseJoint._localAnchor);
 				Vector2 p2 = _mouseJoint._target;
 
@@ -449,19 +449,19 @@ namespace TestBed
 
 			if (settings.drawContactPoints!=0)
 			{
-				float k_forceScale = 0.01f;
+				//float k_forceScale = 0.01f;
 				float k_axisScale = 0.3f;
 
 				for (int i = 0; i < _pointCount; ++i)
 				{
 					MyContactPoint point = _points[i];
 
-					if (point.state == 0)
+					if (point.state == ContactState.ContactAdded)
 					{
 						// Add
 						OpenGLDebugDraw.DrawPoint(point.position, 10.0f, new Color(0.3f, 0.95f, 0.3f));
 					}
-					else if (point.state == 1)
+					else if (point.state == ContactState.ContactPersisted)
 					{
 						// Persist
 						OpenGLDebugDraw.DrawPoint(point.position, 5.0f, new Color(0.3f, 0.3f, 0.95f));
@@ -480,17 +480,17 @@ namespace TestBed
 					}
 					else if (settings.drawContactForces == 1)
 					{
-						Vector2 p1 = point.position;
+						/*Vector2 p1 = point.position;
 						Vector2 p2 = p1 + k_forceScale * point.normalForce * point.normal;
-						OpenGLDebugDraw.DrawSegment(p1, p2, new Color(0.9f, 0.9f, 0.3f));
+						OpenGLDebugDraw.DrawSegment(p1, p2, new Color(0.9f, 0.9f, 0.3f));*/
 					}
 
 					if (settings.drawFrictionForces == 1)
 					{
-						Vector2 tangent = Vector2.Cross(point.normal, 1.0f);
+						/*Vector2 tangent = Vector2.Cross(point.normal, 1.0f);
 						Vector2 p1 = point.position;
 						Vector2 p2 = p1 + k_forceScale * point.tangentForce * tangent;
-						OpenGLDebugDraw.DrawSegment(p1, p2, new Color(0.9f, 0.9f, 0.3f));
+						OpenGLDebugDraw.DrawSegment(p1, p2, new Color(0.9f, 0.9f, 0.3f));*/
 					}
 				}
 			}

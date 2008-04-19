@@ -32,9 +32,7 @@ namespace Box2DX.Collision
 
 	public partial class Collision
 	{
-		public static readonly byte NullFeature = byte.MaxValue; //0xff
-		public static readonly byte NewPoint = 0x02;
-		public static readonly byte OldPoint = 0x04;
+		public static readonly byte NullFeature = Common.Math.UCHAR_MAX;
 
 		public static bool TestOverlap(AABB a, AABB b)
 		{
@@ -120,19 +118,31 @@ namespace Box2DX.Collision
 		public float Separation;
 
 		/// <summary>
-		/// The non-penetration force.
+		/// The non-penetration impulse.
 		/// </summary>
-		public float NormalForce;
+		public float NormalImpulse;
 
 		/// <summary>
-		/// The friction force.
+		/// The friction impulse.
 		/// </summary>
-		public float TangentForce;
+		public float TangentImpulse;
 
 		/// <summary>
 		/// Uniquely identifies a contact point between two shapes.
 		/// </summary>
 		public ContactID ID;
+
+		public ManifoldPoint Clone()
+		{
+			ManifoldPoint newPoint = new ManifoldPoint();
+			newPoint.LocalPoint1 = this.LocalPoint1;
+			newPoint.LocalPoint2 = this.LocalPoint2;
+			newPoint.Separation = this.Separation;
+			newPoint.NormalImpulse = this.NormalImpulse;
+			newPoint.TangentImpulse = this.TangentImpulse;
+			newPoint.ID = this.ID;
+			return newPoint;
+		}
 	}
 
 #warning "CAS"
@@ -160,6 +170,21 @@ namespace Box2DX.Collision
 		{
 			for (int i = 0; i < Settings.MaxManifoldPoints; i++)
 				Points[i] = new ManifoldPoint();
+		}
+
+		public Manifold Clone()
+		{
+			Manifold newManifold = new Manifold();
+			newManifold.Normal = this.Normal;
+			newManifold.PointCount = this.PointCount;
+			int pointCount = this.Points.Length;
+			ManifoldPoint[] tmp = new ManifoldPoint[pointCount];
+			for (int i = 0; i < pointCount; i++)
+			{
+				tmp[i] = this.Points[i].Clone();
+			}
+			newManifold.Points = tmp;
+			return newManifold;
 		}
 	}
 
@@ -201,7 +226,7 @@ namespace Box2DX.Collision
 			Vector2 d = P2 - P1;
 			Vector2 n = Vector2.Cross(d, 1.0f);
 
-			float k_slop = 100.0f * Common.Math.FLOAT32_EPSILON;
+			float k_slop = 100.0f * Common.Settings.FLT_EPSILON;
 			float denom = -Vector2.Dot(r, n);
 
 			// Cull back facing collision and ignore parallel segments.

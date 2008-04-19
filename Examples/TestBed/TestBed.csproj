@@ -82,13 +82,25 @@
     </Compile>
     <Compile Include="Render.cs" />
     <Compile Include="Test.cs" />
-    <Compile Include="Tests\Bridge.cs" />
-    <Compile Include="Tests\BroadPhaseTest.cs" />
-    <Compile Include="Tests\Gears.cs" />
-    <Compile Include="Tests\Pulleys.cs" />
+    <Compile Include="Tests\Bridge.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Tests\BroadPhaseTest.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Tests\Gears.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Tests\Pulleys.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Tests\Pyramid.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Tests\SimpleTest.cs" />
-    <Compile Include="Tests\Pyramid.cs" />
-    <Compile Include="Tests\VerticalStack.cs" />
+    <Compile Include="Tests\VerticalStack.cs">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Box2DX.csproj">

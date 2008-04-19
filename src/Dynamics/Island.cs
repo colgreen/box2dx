@@ -223,7 +223,7 @@ namespace Box2DX.Dynamics
 			ContactSolver contactSolver = new ContactSolver(step, _contacts, _contactCount);
 
 			// Initialize velocity constraints.
-			contactSolver.InitVelocityConstraints();
+			contactSolver.InitVelocityConstraints(step);
 
 			for (int i = 0; i < _jointCount; ++i)
 			{
@@ -298,7 +298,7 @@ namespace Box2DX.Dynamics
 
 			if (allowSleep)
 			{
-				float minSleepTime = Common.Math.FLOAT32_MAX;
+				float minSleepTime = Common.Settings.FLT_MAX;
 #if !TARGET_FLOAT32_IS_FIXED
 				float linTolSqr = Settings.LinearSleepTolerance * Settings.LinearSleepTolerance;
 				float angTolSqr = Settings.AngularSleepTolerance * Settings.AngularSleepTolerance;
@@ -431,41 +431,29 @@ namespace Box2DX.Dynamics
 			{
 				Contact c = _contacts[i];
 				ContactConstraint cc = constraints[i];
-				ContactPoint cp = new ContactPoint();
-				cp.Shape1 = c.GetShape1();
-				cp.Shape2 = c.GetShape2();
-				Body b1 = cp.Shape1.GetBody();
+				ContactResult cr = new ContactResult();
+				cr.Shape1 = c.GetShape1();
+				cr.Shape2 = c.GetShape2();
+				Body b1 = cr.Shape1.GetBody();
 				int manifoldCount = c.GetManifoldCount();
-				Manifold manifolds = c.GetManifolds();
-#warning "manifold array"
-				//for (int j = 0; j < manifoldCount; ++j)
-				if(manifoldCount>0)
+				Manifold[] manifolds = c.GetManifolds();
+				for (int j = 0; j < manifoldCount; ++j)
 				{
-					Manifold manifold = manifolds;
-					cp.Normal = manifold.Normal;
+					Manifold manifold = manifolds[j];
+					cr.Normal = manifold.Normal;
 					for (int k = 0; k < manifold.PointCount; ++k)
 					{
 						ManifoldPoint point = manifold.Points[k];
 						ContactConstraintPoint ccp = cc.Points[k];
-						cp.Position = Common.Math.Mul(b1.GetXForm(), point.LocalPoint1);
-						cp.Separation = point.Separation;
+						cr.Position = b1.GetWorldPoint(point.LocalPoint1);
 
 						// TOI constraint results are not stored, so get
 						// the result from the constraint.
-						cp.NormalForce = ccp.NormalForce;
-						cp.TangentForce = ccp.TangentForce;
+						cr.NormalImpulse = ccp.NormalImpulse;
+						cr.TangentImpulse = ccp.TangentImpulse;
+						cr.ID = point.ID;
 
-						if ((point.ID.Features.Flip & Collision.Collision.NewPoint) != 0)
-						{
-							point.ID.Features.Flip &= (byte)~Collision.Collision.NewPoint;
-							cp.ID = point.ID;
-							_listener.Add(cp);
-						}
-						else
-						{
-							cp.ID = point.ID;
-							_listener.Persist(cp);
-						}
+						_listener.Result(cr);
 					}
 				}
 			}

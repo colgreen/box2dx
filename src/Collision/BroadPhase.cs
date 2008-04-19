@@ -55,7 +55,7 @@ namespace Box2DX.Collision
 		public ushort[/*2*/] UpperValues = new ushort[2];
 	}
 #warning "CAS"
-	public class Bound : ICloneable
+	public class Bound
 	{
 		public bool IsLower { get { return (Value & (ushort)1) == (ushort)0; } }
 		public bool IsUpper { get { return (Value & (ushort)1) == (ushort)1; } }
@@ -64,7 +64,7 @@ namespace Box2DX.Collision
 		public ushort ProxyId;
 		public ushort StabbingCount;
 
-		public object Clone()
+		public Bound Clone()
 		{
 			Bound newBound = new Bound();
 			newBound.Value = this.Value;
@@ -198,33 +198,23 @@ namespace Box2DX.Collision
 				Bound[] tmp = new Bound[boundCount - upperIndex];
 				for (int i = 0; i < (boundCount - upperIndex); i++)
 				{
-					tmp[i] = (Bound)bounds[upperIndex + i].Clone();
+					tmp[i] = bounds[upperIndex + i].Clone();
 				}
 				for (int i = 0; i < (boundCount - upperIndex); i++)
 				{
 					bounds[upperIndex + 2 + i] = tmp[i];
 				}
-				/*for (int i = 0; i < (boundCount - upperIndex); i++)
-				{
-					bounds[upperIndex + 2 + i] = null;
-					bounds[upperIndex + 2 + i] = (Bound)bounds[upperIndex + i].Clone();
-				}*/
 
 				//memmove(bounds + lowerIndex + 1, bounds + lowerIndex, (upperIndex - lowerIndex) * sizeof(b2Bound));
 				tmp = new Bound[upperIndex - lowerIndex];
 				for (int i = 0; i < (upperIndex - lowerIndex); i++)
 				{
-					tmp[i] = (Bound)bounds[lowerIndex + i].Clone();
+					tmp[i] = bounds[lowerIndex + i].Clone();
 				}
 				for (int i = 0; i < (upperIndex - lowerIndex); i++)
 				{
 					bounds[lowerIndex + 1 + i] = tmp[i];
 				}
-				/*for (int i = 0; i < (upperIndex - lowerIndex); i++)
-				{
-					bounds[lowerIndex + 1 + i] = null;
-					bounds[lowerIndex + 1 + i] = (Bound)bounds[lowerIndex + i].Clone();
-				}*/
 
 				// The upper index has increased because of the lower bound insertion.
 				++upperIndex;
@@ -308,33 +298,23 @@ namespace Box2DX.Collision
 				Bound[] tmp = new Bound[upperIndex - lowerIndex - 1];
 				for (int i = 0; i < (upperIndex - lowerIndex - 1); i++)
 				{
-					tmp[i] = (Bound)bounds[lowerIndex + 1 + i].Clone();
+					tmp[i] = bounds[lowerIndex + 1 + i].Clone();
 				}
 				for (int i = 0; i < (upperIndex - lowerIndex - 1); i++)
 				{
 					bounds[lowerIndex + i] = tmp[i];
 				}
-				/*for (int i = 0; i < (upperIndex - lowerIndex - 1); i++)
-				{
-					bounds[lowerIndex + i] = null;
-					bounds[lowerIndex + i] = (Bound)bounds[lowerIndex + 1 + i].Clone();
-				}*/
 
 				//memmove(bounds + upperIndex - 1, bounds + upperIndex + 1, (boundCount - upperIndex - 1) * sizeof(b2Bound));
 				tmp = new Bound[boundCount - upperIndex - 1];
 				for (int i = 0; i < (boundCount - upperIndex - 1); i++)
 				{
-					tmp[i] = (Bound)bounds[upperIndex + 1 + i].Clone();
+					tmp[i] = bounds[upperIndex + 1 + i].Clone();
 				}
 				for (int i = 0; i < (boundCount - upperIndex - 1); i++)
 				{
 					bounds[upperIndex - 1 + i] = tmp[i];
 				}
-				/*for (int i = 0; i < (boundCount - upperIndex - 1); i++)
-				{
-					bounds[upperIndex - 1 + i] = null;
-					bounds[upperIndex - 1 + i] = (Bound)bounds[upperIndex + 1 + i].Clone();
-				}*/
 
 				// Fix bound indices.
 				for (int index = lowerIndex; index < boundCount - 2; ++index)

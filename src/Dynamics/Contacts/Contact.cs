@@ -85,6 +85,10 @@ namespace Box2DX.Dynamics
 		/// </summary>
 		public Vector2 Position;
 		/// <summary>
+		/// Velocity of point on body2 relative to point on body1 (pre-solver).
+		/// </summary>
+		public Vector2 Velocity;
+		/// <summary>
 		/// Points from shape1 to shape2.
 		/// </summary>
 		public Vector2 Normal;
@@ -93,13 +97,49 @@ namespace Box2DX.Dynamics
 		/// </summary>
 		public float Separation;
 		/// <summary>
-		/// The signed magnitude of the normal force.
+		/// The combined friction coefficient.
 		/// </summary>
-		public float NormalForce;
+		public float Friction;
 		/// <summary>
-		/// The signed magnitude of the tangent force.
+		/// The combined restitution coefficient.
 		/// </summary>
-		public float TangentForce;
+		public float Restitution;
+		/// <summary>
+		/// The contact id identifies the features in contact.
+		/// </summary>
+		public ContactID ID;
+	}
+
+#warning "CAS"
+	/// <summary>
+	/// This structure is used to report contact point results.
+	/// </summary>
+	public class ContactResult
+	{
+		/// <summary>
+		/// The first shape.
+		/// </summary>
+		public Shape Shape1;
+		/// <summary>
+		/// The second shape.
+		/// </summary>
+		public Shape Shape2;
+		/// <summary>
+		/// Position in world coordinates.
+		/// </summary>
+		public Vector2 Position;
+		/// <summary>
+		/// Points from shape1 to shape2.
+		/// </summary>
+		public Vector2 Normal;
+		/// <summary>
+		/// The normal impulse applied to body2.
+		/// </summary>
+		public float NormalImpulse;
+		/// <summary>
+		/// The tangent impulse applied to body2.
+		/// </summary>
+		public float TangentImpulse;
 		/// <summary>
 		/// The contact id identifies the features in contact.
 		/// </summary>
@@ -165,8 +205,8 @@ namespace Box2DX.Dynamics
 
 			_manifoldCount = 0;
 
-			_friction = (float)System.Math.Sqrt(_shape1._friction * _shape2._friction);
-			_restitution = Common.Math.Max(_shape1._restitution, _shape2._restitution);
+			_friction = Settings.MixFriction(_shape1.Friction, _shape2.Friction);
+			_restitution = Settings.MixRestitution(_shape1.Restitution, _shape2.Restitution);
 			_prev = null;
 			_next = null;
 
@@ -222,8 +262,8 @@ namespace Box2DX.Dynamics
 				s_initialized = true;
 			}
 
-			ShapeType type1 = shape1._type;
-			ShapeType type2 = shape2._type;
+			ShapeType type1 = shape1.GetType();
+			ShapeType type2 = shape2.GetType();
 
 			Box2DXDebug.Assert(ShapeType.UnknownShape < type1 && type1 < ShapeType.ShapeTypeCount);
 			Box2DXDebug.Assert(ShapeType.UnknownShape < type2 && type2 < ShapeType.ShapeTypeCount);
@@ -238,11 +278,9 @@ namespace Box2DX.Dynamics
 				else
 				{
 					Contact c = createFcn(shape2, shape1);
-#warning "manifold array"
-					//for (int i = 0; i < c.GetManifoldCount(); ++i)
-					if(c.GetManifoldCount()>0)
+					for (int i = 0; i < c.GetManifoldCount(); ++i)
 					{
-						Manifold m = c.GetManifolds();
+						Manifold m = c.GetManifolds()[i];
 						m.Normal = -m.Normal;
 					}
 					return c;
@@ -278,7 +316,7 @@ namespace Box2DX.Dynamics
 		/// Get the manifold array.
 		/// </summary>
 		/// <returns></returns>
-		public abstract Manifold GetManifolds();
+		public abstract Manifold[] GetManifolds();
 
 		/// <summary>
 		/// Get the number of manifolds. This is 0 or 1 between convex shapes.

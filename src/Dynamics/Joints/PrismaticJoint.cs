@@ -191,8 +191,8 @@ namespace Box2DX.Dynamics
 		{
 			get
 			{
-				Vector2 ax1 = Common.Math.Mul(_body1._xf.R, _localXAxis1);
-				Vector2 ay1 = Common.Math.Mul(_body1._xf.R, _localYAxis1);
+				Vector2 ax1 = Common.Math.Mul(_body1.GetXForm().R, _localXAxis1);
+				Vector2 ay1 = Common.Math.Mul(_body1.GetXForm().R, _localYAxis1);
 
 				return Settings.FORCE_SCALE(1.0f) * (_limitForce * ax1 + _force * ay1);
 			}
@@ -233,8 +233,8 @@ namespace Box2DX.Dynamics
 				Body b1 = _body1;
 				Body b2 = _body2;
 
-				Vector2 r1 = Common.Math.Mul(b1._xf.R, _localAnchor1 - b1.GetLocalCenter());
-				Vector2 r2 = Common.Math.Mul(b2._xf.R, _localAnchor2 - b2.GetLocalCenter());
+				Vector2 r1 = Common.Math.Mul(b1.GetXForm().R, _localAnchor1 - b1.GetLocalCenter());
+				Vector2 r2 = Common.Math.Mul(b2.GetXForm().R, _localAnchor2 - b2.GetLocalCenter());
 				Vector2 p1 = b1._sweep.C + r1;
 				Vector2 p2 = b2._sweep.C + r2;
 				Vector2 d = p2 - p1;
@@ -368,32 +368,32 @@ namespace Box2DX.Dynamics
 			_enableMotor = def.EnableMotor;
 		}
 
-		public override void InitVelocityConstraints(TimeStep step)
+		internal override void InitVelocityConstraints(TimeStep step)
 		{
 			Body b1 = _body1;
 			Body b2 = _body2;
 
 			// Compute the effective masses.
-			Vector2 r1 = Box2DXMath.Mul(b1._xf.R, _localAnchor1 - b1.GetLocalCenter());
-			Vector2 r2 = Box2DXMath.Mul(b2._xf.R, _localAnchor2 - b2.GetLocalCenter());
+			Vector2 r1 = Box2DXMath.Mul(b1.GetXForm().R, _localAnchor1 - b1.GetLocalCenter());
+			Vector2 r2 = Box2DXMath.Mul(b2.GetXForm().R, _localAnchor2 - b2.GetLocalCenter());
 
 			float invMass1 = b1._invMass, invMass2 = b2._invMass;
 			float invI1 = b1._invI, invI2 = b2._invI;
 
 			// Compute point to line constraint effective mass.
 			// J = [-ay1 -cross(d+r1,ay1) ay1 cross(r2,ay1)]
-			Vector2 ay1 = Box2DXMath.Mul(b1._xf.R, _localYAxis1);
+			Vector2 ay1 = Box2DXMath.Mul(b1.GetXForm().R, _localYAxis1);
 			Vector2 e = b2._sweep.C + r2 - b1._sweep.C;	// e = d + r1
 
 			_linearJacobian.Set(-ay1, -Vector2.Cross(e, ay1), ay1, Vector2.Cross(r2, ay1));
 			_linearMass = invMass1 + invI1 * _linearJacobian.Angular1 * _linearJacobian.Angular1 +
 							invMass2 + invI2 * _linearJacobian.Angular2 * _linearJacobian.Angular2;
-			Box2DXDebug.Assert(_linearMass > Box2DXMath.FLOAT32_EPSILON);
+			Box2DXDebug.Assert(_linearMass > Settings.FLT_EPSILON);
 			_linearMass = 1.0f / _linearMass;
 
 			// Compute angular constraint effective mass.
 			_angularMass = invI1 + invI2;
-			if (_angularMass > Box2DXMath.FLOAT32_EPSILON)
+			if (_angularMass > Settings.FLT_EPSILON)
 			{
 				_angularMass = 1.0f / _angularMass;
 			}
@@ -402,11 +402,11 @@ namespace Box2DX.Dynamics
 			if (_enableLimit || _enableMotor)
 			{
 				// The motor and limit share a Jacobian and effective mass.
-				Vector2 ax1 = Box2DXMath.Mul(b1._xf.R, _localXAxis1);
+				Vector2 ax1 = Box2DXMath.Mul(b1.GetXForm().R, _localXAxis1);
 				_motorJacobian.Set(-ax1, -Vector2.Cross(e, ax1), ax1, Vector2.Cross(r2, ax1));
 				_motorMass = invMass1 + invI1 * _motorJacobian.Angular1 * _motorJacobian.Angular1 +
 								invMass2 + invI2 * _motorJacobian.Angular2 * _motorJacobian.Angular2;
-				Box2DXDebug.Assert(_motorMass > Box2DXMath.FLOAT32_EPSILON);
+				Box2DXDebug.Assert(_motorMass > Settings.FLT_EPSILON);
 				_motorMass = 1.0f / _motorMass;
 
 				if (_enableLimit)
@@ -451,7 +451,7 @@ namespace Box2DX.Dynamics
 				_limitForce = 0.0f;
 			}
 
-			if (World.s_enableWarmStarting != 0)
+			if (step.WarmStarting)
 			{
 				Vector2 P1 = Settings.FORCE_SCALE(step.Dt) * (_force * _linearJacobian.Linear1 + (_motorForce + _limitForce) * _motorJacobian.Linear1);
 				Vector2 P2 = Settings.FORCE_SCALE(step.Dt) * (_force * _linearJacobian.Linear2 + (_motorForce + _limitForce) * _motorJacobian.Linear2);
@@ -475,7 +475,7 @@ namespace Box2DX.Dynamics
 			_limitPositionImpulse = 0.0f;
 		}
 
-		public override void SolveVelocityConstraints(TimeStep step)
+		internal override void SolveVelocityConstraints(TimeStep step)
 		{
 			Body b1 = _body1;
 			Body b2 = _body2;
@@ -554,7 +554,7 @@ namespace Box2DX.Dynamics
 			}
 		}
 
-		public override bool SolvePositionConstraints()
+		internal override bool SolvePositionConstraints()
 		{
 			Body b1 = _body1;
 			Body b2 = _body2;
@@ -562,12 +562,12 @@ namespace Box2DX.Dynamics
 			float invMass1 = b1._invMass, invMass2 = b2._invMass;
 			float invI1 = b1._invI, invI2 = b2._invI;
 
-			Vector2 r1 = Box2DXMath.Mul(b1._xf.R, _localAnchor1 - b1.GetLocalCenter());
-			Vector2 r2 = Box2DXMath.Mul(b2._xf.R, _localAnchor2 - b2.GetLocalCenter());
+			Vector2 r1 = Box2DXMath.Mul(b1.GetXForm().R, _localAnchor1 - b1.GetLocalCenter());
+			Vector2 r2 = Box2DXMath.Mul(b2.GetXForm().R, _localAnchor2 - b2.GetLocalCenter());
 			Vector2 p1 = b1._sweep.C + r1;
 			Vector2 p2 = b2._sweep.C + r2;
 			Vector2 d = p2 - p1;
-			Vector2 ay1 = Box2DXMath.Mul(b1._xf.R, _localYAxis1);
+			Vector2 ay1 = Box2DXMath.Mul(b1.GetXForm().R, _localYAxis1);
 
 			// Solve linear (point-to-line) constraint.
 			float linearC = Vector2.Dot(ay1, d);
@@ -601,12 +601,12 @@ namespace Box2DX.Dynamics
 			// Solve linear limit constraint.
 			if (_enableLimit && _limitState != LimitState.InactiveLimit)
 			{
-				Vector2 r1_ = Box2DXMath.Mul(b1._xf.R, _localAnchor1 - b1.GetLocalCenter());
-				Vector2 r2_ = Box2DXMath.Mul(b2._xf.R, _localAnchor2 - b2.GetLocalCenter());
+				Vector2 r1_ = Box2DXMath.Mul(b1.GetXForm().R, _localAnchor1 - b1.GetLocalCenter());
+				Vector2 r2_ = Box2DXMath.Mul(b2.GetXForm().R, _localAnchor2 - b2.GetLocalCenter());
 				Vector2 p1_ = b1._sweep.C + r1_;
 				Vector2 p2_ = b2._sweep.C + r2_;
 				Vector2 d_ = p2_ - p1_;
-				Vector2 ax1 = Box2DXMath.Mul(b1._xf.R, _localXAxis1);
+				Vector2 ax1 = Box2DXMath.Mul(b1.GetXForm().R, _localXAxis1);
 
 				float translation = Vector2.Dot(ax1, d_);
 				float limitImpulse = 0.0f;

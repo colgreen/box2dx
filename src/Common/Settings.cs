@@ -28,9 +28,13 @@ namespace Box2DX.Common
 	public class Settings
 	{
 #if TARGET_FLOAT32_IS_FIXED
+		public static readonly float FLT_EPSILON = FIXED_EPSILON;
+		public static readonly float FLT_MAX = FIXED_MAX;
 		public static float	FORCE_SCALE2(x){ return x<<7;}
 		public static float FORCE_INV_SCALE2(x)	{return x>>7;}
 #else
+		public static readonly float FLT_EPSILON = 1.192092896e-07F;
+		public static readonly float FLT_MAX = 3.402823466e+38F;
 		public static float FORCE_SCALE(float x) { return x; }
 		public static float FORCE_INV_SCALE(float x) { return x; }
 #endif
@@ -129,5 +133,27 @@ namespace Box2DX.Common
 		/// A body cannot sleep if its angular velocity is above this tolerance.
 		/// </summary>
 		public static readonly float AngularSleepTolerance = 2.0f / 180.0f; // 2 degrees/s
+
+		/// <summary>
+		/// Friction mixing law. Feel free to customize this.
+		/// </summary>
+		/// <param name="friction1"></param>
+		/// <param name="friction2"></param>
+		/// <returns></returns>
+		public static float MixFriction(float friction1, float friction2)
+		{
+			return (float)System.Math.Sqrt(friction1 * friction2);
+		}
+
+		/// <summary>
+		/// Restitution mixing law. Feel free to customize this.
+		/// </summary>
+		/// <param name="restitution1"></param>
+		/// <param name="restitution2"></param>
+		/// <returns></returns>
+		public static float MixRestitution(float restitution1, float restitution2)
+		{
+			return restitution1 > restitution2 ? restitution1 : restitution2;
+		}
 	}
 }

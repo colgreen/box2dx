@@ -71,7 +71,7 @@ namespace Box2DX.Collision
 
 	public abstract class PairCallback
 	{
-		// This should return the new pair user data. It is okay if the
+		// This should return the new pair user data. It is ok if the
 		// user data is null.
 		public abstract object PairAdded(object proxyUserData1, object proxyUserData2);
 
@@ -380,8 +380,8 @@ namespace Box2DX.Collision
 				{
 					//node = &m_pairs[*node].next;
 					ni = node;
-					node = _pairs[node].Next;
-					ion = true;		
+					node = _pairs[ni].Next;
+					ion = true;
 				}
 			}
 

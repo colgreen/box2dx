@@ -32,7 +32,10 @@ namespace Box2DX.Dynamics
 	{
 		public float Dt; // time step
 		public float Inv_Dt; // inverse time step (0 if dt == 0).
+		public float DtRatio;	// dt * inv_dt0
 		public int MaxIterations;
+		public bool WarmStarting;
+		public bool PositionCorrection;
 	}
 
 	/// <summary>
@@ -41,44 +44,49 @@ namespace Box2DX.Dynamics
 	/// </summary>
 	public class World : IDisposable
 	{
-		public bool _lock;
+		internal bool _lock;
 
-		public BroadPhase _broadPhase;
-		public ContactManager _contactManager;
+		internal BroadPhase _broadPhase;
+		private ContactManager _contactManager;
 
-		public Body _bodyList;
-		public Joint _jointList;
+		private Body _bodyList;
+		private Joint _jointList;
 
 		// Do not access
-		public Contact _contactList;
+		internal Contact _contactList;
 
-		public int _bodyCount;
-		public int _contactCount;
-		public int _jointCount;
+		private int _bodyCount;
+		internal int _contactCount;
+		private int _jointCount;
 
-		public Vector2 _gravity;
+		private Vector2 _gravity;
+		/// <summary>
+		/// Get\Set global gravity vector.
+		/// </summary>
 		public Vector2 Gravity { get { return _gravity; } set { _gravity = value; } }
 
-		public bool _allowSleep;
+		private bool _allowSleep;
 
-		public Body _groundBody;
+		private Body _groundBody;
 
-		public DestructionListener _destructionListener;
-		public BoundaryListener _boundaryListener;
-		public ContactFilter _contactFilter;
-		public ContactListener _contactListener;
-		public DebugDraw _debugDraw;
+		private DestructionListener _destructionListener;
+		private BoundaryListener _boundaryListener;
+		internal ContactFilter _contactFilter;
+		internal ContactListener _contactListener;
+		private DebugDraw _debugDraw;
 
-		public int _positionIterationCount;
+		private float _inv_dt0;
 
-		// This is for debugging the solver.
-		public static int s_enablePositionCorrection = 1;
-
-		// This is for debugging the solver.
-		public static int s_enableWarmStarting = 1;
+		private int _positionIterationCount;
 
 		// This is for debugging the solver.
-		public static int s_enableTOI = 1;
+		private bool _positionCorrection;
+
+		// This is for debugging the solver.
+		private bool _warmStarting;
+
+		// This is for debugging the solver.
+		private bool _continuousPhysics;
 
 		/// <summary>
 		/// Construct a world object.
@@ -102,17 +110,23 @@ namespace Box2DX.Dynamics
 			_contactCount = 0;
 			_jointCount = 0;
 
+			_positionCorrection = true;
+			_warmStarting = true;
+			_continuousPhysics = true;
+
 			_allowSleep = doSleep;
 			_gravity = gravity;
 
 			_lock = false;
+
+			_inv_dt0 = 0.0f;
 
 			_contactManager = new ContactManager();
 			_contactManager._world = this;
 			_broadPhase = new BroadPhase(worldAABB, _contactManager);
 
 			BodyDef bd = new BodyDef();
-			_groundBody = CreateStaticBody(bd);
+			_groundBody = CreateBody(bd);
 		}
 
 		/// <summary>
@@ -130,7 +144,7 @@ namespace Box2DX.Dynamics
 		/// Register a destruction listener.
 		/// </summary>
 		/// <param name="listener"></param>
-		public void SetListener(DestructionListener listener)
+		public void SetDestructionListener(DestructionListener listener)
 		{
 			_destructionListener = listener;
 		}
@@ -139,7 +153,7 @@ namespace Box2DX.Dynamics
 		/// Register a broad-phase boundary listener.
 		/// </summary>
 		/// <param name="listener"></param>
-		public void SetListener(BoundaryListener listener)
+		public void SetBoundaryListener(BoundaryListener listener)
 		{
 			_boundaryListener = listener;
 		}
@@ -149,7 +163,7 @@ namespace Box2DX.Dynamics
 		/// Otherwise the default filter is used (b2_defaultFilter).
 		/// </summary>
 		/// <param name="filter"></param>
-		public void SetFilter(ContactFilter filter)
+		public void SetContactFilter(ContactFilter filter)
 		{
 			_contactFilter = filter;
 		}
@@ -158,7 +172,7 @@ namespace Box2DX.Dynamics
 		/// Register a contact event listener
 		/// </summary>
 		/// <param name="listener"></param>
-		public void SetListener(ContactListener listener)
+		public void SetContactListener(ContactListener listener)
 		{
 			_contactListener = listener;
 		}
@@ -175,13 +189,13 @@ namespace Box2DX.Dynamics
 		}
 
 		/// <summary>
-		/// Create a static rigid body given a definition. No reference to the definition
+		/// Create a rigid body given a definition. No reference to the definition
 		/// is retained.
 		/// @warning This function is locked during callbacks.
 		/// </summary>
 		/// <param name="def"></param>
 		/// <returns></returns>
-		public Body CreateStaticBody(BodyDef def)
+		public Body CreateBody(BodyDef def)
 		{
 			Box2DXDebug.Assert(_lock == false);
 			if (_lock == true)
@@ -189,37 +203,7 @@ namespace Box2DX.Dynamics
 				return null;
 			}
 
-			Body b = new Body(def, Body.BodyType.Static, this);
-
-			// Add to world doubly linked list.
-			b._prev = null;
-			b._next = _bodyList;
-			if (_bodyList!=null)
-			{
-				_bodyList._prev = b;
-			}
-			_bodyList = b;
-			++_bodyCount;
-
-			return b;
-		}
-
-		/// <summary>
-		/// Create a dynamic rigid body given a definition. No reference to the definition
-		/// is retained.
-		/// @warning This function is locked during callbacks.
-		/// </summary>
-		/// <param name="def"></param>
-		/// <returns></returns>
-		public Body CreateDynamicBody(BodyDef def)
-		{
-			Box2DXDebug.Assert(_lock == false);
-			if (_lock == true)
-			{
-				return null;
-			}
-
-			Body b = new Body(def, Body.BodyType.Dynamic, this);
+			Body b = new Body(def, this);
 
 			// Add to world doubly linked list.
 			b._prev = null;
@@ -355,7 +339,7 @@ namespace Box2DX.Dynamics
 				Body b = def.Body1._shapeCount < def.Body2._shapeCount ? def.Body1 : def.Body2;
 				for (Shape s = b._shapeList; s != null; s = s._next)
 				{
-					s.ResetProxy(_broadPhase, b._xf);
+					s.RefilterProxy(_broadPhase, b.GetXForm());
 				}
 			}
 
@@ -447,7 +431,7 @@ namespace Box2DX.Dynamics
 				Body b = body1._shapeCount < body2._shapeCount ? body1 : body2;
 				for (Shape s = b._shapeList; s != null; s = s._next)
 				{
-					s.ResetProxy(_broadPhase, b._xf);
+					s.RefilterProxy(_broadPhase, b.GetXForm());
 				}
 			}
 		}
@@ -482,6 +466,53 @@ namespace Box2DX.Dynamics
 			return _jointList;
 		}
 
+		/// Re-filter a shape. This re-runs contact filtering on a shape.
+		public void Refilter(Shape shape) { shape.RefilterProxy(_broadPhase, shape.GetBody().GetXForm()); }
+
+		/// Enable/disable warm starting. For testing.
+		public void SetWarmStarting(bool flag) { _warmStarting = flag; }
+
+		/// Enable/disable position correction. For testing.
+		public void SetPositionCorrection(bool flag) { _positionCorrection = flag; }
+
+		/// Enable/disable continuous physics. For testing.
+		public void SetContinuousPhysics(bool flag) { _continuousPhysics = flag; }
+
+		/// <summary>
+		/// Perform validation of internal data structures.
+		/// </summary>
+		public void Validate() { _broadPhase.Validate(); }
+
+		/// <summary>
+		/// Get the number of broad-phase proxies.
+		/// </summary>
+		/// <returns></returns>
+		public int GetProxyCount() { return _broadPhase._proxyCount; }
+
+		/// <summary>
+		/// Get the number of broad-phase pairs.
+		/// </summary>
+		/// <returns></returns>
+		public int GetPairCount() { return _broadPhase._pairManager._pairCount; }
+
+		/// <summary>
+		/// Get the number of bodies.
+		/// </summary>
+		/// <returns></returns>
+		public int GetBodyCount() { return _bodyCount; }
+
+		/// <summary>
+		/// Get the number joints.
+		/// </summary>
+		/// <returns></returns>
+		public int GetJointCount() { return _jointCount; }
+
+		/// <summary>
+		/// Get the number of contacts (each may have 0 or more contact points).
+		/// </summary>
+		/// <returns></returns>
+		public int GetContactCount() { return _contactCount; }
+
 		/// <summary>
 		/// Take a time step. This performs collision detection, integration,
 		/// and constraint solution.
@@ -504,6 +535,11 @@ namespace Box2DX.Dynamics
 				step.Inv_Dt = 0.0f;
 			}
 
+			step.DtRatio = _inv_dt0 * dt;
+
+			step.PositionCorrection = _positionCorrection;
+			step.WarmStarting = _warmStarting;
+
 			// Update contacts.
 			_contactManager.Collide();
 
@@ -514,7 +550,7 @@ namespace Box2DX.Dynamics
 			}
 
 			// Handle TOI events.
-			if (World.s_enableTOI!=0 && step.Dt > 0.0f)
+			if (_continuousPhysics && step.Dt > 0.0f)
 			{
 				SolveTOI(step);
 			}
@@ -522,6 +558,7 @@ namespace Box2DX.Dynamics
 			// Draw debug information.
 			DrawDebugData();
 
+			_inv_dt0 = step.Inv_Dt;
 			_lock = false;
 		}
 
@@ -551,7 +588,7 @@ namespace Box2DX.Dynamics
 		}
 
 		// Find islands, integrate and solve constraints, solve position constraints
-		internal void Solve(TimeStep step)
+		private void Solve(TimeStep step)
 		{
 			_positionIterationCount = 0;
 
@@ -574,7 +611,6 @@ namespace Box2DX.Dynamics
 
 			// Build and simulate all awake islands.
 			int stackSize = _bodyCount;
-			//using (Body[] stack = new Body[stackSize])
 			{
 				Body[] stack = new Body[stackSize];
 
@@ -667,7 +703,7 @@ namespace Box2DX.Dynamics
 						}
 					}
 
-					island.Solve(step, _gravity, World.s_enablePositionCorrection > 0, _allowSleep);
+					island.Solve(step, _gravity, _positionCorrection, _allowSleep);
 					_positionIterationCount = Common.Math.Max(_positionIterationCount, island._positionIterationCount);
 
 					// Post solve cleanup.
@@ -716,7 +752,7 @@ namespace Box2DX.Dynamics
 		}
 
 		// Find TOI contacts and solve them.
-		internal void SolveTOI(TimeStep step)
+		private void SolveTOI(TimeStep step)
 		{
 			// Reserve an island and a stack for TOI island solution.
 			Island island = new Island(_bodyCount, Settings.MaxTOIContactsPerIsland, 0, _contactListener);
@@ -801,7 +837,7 @@ namespace Box2DX.Dynamics
 							c._flags |= Contact.CollisionFlags.Toi;
 						}
 
-						if (Common.Math.FLOAT32_EPSILON < toi && toi < minTOI)
+						if (Common.Settings.FLT_EPSILON < toi && toi < minTOI)
 						{
 							// This is the minimum TOI found so far.
 							minContact = c;
@@ -809,7 +845,7 @@ namespace Box2DX.Dynamics
 						}
 					}
 
-					if (minContact == null || 1.0f - 100.0f * Common.Math.FLOAT32_EPSILON < minTOI)
+					if (minContact == null || 1.0f - 100.0f * Common.Settings.FLT_EPSILON < minTOI)
 					{
 						// No more TOI events. Done!
 						break;
@@ -912,7 +948,7 @@ namespace Box2DX.Dynamics
 
 					TimeStep subStep = new TimeStep();
 					subStep.Dt = (1.0f - minTOI) * step.Dt;
-					Box2DXDebug.Assert(subStep.Dt > Common.Math.FLOAT32_EPSILON);
+					Box2DXDebug.Assert(subStep.Dt > Common.Settings.FLT_EPSILON);
 					subStep.Inv_Dt = 1.0f / subStep.Dt;
 					subStep.MaxIterations = step.MaxIterations;
 
@@ -970,7 +1006,7 @@ namespace Box2DX.Dynamics
 			}
 		}
 
-		internal void DrawJoint(Joint joint)
+		private void DrawJoint(Joint joint)
 		{
 			Body b1 = joint.GetBody1();
 			Body b2 = joint.GetBody2();
@@ -1012,11 +1048,11 @@ namespace Box2DX.Dynamics
 			}
 		}
 
-		internal void DrawShape(Shape shape, XForm xf, Color color, bool core)
+		private void DrawShape(Shape shape, XForm xf, Color color, bool core)
 		{
 			Color coreColor = new Color(0.9f, 0.6f, 0.6f);
 
-			switch (shape._type)
+			switch (shape.GetType())
 			{
 				case ShapeType.CircleShape:
 					{
@@ -1065,7 +1101,7 @@ namespace Box2DX.Dynamics
 			}
 		}
 
-		internal void DrawDebugData()
+		private void DrawDebugData()
 		{
 			if (_debugDraw == null)
 			{

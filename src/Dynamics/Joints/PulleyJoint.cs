@@ -88,7 +88,7 @@ namespace Box2DX.Dynamics
 			Vector2 d2 = anchor2 - groundAnchor2;
 			Length2 = d2.Length();
 			Ratio = ratio;
-			Box2DXDebug.Assert(ratio > Common.Math.FLOAT32_EPSILON);
+			Box2DXDebug.Assert(ratio > Common.Settings.FLT_EPSILON);
 			float C = Length1 + ratio * Length2;
 			MaxLength1 = C - ratio * PulleyJoint.MinPulleyLength;
 			MaxLength2 = (C - PulleyJoint.MinPulleyLength) / ratio;
@@ -215,7 +215,7 @@ namespace Box2DX.Dynamics
 		/// </summary>
 		public Vector2 GroundAnchor1
 		{
-			get { return _ground._xf.Position + _groundAnchor1; }
+			get { return _ground.GetXForm().Position + _groundAnchor1; }
 		}
 
 		/// <summary>
@@ -223,7 +223,7 @@ namespace Box2DX.Dynamics
 		/// </summary>
 		public Vector2 GroundAnchor2
 		{
-			get { return _ground._xf.Position + _groundAnchor2; }
+			get { return _ground.GetXForm().Position + _groundAnchor2; }
 		}
 
 		/// <summary>
@@ -234,7 +234,7 @@ namespace Box2DX.Dynamics
 			get
 			{
 				Vector2 p = _body1.GetWorldPoint(_localAnchor1);
-				Vector2 s = _ground._xf.Position + _groundAnchor1;
+				Vector2 s = _ground.GetXForm().Position + _groundAnchor1;
 				Vector2 d = p - s;
 				return d.Length();
 			}
@@ -248,7 +248,7 @@ namespace Box2DX.Dynamics
 			get
 			{
 				Vector2 p = _body2.GetWorldPoint(_localAnchor2);
-				Vector2 s = _ground._xf.Position + _groundAnchor2;
+				Vector2 s = _ground.GetXForm().Position + _groundAnchor2;
 				Vector2 d = p - s;
 				return d.Length();
 			}
@@ -265,9 +265,9 @@ namespace Box2DX.Dynamics
 		public PulleyJoint(PulleyJointDef def)
 			: base(def)
 		{
-			_ground = _body1._world._groundBody;
-			_groundAnchor1 = def.GroundAnchor1 - _ground._xf.Position;
-			_groundAnchor2 = def.GroundAnchor2 - _ground._xf.Position;
+			_ground = _body1.GetWorld().GetGroundBody();
+			_groundAnchor1 = def.GroundAnchor1 - _ground.GetXForm().Position;
+			_groundAnchor2 = def.GroundAnchor2 - _ground.GetXForm().Position;
 			_localAnchor1 = def.LocalAnchor1;
 			_localAnchor2 = def.LocalAnchor2;
 
@@ -284,19 +284,19 @@ namespace Box2DX.Dynamics
 			_limitForce2 = 0.0f;
 		}
 
-		public override void InitVelocityConstraints(TimeStep step)
+		internal override void InitVelocityConstraints(TimeStep step)
 		{
 			Body b1 = _body1;
 			Body b2 = _body2;
 
-			Vector2 r1 = Box2DXMath.Mul(b1._xf.R, _localAnchor1 - b1.GetLocalCenter());
-			Vector2 r2 = Box2DXMath.Mul(b2._xf.R, _localAnchor2 - b2.GetLocalCenter());
+			Vector2 r1 = Box2DXMath.Mul(b1.GetXForm().R, _localAnchor1 - b1.GetLocalCenter());
+			Vector2 r2 = Box2DXMath.Mul(b2.GetXForm().R, _localAnchor2 - b2.GetLocalCenter());
 
 			Vector2 p1 = b1._sweep.C + r1;
 			Vector2 p2 = b2._sweep.C + r2;
 
-			Vector2 s1 = _ground._xf.Position + _groundAnchor1;
-			Vector2 s2 = _ground._xf.Position + _groundAnchor2;
+			Vector2 s1 = _ground.GetXForm().Position + _groundAnchor1;
+			Vector2 s2 = _ground.GetXForm().Position + _groundAnchor2;
 
 			// Get the pulley axes.
 			_u1 = p1 - s1;
@@ -364,14 +364,14 @@ namespace Box2DX.Dynamics
 			_limitMass1 = b1._invMass + b1._invI * cr1u1 * cr1u1;
 			_limitMass2 = b2._invMass + b2._invI * cr2u2 * cr2u2;
 			_pulleyMass = _limitMass1 + _ratio * _ratio * _limitMass2;
-			Box2DXDebug.Assert(_limitMass1 > Box2DXMath.FLOAT32_EPSILON);
-			Box2DXDebug.Assert(_limitMass2 > Box2DXMath.FLOAT32_EPSILON);
-			Box2DXDebug.Assert(_pulleyMass > Box2DXMath.FLOAT32_EPSILON);
+			Box2DXDebug.Assert(_limitMass1 > Settings.FLT_EPSILON);
+			Box2DXDebug.Assert(_limitMass2 > Settings.FLT_EPSILON);
+			Box2DXDebug.Assert(_pulleyMass > Settings.FLT_EPSILON);
 			_limitMass1 = 1.0f / _limitMass1;
 			_limitMass2 = 1.0f / _limitMass2;
 			_pulleyMass = 1.0f / _pulleyMass;
 
-			if (World.s_enableWarmStarting != 0)
+			if (step.WarmStarting)
 			{
 				// Warm starting.
 				Vector2 P1 = Settings.FORCE_SCALE(step.Dt) * (-_force - _limitForce1) * _u1;
@@ -389,13 +389,13 @@ namespace Box2DX.Dynamics
 			}
 		}
 
-		public override void SolveVelocityConstraints(TimeStep step)
+		internal override void SolveVelocityConstraints(TimeStep step)
 		{
 			Body b1 = _body1;
 			Body b2 = _body2;
 
-			Vector2 r1 = Box2DXMath.Mul(b1._xf.R, _localAnchor1 - b1.GetLocalCenter());
-			Vector2 r2 = Box2DXMath.Mul(b2._xf.R, _localAnchor2 - b2.GetLocalCenter());
+			Vector2 r1 = Box2DXMath.Mul(b1.GetXForm().R, _localAnchor1 - b1.GetLocalCenter());
+			Vector2 r2 = Box2DXMath.Mul(b2.GetXForm().R, _localAnchor2 - b2.GetLocalCenter());
 
 			if (_state == LimitState.AtUpperLimit)
 			{
@@ -447,20 +447,20 @@ namespace Box2DX.Dynamics
 			}
 		}
 
-		public override bool SolvePositionConstraints()
+		internal override bool SolvePositionConstraints()
 		{
 			Body b1 = _body1;
 			Body b2 = _body2;
 
-			Vector2 s1 = _ground._xf.Position + _groundAnchor1;
-			Vector2 s2 = _ground._xf.Position + _groundAnchor2;
+			Vector2 s1 = _ground.GetXForm().Position + _groundAnchor1;
+			Vector2 s2 = _ground.GetXForm().Position + _groundAnchor2;
 
 			float linearError = 0.0f;
 
 			if (_state == LimitState.AtUpperLimit)
 			{
-				Vector2 r1 = Box2DXMath.Mul(b1._xf.R, _localAnchor1 - b1.GetLocalCenter());
-				Vector2 r2 = Box2DXMath.Mul(b2._xf.R, _localAnchor2 - b2.GetLocalCenter());
+				Vector2 r1 = Box2DXMath.Mul(b1.GetXForm().R, _localAnchor1 - b1.GetLocalCenter());
+				Vector2 r2 = Box2DXMath.Mul(b2.GetXForm().R, _localAnchor2 - b2.GetLocalCenter());
 
 				Vector2 p1 = b1._sweep.C + r1;
 				Vector2 p2 = b2._sweep.C + r2;
@@ -513,7 +513,7 @@ namespace Box2DX.Dynamics
 
 			if (_limitState1 == LimitState.AtUpperLimit)
 			{
-				Vector2 r1 = Box2DXMath.Mul(b1._xf.R, _localAnchor1 - b1.GetLocalCenter());
+				Vector2 r1 = Box2DXMath.Mul(b1.GetXForm().R, _localAnchor1 - b1.GetLocalCenter());
 				Vector2 p1 = b1._sweep.C + r1;
 
 				_u1 = p1 - s1;
@@ -545,7 +545,7 @@ namespace Box2DX.Dynamics
 
 			if (_limitState2 == LimitState.AtUpperLimit)
 			{
-				Vector2 r2 = Box2DXMath.Mul(b2._xf.R, _localAnchor2 - b2.GetLocalCenter());
+				Vector2 r2 = Box2DXMath.Mul(b2.GetXForm().R, _localAnchor2 - b2.GetLocalCenter());
 				Vector2 p2 = b2._sweep.C + r2;
 
 				_u2 = p2 - s2;
