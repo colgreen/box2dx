@@ -95,17 +95,25 @@
     <Compile Include="Tests\Car.cs" />
     <Compile Include="Tests\CCDTest.cs" />
     <Compile Include="Tests\Chain.cs" />
+    <Compile Include="Tests\CollisionFiltering.cs" />
+    <Compile Include="Tests\CollisionProcessing.cs" />
+    <Compile Include="Tests\CompoundShapes.cs" />
     <Compile Include="Tests\Dominos.cs" />
     <Compile Include="Tests\Gears.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Tests\MotorsAndLimits.cs" />
     <Compile Include="Tests\Pulleys.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Tests\Pyramid.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Tests\SensorTest.cs" />
     <Compile Include="Tests\SimpleTest.cs" />
+    <Compile Include="Tests\SliderCrank.cs" />
+    <Compile Include="Tests\VaryingFriction.cs" />
+    <Compile Include="Tests\VaryingRestitution.cs" />
     <Compile Include="Tests\VerticalStack.cs">
       <SubType>Code</SubType>
     </Compile>

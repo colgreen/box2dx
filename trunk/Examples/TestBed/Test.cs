@@ -158,14 +158,14 @@ namespace TestBed
 				return;
 			}
 
-			MyContactPoint cp = test._points[test._pointCount];
+			MyContactPoint cp = new MyContactPoint();
 			cp.shape1 = point.Shape1;
 			cp.shape2 = point.Shape2;
 			cp.position = point.Position;
 			cp.normal = point.Normal;
 			cp.id = point.ID;
-			cp.state =  ContactState.ContactAdded;
-
+			cp.state = ContactState.ContactAdded;
+			test._points[test._pointCount] = cp;
 			++test._pointCount;
 		}
 
@@ -176,14 +176,14 @@ namespace TestBed
 				return;
 			}
 
-			MyContactPoint cp = test._points[test._pointCount];
+			MyContactPoint cp = new MyContactPoint();
 			cp.shape1 = point.Shape1;
 			cp.shape2 = point.Shape2;
 			cp.position = point.Position;
 			cp.normal = point.Normal;
 			cp.id = point.ID;
 			cp.state = ContactState.ContactPersisted;
-
+			test._points[test._pointCount] = cp;
 			++test._pointCount;
 		}
 
@@ -194,14 +194,14 @@ namespace TestBed
 				return;
 			}
 
-			MyContactPoint cp = test._points[test._pointCount];
+			MyContactPoint cp = new MyContactPoint();
 			cp.shape1 = point.Shape1;
 			cp.shape2 = point.Shape2;
 			cp.position = point.Position;
 			cp.normal = point.Normal;
 			cp.id = point.ID;
 			cp.state = ContactState.ContactRemoved;
-
+			test._points[test._pointCount] = cp;
 			++test._pointCount;
 		}
 
@@ -213,19 +213,37 @@ namespace TestBed
 		public static TestEntry[] g_testEntries = new TestEntry[]
 		{
 			new TestEntry("Simple Test", SimpleTest.Create),
-			new TestEntry("Vertical Stack", VerticalStack.Create),
 			new TestEntry("Pyramid", Pyramid.Create),
+            //{"Theo Jansen's Walker", TheoJansen::Create},
+	        //{"Contact Callback Test", ContactCB::Create},
+	        //{"Polygon Shapes", PolyShapes::Create},
+	        //{"Web", Web::Create},            
+			new TestEntry("Vertical Stack", VerticalStack.Create),
+			new TestEntry("Varying Friction", VaryingFriction.Create),
+	        new TestEntry("Varying Restitution", VaryingRestitution.Create),
 			new TestEntry("Bridge", Bridge.Create),
 			new TestEntry("Dominos", Dominos.Create),
 			new TestEntry("CCD Test", CCDTest.Create),
-			//new TestEntry("Biped Test", BipedTest.Create),
+            //new TestEntry("Biped Test", BipedTest.Create),
+            new TestEntry("Sensor Test", SensorTest.Create),
 			new TestEntry("Car", Car.Create),
 			new TestEntry("Gears", Gears.Create),
+            new TestEntry("Slider Crank", SliderCrank.Create),
+	        new TestEntry("Compound Shapes", CompoundShapes.Create),
 			new TestEntry("Chain", Chain.Create),
+            new TestEntry("Collision Processing", CollisionProcessing.Create),
+	        new TestEntry("Collision Filtering", CollisionFiltering.Create),
+	        new TestEntry("Motors and Limits", MotorsAndLimits.Create),
 			new TestEntry("Apply Force", ApplyForce.Create),
 			new TestEntry("Pulleys", Pulleys.Create),
+            //{"Shape Editing", ShapeEditing::Create},
+	        //{"Time of Impact", TimeOfImpact::Create},
+	        //{"Distance Test", DistanceTest::Create},
 			//new TestEntry("Broad Phase", BroadPhaseTest.Create)
+            //{"PolyCollision", PolyCollision::Create},
+	        //{"Elastic Body", ElasticBody::Create},
 		};
+
 		public static int k_maxContactPoints = 2048;
 
 		protected AABB _worldAABB;
@@ -453,7 +471,7 @@ namespace TestBed
 				Gl.glEnd();
 			}
 
-			if (settings.drawContactPoints!=0)
+			if (settings.drawContactPoints != 0)
 			{
 				//float k_forceScale = 0.01f;
 				float k_axisScale = 0.3f;
