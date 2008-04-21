@@ -323,7 +323,7 @@ namespace Box2DX.Dynamics
 			{
 				if (node == shape)
 				{
-					node = shape._next;
+					_shapeList = shape._next;
 					found = true;
 					break;
 				}
