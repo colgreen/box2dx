@@ -97,7 +97,7 @@ namespace Box2DX.Dynamics
 		/// <summary>
 		/// The default contact filter.
 		/// </summary>
-		public static ContactFilter DefaultFilter;
+		public static ContactFilter DefaultFilter = new ContactFilter();
 	}
 
 	/// <summary>
