@@ -214,7 +214,7 @@ namespace TestBed
 		{
 			new TestEntry("Simple Test", SimpleTest.Create),
 			new TestEntry("Pyramid", Pyramid.Create),
-			//{"Theo Jansen's Walker", TheoJansen::Create},
+			new TestEntry("Theo Jansen's Walker", TheoJansen.Create),
 			//{"Contact Callback Test", ContactCB::Create},
 			new TestEntry("Polygon Shapes", PolyShapes.Create),
 			new TestEntry("Web", Web.Create),
@@ -237,11 +237,11 @@ namespace TestBed
 			new TestEntry("Apply Force", ApplyForce.Create),
 			new TestEntry("Pulleys", Pulleys.Create),
 			new TestEntry("Shape Editing", ShapeEditing.Create),
-			//{"Time of Impact", TimeOfImpact::Create},
-			//{"Distance Test", DistanceTest::Create},
+			new TestEntry("Time of Impact", TimeOfImpact.Create),
+			new TestEntry("Distance Test", DistanceTest.Create),
 			//new TestEntry("Broad Phase", BroadPhaseTest.Create)
-			//{"PolyCollision", PolyCollision::Create},
-			//{"Elastic Body", ElasticBody::Create},
+			new TestEntry("PolyCollision", PolyCollision.Create),
+			new TestEntry("Elastic Body", ElasticBody.Create)
 		};
 
 		public static int k_maxContactPoints = 2048;

@@ -98,11 +98,14 @@
     <Compile Include="Tests\CollisionFiltering.cs" />
     <Compile Include="Tests\CollisionProcessing.cs" />
     <Compile Include="Tests\CompoundShapes.cs" />
+    <Compile Include="Tests\DistanceTest.cs" />
     <Compile Include="Tests\Dominos.cs" />
+    <Compile Include="Tests\ElasticBody.cs" />
     <Compile Include="Tests\Gears.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Tests\MotorsAndLimits.cs" />
+    <Compile Include="Tests\PolyCollision.cs" />
     <Compile Include="Tests\PolyShapes.cs" />
     <Compile Include="Tests\Pulleys.cs">
       <SubType>Code</SubType>
@@ -114,6 +117,8 @@
     <Compile Include="Tests\ShapeEditing.cs" />
     <Compile Include="Tests\SimpleTest.cs" />
     <Compile Include="Tests\SliderCrank.cs" />
+    <Compile Include="Tests\TheoJansen.cs" />
+    <Compile Include="Tests\TimeOfImpact.cs" />
     <Compile Include="Tests\VaryingFriction.cs" />
     <Compile Include="Tests\VaryingRestitution.cs" />
     <Compile Include="Tests\VerticalStack.cs">
