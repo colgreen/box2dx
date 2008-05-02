@@ -60,7 +60,7 @@ namespace TestBed
 				// Define another box shape for our dynamic body.
 				PolygonDef shapeDef = new PolygonDef();
 				shapeDef.SetAsBox(1.0f, 1.0f);
-
+				
 				// Set the box density to be non-zero, so it will be dynamic.
 				shapeDef.Density = 1.0f;
 

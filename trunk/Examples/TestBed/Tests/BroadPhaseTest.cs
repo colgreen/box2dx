@@ -203,9 +203,10 @@ namespace TestBed
 				OpenGLDebugDraw.DrawAABB(actor.aabb, c);
 			}
 
-			//char buffer[64];
-			//sprintf(buffer, "overlaps = %d, exact = %d, diff = %d", m_overlapCount, m_overlapCountExact, m_overlapCount - m_overlapCountExact);
-			//OpenGLDebugDraw.DrawString(5, 30, "AAA");
+			StringBuilder strBld = new StringBuilder();
+			strBld.AppendFormat("overlaps = {0}, exact = {1}, diff = {2}",
+				new object[] { _overlapCount, _overlapCountExact, _overlapCount - _overlapCountExact });
+			OpenGLDebugDraw.DrawString(5, 30, strBld.ToString());
 			Validate();
 
 			++_stepCount;

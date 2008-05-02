@@ -195,9 +195,9 @@ namespace TestBed
 		{
 			base.Step(settings);
 
-			//DrawString(5, _textLine, "This demonstrates a soft distance joint.");
+			OpenGLDebugDraw.DrawString(5, _textLine, "This demonstrates a soft distance joint.");
 			_textLine += 15;
-			//DrawString(5, _textLine, "Press: (b) to delete a body, (j) to delete a joint");
+			OpenGLDebugDraw.DrawString(5, _textLine, "Press: (b) to delete a body, (j) to delete a joint");
 			_textLine += 15;
 		}
 

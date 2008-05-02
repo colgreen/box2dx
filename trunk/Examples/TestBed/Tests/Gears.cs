@@ -132,12 +132,16 @@ namespace TestBed
 
 			ratio = _joint4.Ratio;
 			value = _joint1.JointAngle + ratio * _joint2.JointAngle;
-			//DrawString(5, m_textLine, "theta1 + %4.2f * theta2 = %4.2f", (float)ratio, (float)value);
+			StringBuilder strBld = new StringBuilder();
+			strBld.AppendFormat("theta1 + {0} * theta2 = {1}", new object[]{ratio,value});
+			OpenGLDebugDraw.DrawString(5, _textLine, strBld.ToString());
 			_textLine += 15;
 
 			ratio = _joint5.Ratio;
 			value = _joint2.JointAngle + ratio * _joint3.JointTranslation;
-			//DrawString(5, m_textLine, "theta2 + %4.2f * delta = %4.2f", (float)ratio, (float)value);
+			strBld = new StringBuilder();
+			strBld.AppendFormat("theta2 + {0} * delta = {1}", new object[] { ratio, value });
+			OpenGLDebugDraw.DrawString(5, _textLine, strBld.ToString());
 			_textLine += 15;
 		}
 	}

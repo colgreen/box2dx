@@ -25,6 +25,7 @@ using System.Text;
 
 using Tao.OpenGl;
 using Tao.FreeGlut;
+using ISE;
 
 using Box2DX.Common;
 using Box2DX.Collision;
@@ -171,36 +172,51 @@ namespace TestBed
 			Gl.glPointSize(1.0f);
 		}
 
+		static FTFont sysfont;
+
+		static Tao.Platform.Windows.SimpleOpenGlControl openGlControl;
+		public static void InitTextRenderer(Tao.Platform.Windows.SimpleOpenGlControl openGlCtrl)
+		{
+			openGlControl = openGlCtrl;
+			
+			int Errors = 0;
+			// CREATE FONT
+			sysfont = new FTFont("FreeSans.ttf", out Errors);
+			// INITIALISE FONT AS A PER_CHARACTER TEXTURE MAPPED FONT
+			sysfont.ftRenderToTexture(12, 196);
+			// SET the sample font to align CENTERED
+			sysfont.FT_ALIGN = FTFontAlign.FT_ALIGN_LEFT;
+		}
+
 		public static void DrawString(int x, int y, string str)
 		{
-			/*System.Text.ASCIIEncoding encoding = new System.Text.ASCIIEncoding();
-			byte[] buffer = encoding.GetBytes(str);
-
 			Gl.glMatrixMode(Gl.GL_PROJECTION);
 			Gl.glPushMatrix();
 			Gl.glLoadIdentity();
-			//int w = Glut.glutGet(Glut.GLUT_WINDOW_WIDTH);
-			//int h = Glut.glutGet(Glut.GLUT_WINDOW_HEIGHT);
-			int w = 100;
-			int h = 100;
-			Glu.gluOrtho2D(0, w, h, 0);
+
 			Gl.glMatrixMode(Gl.GL_MODELVIEW);
 			Gl.glPushMatrix();
 			Gl.glLoadIdentity();
 
+			float xOffset = -0.95f + (float)x / ((float)openGlControl.Width / 2f);
+			float yOffset = 0.95f - (float)y / ((float)openGlControl.Height / 2f);
+			// Offset the font on the screen
+			Gl.glTranslatef(xOffset, yOffset, 0);
+
 			Gl.glColor3f(0.9f, 0.6f, 0.6f);
-			Gl.glRasterPos2i(x, y);
-			int length = buffer.Length;
-			for (int i = 0; i < length; ++i)
-			{
-				//Glut.glutBitmapCharacter(Glut.GLUT_BITMAP_8_BY_13, buffer[i]);
-				Glut.glutBitmapString(Glut.GLUT_BITMAP_TIMES_ROMAN_10, str);
-			}
+			// Scale the font
+			Gl.glScalef(0.0035f, 0.0035f, 0.0035f);			
+
+			// Begin writing the font
+			sysfont.ftBeginFont();
+			sysfont.ftWrite(str);
+			// Stop writing the font and restore old OpenGL parameters
+			sysfont.ftEndFont();
 
 			Gl.glPopMatrix();
 			Gl.glMatrixMode(Gl.GL_PROJECTION);
 			Gl.glPopMatrix();
-			Gl.glMatrixMode(Gl.GL_MODELVIEW);*/
+			Gl.glMatrixMode(Gl.GL_MODELVIEW);
 		}
 
 		public static void DrawAABB(AABB aabb, Color c)

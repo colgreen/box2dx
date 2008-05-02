@@ -75,10 +75,14 @@ namespace TestBed
 			Vector2 x1, x2;
 			float distance = Collision.Distance(out x1, out x2, _shape1, _body1.GetXForm(), _shape2, _body2.GetXForm());
 
-			//DrawString(5, m_textLine, "distance = %g", (float) distance);
-			_textLine += 15;			
+			StringBuilder strBld = new StringBuilder();
+			strBld.AppendFormat("distance = {0}", new object[] { distance });
+			OpenGLDebugDraw.DrawString(5, _textLine, strBld.ToString());
+			_textLine += 15;
 
-			//DrawString(5, m_textLine, "iterations = %d", g_GJK_Iterations);
+			strBld = new StringBuilder();
+			strBld.AppendFormat("iterations = {0}", new object[] { Collision.GJKIterations });
+			OpenGLDebugDraw.DrawString(5, _textLine, strBld.ToString());
 			_textLine += 15;
 
 			OpenGLDebugDraw.DrawPoint(x1, 4.0f, new Color(1, 0, 0));
