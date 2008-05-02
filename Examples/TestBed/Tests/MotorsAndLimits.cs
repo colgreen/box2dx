@@ -113,12 +113,15 @@ namespace TestBed
 		public override void Step(Settings settings)
 		{
 			base.Step(settings);
-			//DrawString(5, _textLine, "Keys: (l) limits, (m) motors, (p) prismatic speed");
+			OpenGLDebugDraw.DrawString(5, _textLine, "Keys: (l) limits, (m) motors, (p) prismatic speed");
 			_textLine += 15;
 			float torque1 = _joint1.MotorTorque;
 			float torque2 = _joint2.MotorTorque;
 			float force3 = _joint3.MotorForce;
-			//DrawString(5, _textLine, "Motor Torque = %4.0f, %4.0f : Motor Force = %4.0f", (float)torque1, (float)torque2, (float)force3);
+			StringBuilder strBld = new StringBuilder();
+			strBld.AppendFormat("Motor Torque = {0}, {1} : Motor Force = {2}",
+				new object[] { torque1, torque2, force3 });
+			OpenGLDebugDraw.DrawString(5, _textLine, strBld.ToString());
 			_textLine += 15;
 		}
 

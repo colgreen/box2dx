@@ -215,7 +215,7 @@ namespace TestBed
 			new TestEntry("Simple Test", SimpleTest.Create),
 			new TestEntry("Pyramid", Pyramid.Create),
 			new TestEntry("Theo Jansen's Walker", TheoJansen.Create),
-			//{"Contact Callback Test", ContactCB::Create},
+			//new TestEntry("Contact Callback Test", ContactCB.Create),
 			new TestEntry("Polygon Shapes", PolyShapes.Create),
 			new TestEntry("Web", Web.Create),
 			new TestEntry("Vertical Stack", VerticalStack.Create),
@@ -239,7 +239,7 @@ namespace TestBed
 			new TestEntry("Shape Editing", ShapeEditing.Create),
 			new TestEntry("Time of Impact", TimeOfImpact.Create),
 			new TestEntry("Distance Test", DistanceTest.Create),
-			//new TestEntry("Broad Phase", BroadPhaseTest.Create)
+			//new TestEntry("Broad Phase", BroadPhaseTest.Create),
 			new TestEntry("PolyCollision", PolyCollision.Create),
 			new TestEntry("Elastic Body", ElasticBody.Create)
 		};

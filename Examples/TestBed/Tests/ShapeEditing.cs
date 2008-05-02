@@ -94,7 +94,7 @@ namespace TestBed
 		{
 			base.Step(settings);
 
-			//DrawString(5, m_textLine, "Press: (c) create a shape, (d) destroy a shape.");
+			OpenGLDebugDraw.DrawString(5, _textLine, "Press: (c) create a shape, (d) destroy a shape.");
 			_textLine += 15;
 		}
 

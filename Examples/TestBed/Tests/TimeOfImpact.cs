@@ -89,7 +89,7 @@ namespace TestBed
 
 			float toi = Collision.TimeOfImpact(_shape1, sweep1, _shape2, sweep2);
 			
-			//OpenGLDebugDraw.DrawString(5, _textLine, "toi = %g", (float) toi);
+			OpenGLDebugDraw.DrawString(5, _textLine, "toi = " + toi.ToString());
 			_textLine += 15;
 
 			XForm xf2 = new XForm();

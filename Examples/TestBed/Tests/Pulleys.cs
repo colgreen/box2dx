@@ -85,7 +85,10 @@ namespace TestBed
 
 			float ratio = _joint1.Ratio;
 			float L = _joint1.Length1 + ratio * _joint1.Length2;
-			//DrawString(5, m_textLine, "L1 + %4.2f * L2 = %4.2f", (float) ratio, (float) L);
+			StringBuilder strBld = new StringBuilder();
+			strBld.AppendFormat("L1 + {0} * L2 = {1}",
+				new object[] { ratio, L });
+			OpenGLDebugDraw.DrawString(5, _textLine, strBld.ToString());
 			_textLine += 15;
 		}
 

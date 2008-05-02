@@ -18,7 +18,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\..\Build\VCS9\TestBed\bin\Debug\</OutputPath>
+    <OutputPath>..\..\Build\VCS\TestBed\bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -29,7 +29,7 @@
     <BaseIntermediateOutputPath>..\..\Build\VCS9\TestBed\obj\</BaseIntermediateOutputPath>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\..\Build\VCS9\TestBed\bin\Release\</OutputPath>
+    <OutputPath>..\..\Build\VCS\TestBed\bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -46,6 +46,11 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>F:\WINXP32\Program Files\Tao\bin\Tao.FreeGlut.dll</HintPath>
     </Reference>
+    <Reference Include="Tao.FreeType, Version=2.3.5.0, Culture=neutral, PublicKeyToken=e499629dc69cd531, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Libraries\Tao.FreeType.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Tao.OpenGl, Version=2.1.0.4, Culture=neutral, PublicKeyToken=1ca010269a4501ef" />
     <Reference Include="Tao.Platform.Windows, Version=1.0.0.4, Culture=neutral, PublicKeyToken=701104b2da67a104, processorArchitecture=MSIL" />
   </ItemGroup>
@@ -56,6 +61,7 @@
     <Compile Include="MainForm.Designer.cs">
       <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="OpenGL Render\FTclass.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="MainForm.resx">
@@ -98,6 +104,7 @@
     <Compile Include="Tests\CollisionFiltering.cs" />
     <Compile Include="Tests\CollisionProcessing.cs" />
     <Compile Include="Tests\CompoundShapes.cs" />
+    <Compile Include="Tests\ContactCallbackTest.cs" />
     <Compile Include="Tests\DistanceTest.cs" />
     <Compile Include="Tests\Dominos.cs" />
     <Compile Include="Tests\ElasticBody.cs" />

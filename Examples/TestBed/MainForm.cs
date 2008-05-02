@@ -58,7 +58,8 @@ namespace TestBed
 			InitializeComponent();
 
 			openGlControl.InitializeContexts();
-	
+			OpenGLDebugDraw.InitTextRenderer(openGlControl);
+
 			Init();
 			SetView();
 		}		
