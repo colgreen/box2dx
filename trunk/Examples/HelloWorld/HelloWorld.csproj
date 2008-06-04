@@ -14,7 +14,7 @@
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <BaseIntermediateOutputPath>..\..\Build\VCS9\HelloWorld\obj\</BaseIntermediateOutputPath>
+    <BaseIntermediateOutputPath>..\..\Build\VCS\HelloWorld\obj\</BaseIntermediateOutputPath>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -26,7 +26,7 @@
     <UseVSHostingProcess>false</UseVSHostingProcess>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <BaseIntermediateOutputPath>..\..\Build\VCS9\HelloWorld\obj\</BaseIntermediateOutputPath>
+    <BaseIntermediateOutputPath>..\..\Build\VCS\HelloWorld\obj\</BaseIntermediateOutputPath>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>..\..\Build\VCS\HelloWorld\bin\Release\</OutputPath>

@@ -19,6 +19,8 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
+//#define B2_DEBUG_SOLVER
+
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -37,7 +39,6 @@ namespace Box2DX.Dynamics
 		public Vector2 R2;
 		public float NormalImpulse;
 		public float TangentImpulse;
-		public float PositionImpulse;
 		public float NormalMass;
 		public float TangentMass;
 		public float EqualizedMass;
@@ -50,6 +51,8 @@ namespace Box2DX.Dynamics
 	{
 		public ContactConstraintPoint[] Points = new ContactConstraintPoint[Settings.MaxManifoldPoints];
 		public Vector2 Normal;
+		public Mat22 NormalMass;
+		public Mat22 K;
 		public Manifold Manifold;
 		public Body Body1;
 		public Body Body2;
@@ -111,24 +114,23 @@ namespace Box2DX.Dynamics
 					Vector2 normal = manifold.Normal;
 
 					Box2DXDebug.Assert(count < _constraintCount);
-					ContactConstraint c = _constraints[count];
-					c.Body1 = b1;
-					c.Body2 = b2;
-					c.Manifold = manifold;
-					c.Normal = normal;
-					c.PointCount = manifold.PointCount;
-					c.Friction = friction;
-					c.Restitution = restitution;
+					ContactConstraint cc = _constraints[count];
+					cc.Body1 = b1;
+					cc.Body2 = b2;
+					cc.Manifold = manifold;
+					cc.Normal = normal;
+					cc.PointCount = manifold.PointCount;
+					cc.Friction = friction;
+					cc.Restitution = restitution;
 
-					for (int k = 0; k < c.PointCount; ++k)
+					for (int k = 0; k < cc.PointCount; ++k)
 					{
 						ManifoldPoint cp = manifold.Points[k];
-						ContactConstraintPoint ccp = c.Points[k];
+						ContactConstraintPoint ccp = cc.Points[k];
 
 						ccp.NormalImpulse = cp.NormalImpulse;
 						ccp.TangentImpulse = cp.TangentImpulse;
 						ccp.Separation = cp.Separation;
-						ccp.PositionImpulse = 0.0f;
 
 						ccp.LocalAnchor1 = cp.LocalPoint1;
 						ccp.LocalAnchor2 = cp.LocalPoint2;
@@ -167,13 +169,51 @@ namespace Box2DX.Dynamics
 						ccp.VelocityBias = 0.0f;
 						if (ccp.Separation > 0.0f)
 						{
-							ccp.VelocityBias = -60.0f * ccp.Separation; // TODO_ERIN b2TimeStep
+							ccp.VelocityBias = -step.Inv_Dt * ccp.Separation; // TODO_ERIN b2TimeStep
 						}
-
-						float vRel = Vector2.Dot(c.Normal, v2 + Vector2.Cross(w2, ccp.R2) - v1 - Vector2.Cross(w1, ccp.R1));
-						if (vRel < -Settings.VelocityThreshold)
+						else
 						{
-							ccp.VelocityBias += -c.Restitution * vRel;
+							float vRel = Vector2.Dot(cc.Normal, v2 + Vector2.Cross(w2, ccp.R2) - v1 - Vector2.Cross(w1, ccp.R1));
+							if (vRel < -Settings.VelocityThreshold)
+							{
+								ccp.VelocityBias = -cc.Restitution * vRel;
+							}
+						}
+					}
+
+					// If we have two points, then prepare the block solver.
+					if (cc.PointCount == 2)
+					{
+						ContactConstraintPoint ccp1 = cc.Points[0];
+						ContactConstraintPoint ccp2 = cc.Points[1];
+
+						float invMass1 = b1._invMass;
+						float invI1 = b1._invI;
+						float invMass2 = b2._invMass;
+						float invI2 = b2._invI;
+
+						float rn11 = Vector2.Cross(ccp1.R1, normal);
+						float rn12 = Vector2.Cross(ccp1.R2, normal);
+						float rn21 = Vector2.Cross(ccp2.R1, normal);
+						float rn22 = Vector2.Cross(ccp2.R2, normal);
+
+						float k11 = invMass1 + invMass2 + invI1 * rn11 * rn11 + invI2 * rn12 * rn12;
+						float k22 = invMass1 + invMass2 + invI1 * rn21 * rn21 + invI2 * rn22 * rn22;
+						float k12 = invMass1 + invMass2 + invI1 * rn11 * rn21 + invI2 * rn12 * rn22;
+
+						// Ensure a reasonable condition number.
+						const float k_maxConditionNumber = 100.0f;
+						if (k11 * k11 < k_maxConditionNumber * (k11 * k22 - k12 * k12))
+						{
+							// K is safe to invert.
+							cc.K.Col1.Set(k11, k12);
+							cc.K.Col2.Set(k12, k22);
+							cc.NormalMass = cc.K.Invert();
+						}
+						else
+						{
+							// The constraints are redundant, just use one.
+							cc.PointCount = 1;
 						}
 					}
 
@@ -249,16 +289,13 @@ namespace Box2DX.Dynamics
 				Vector2 normal = c.Normal;
 				Vector2 tangent = Vector2.Cross(normal, 1.0f);
 				float friction = c.Friction;
-#if DEFERRED_UPDATE
-				Vector2 b1_linearVelocity = b1._linearVelocity;
-				float b1_angularVelocity = b1._angularVelocity;
-				Vector2 b2_linearVelocity = b2._linearVelocity;
-				float b2_angularVelocity = b2._angularVelocity;
-#endif
+
+				Box2DXDebug.Assert(c.PointCount == 1 || c.PointCount == 2);
+
 				// Solve normal constraints
-				for (int j = 0; j < c.PointCount; ++j)
+				if (c.PointCount == 1)
 				{
-					ContactConstraintPoint ccp = c.Points[j];
+					ContactConstraintPoint ccp = c.Points[0];
 
 					// Relative velocity at contact
 					Vector2 dv = v2 + Vector2.Cross(w2, ccp.R2) - v1 - Vector2.Cross(w1, ccp.R1);
@@ -273,28 +310,229 @@ namespace Box2DX.Dynamics
 
 					// Apply contact impulse
 					Vector2 P = lambda * normal;
-#if DEFERRED_UPDATE
-					b1_linearVelocity -= invMass1 * P;
-					b1_angularVelocity -= invI1 * Vector2.Cross(r1, P);
 
-					b2_linearVelocity += invMass2 * P;
-					b2_angularVelocity += invI2 * Vector2.Cross(r2, P);
-#else
 					v1 -= invMass1 * P;
 					w1 -= invI1 * Vector2.Cross(ccp.R1, P);
 
 					v2 += invMass2 * P;
 					w2 += invI2 * Vector2.Cross(ccp.R2, P);
-#endif
+
 					ccp.NormalImpulse = newImpulse;
 				}
+				else
+				{
+					// Block solver developed in collaboration with Dirk Gregorius (back in 01/07 on Box2D_Lite).
+					// Build the mini LCP for this contact patch
+					//
+					// vn = A * x + b, vn >= 0, , vn >= 0, x >= 0 and vn_i * x_i = 0 with i = 1..2
+					//
+					// A = J * W * JT and J = ( -n, -r1 x n, n, r2 x n )
+					// b = vn_0 - velocityBias
+					//
+					// The system is solved using the "Total enumeration method" (s. Murty). The complementary constraint vn_i * x_i
+					// implies that we must have in any solution either vn_i = 0 or x_i = 0. So for the 2D contact problem the cases
+					// vn1 = 0 and vn2 = 0, x1 = 0 and x2 = 0, x1 = 0 and vn2 = 0, x2 = 0 and vn1 = 0 need to be tested. The first valid
+					// solution that satisfies the problem is chosen.
+					// 
+					// In order to account of the accumulated impulse 'a' (because of the iterative nature of the solver which only requires
+					// that the accumulated impulse is clamped and not the incremental impulse) we change the impulse variable (x_i).
+					//
+					// Substitute:
+					// 
+					// x = x' - a
+					// 
+					// Plug into above equation:
+					//
+					// vn = A * x + b
+					//    = A * (x' - a) + b
+					//    = A * x' + b - A * a
+					//    = A * x' + b'
+					// b' = b - A * a;
 
-#if DEFERRED_UPDATE
-				b1._linearVelocity = b1_linearVelocity;
-				b1._angularVelocity = b1_angularVelocity;
-				b2._linearVelocity = b2_linearVelocity;
-				b2._angularVelocity = b2_angularVelocity;
+					ContactConstraintPoint cp1 = c.Points[0];
+					ContactConstraintPoint cp2 = c.Points[1];
+
+					Vector2 a = new Vector2(cp1.NormalImpulse, cp2.NormalImpulse);
+					Box2DXDebug.Assert(a.X >= 0.0f && a.Y >= 0.0f);
+
+					// Relative velocity at contact
+					Vector2 dv1 = v2 + Vector2.Cross(w2, cp1.R2) - v1 - Vector2.Cross(w1, cp1.R1);
+					Vector2 dv2 = v2 + Vector2.Cross(w2, cp2.R2) - v1 - Vector2.Cross(w1, cp2.R1);
+
+					// Compute normal velocity
+					float vn1 = Vector2.Dot(dv1, normal);
+					float vn2 = Vector2.Dot(dv2, normal);
+
+					Vector2 b;
+					b.X = vn1 - cp1.VelocityBias;
+					b.Y = vn2 - cp2.VelocityBias;
+					b -= Common.Math.Mul(c.K, a);
+
+					const float k_errorTol = 1e-3f;
+					for (; ; )
+					{
+						//
+						// Case 1: vn = 0
+						//
+						// 0 = A * x' + b'
+						//
+						// Solve for x':
+						//
+						// x' = - inv(A) * b'
+						//
+						Vector2 x = -Common.Math.Mul(c.NormalMass, b);
+
+						if (x.X >= 0.0f && x.Y >= 0.0f)
+						{
+							// Resubstitute for the incremental impulse
+							Vector2 d = x - a;
+
+							// Apply incremental impulse
+							Vector2 P1 = d.X * normal;
+							Vector2 P2 = d.Y * normal;
+							v1 -= invMass1 * (P1 + P2);
+							w1 -= invI1 * (Vector2.Cross(cp1.R1, P1) + Vector2.Cross(cp2.R1, P2));
+
+							v2 += invMass2 * (P1 + P2);
+							w2 += invI2 * (Vector2.Cross(cp1.R2, P1) + Vector2.Cross(cp2.R2, P2));
+
+							// Accumulate
+							cp1.NormalImpulse = x.X;
+							cp2.NormalImpulse = x.Y;
+
+#if B2_DEBUG_SOLVER
+							// Postconditions
+							dv1 = v2 + Vector2.Cross(w2, cp1.R2) - v1 - Vector2.Cross(w1, cp1.R1);
+							dv2 = v2 + Vector2.Cross(w2, cp2.R2) - v1 - Vector2.Cross(w1, cp2.R1);
+
+							// Compute normal velocity
+							vn1 = Vector2.Dot(dv1, normal);
+							vn2 = Vector2.Dot(dv2, normal);
+
+							Box2DXDebug.Assert(Common.Math.Abs(vn1 - cp1.VelocityBias) < k_errorTol);
+							Box2DXDebug.Assert(Common.Math.Abs(vn2 - cp2.VelocityBias) < k_errorTol);
 #endif
+							break;
+						}
+
+						//
+						// Case 2: vn1 = 0 and x2 = 0
+						//
+						//   0 = a11 * x1' + a12 * 0 + b1' 
+						// vn2 = a21 * x1' + a22 * 0 + b2'
+						//
+						x.X = -cp1.NormalMass * b.X;
+						x.Y = 0.0f;
+						vn1 = 0.0f;
+						vn2 = c.K.Col1.Y * x.X + b.Y;
+
+						if (x.X >= 0.0f && vn2 >= 0.0f)
+						{
+							// Resubstitute for the incremental impulse
+							Vector2 d = x - a;
+
+							// Apply incremental impulse
+							Vector2 P1 = d.X * normal;
+							Vector2 P2 = d.Y * normal;
+							v1 -= invMass1 * (P1 + P2);
+							w1 -= invI1 * (Vector2.Cross(cp1.R1, P1) + Vector2.Cross(cp2.R1, P2));
+
+							v2 += invMass2 * (P1 + P2);
+							w2 += invI2 * (Vector2.Cross(cp1.R2, P1) + Vector2.Cross(cp2.R2, P2));
+
+							// Accumulate
+							cp1.NormalImpulse = x.X;
+							cp2.NormalImpulse = x.Y;
+
+#if B2_DEBUG_SOLVER
+							// Postconditions
+							dv1 = v2 + Vector2.Cross(w2, cp1.R2) - v1 - Vector2.Cross(w1, cp1.R1);
+
+							// Compute normal velocity
+							vn1 = Vector2.Dot(dv1, normal);
+
+							Box2DXDebug.Assert(Common.Math.Abs(vn1 - cp1.VelocityBias) < k_errorTol);
+#endif
+							break;
+						}
+
+
+						//
+						// Case 3: w2 = 0 and x1 = 0
+						//
+						// vn1 = a11 * 0 + a12 * x2' + b1' 
+						//   0 = a21 * 0 + a22 * x2' + b2'
+						//
+						x.X = 0.0f;
+						x.Y = -cp2.NormalMass * b.Y;
+						vn1 = c.K.Col2.X * x.Y + b.X;
+						vn2 = 0.0f;
+
+						if (x.Y >= 0.0f && vn1 >= 0.0f)
+						{
+							// Resubstitute for the incremental impulse
+							Vector2 d = x - a;
+
+							// Apply incremental impulse
+							Vector2 P1 = d.X * normal;
+							Vector2 P2 = d.Y * normal;
+							v1 -= invMass1 * (P1 + P2);
+							w1 -= invI1 * (Vector2.Cross(cp1.R1, P1) + Vector2.Cross(cp2.R1, P2));
+
+							v2 += invMass2 * (P1 + P2);
+							w2 += invI2 * (Vector2.Cross(cp1.R2, P1) + Vector2.Cross(cp2.R2, P2));
+
+							// Accumulate
+							cp1.NormalImpulse = x.X;
+							cp2.NormalImpulse = x.Y;
+
+#if B2_DEBUG_SOLVER
+							// Postconditions
+							dv2 = v2 + Vector2.Cross(w2, cp2.R2) - v1 - Vector2.Cross(w1, cp2.R1);
+
+							// Compute normal velocity
+							vn2 = Vector2.Dot(dv2, normal);
+
+							Box2DXDebug.Assert(Common.Math.Abs(vn2 - cp2.VelocityBias) < k_errorTol);
+#endif
+							break;
+						}
+
+						//
+						// Case 4: x1 = 0 and x2 = 0
+						// 
+						// vn1 = b1
+						// vn2 = b2;
+						x.X = 0.0f;
+						x.Y = 0.0f;
+						vn1 = b.X;
+						vn2 = b.Y;
+
+						if (vn1 >= 0.0f && vn2 >= 0.0f)
+						{
+							// Resubstitute for the incremental impulse
+							Vector2 d = x - a;
+
+							// Apply incremental impulse
+							Vector2 P1 = d.X * normal;
+							Vector2 P2 = d.Y * normal;
+							v1 -= invMass1 * (P1 + P2);
+							w1 -= invI1 * (Vector2.Cross(cp1.R1, P1) + Vector2.Cross(cp2.R1, P2));
+
+							v2 += invMass2 * (P1 + P2);
+							w2 += invI2 * (Vector2.Cross(cp1.R2, P1) + Vector2.Cross(cp2.R2, P2));
+
+							// Accumulate
+							cp1.NormalImpulse = x.X;
+							cp2.NormalImpulse = x.Y;
+
+							break;
+						}
+
+						// No solution, give up. This is hit sometimes, but it doesn't seem to matter.
+						break;
+					}
+				}
 
 				// Solve tangent constraints
 				for (int j = 0; j < c.PointCount; ++j)
@@ -385,21 +623,16 @@ namespace Box2DX.Dynamics
 					float C = baumgarte * Common.Math.Clamp(separation + Settings.LinearSlop, -Settings.MaxLinearCorrection, 0.0f);
 
 					// Compute normal impulse
-					float dImpulse = -ccp.EqualizedMass * C;
+					float impulse = -ccp.EqualizedMass * C;
 
-					// b2Clamp the accumulated impulse
-					float impulse0 = ccp.PositionImpulse;
-					ccp.PositionImpulse = Common.Math.Max(impulse0 + dImpulse, 0.0f);
-					dImpulse = ccp.PositionImpulse - impulse0;
+					Vector2 P = impulse * normal;
 
-					Vector2 impulse = dImpulse * normal;
-
-					b1._sweep.C -= invMass1 * impulse;
-					b1._sweep.A -= invI1 * Vector2.Cross(r1, impulse);
+					b1._sweep.C -= invMass1 * P;
+					b1._sweep.A -= invI1 * Vector2.Cross(r1, P);
 					b1.SynchronizeTransform();
 
-					b2._sweep.C += invMass2 * impulse;
-					b2._sweep.A += invI2 * Vector2.Cross(r2, impulse);
+					b2._sweep.C += invMass2 * P;
+					b2._sweep.A += invI2 * Vector2.Cross(r2, P);
 					b2.SynchronizeTransform();
 				}
 			}

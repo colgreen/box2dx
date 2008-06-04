@@ -18,6 +18,8 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
+#define GLRender
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -57,8 +59,10 @@ namespace TestBed
 		{
 			InitializeComponent();
 
+#if GLRender
 			openGlControl.InitializeContexts();
 			OpenGLDebugDraw.InitTextRenderer(openGlControl);
+#endif //GLRender
 
 			Init();
 			SetView();
@@ -374,20 +378,23 @@ namespace TestBed
 
 		#endregion Controls Events Handlers
 
-		#region GL
+		#region Render
 
 		private void Init()
 		{
+#if GLRender
 			Gl.glShadeModel(Gl.GL_SMOOTH);
 			Gl.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 			Gl.glClearDepth(1.0f);
 			Gl.glEnable(Gl.GL_COLOR_MATERIAL);
 			Gl.glEnable(Gl.GL_LIGHT0);
 			Gl.glHint(Gl.GL_PERSPECTIVE_CORRECTION_HINT, Gl.GL_NICEST);
+#endif
 		}
 
 		private void SetView()
 		{
+#if GLRender
 			int width = openGlControl.Width;
 			int height = openGlControl.Height;
 
@@ -408,6 +415,7 @@ namespace TestBed
 
 			Gl.glMatrixMode(Gl.GL_MODELVIEW);
 			Gl.glLoadIdentity();
+#endif
 		}
 
 		private Vector2 ConvertScreenToWorld(float x, float y)
@@ -430,10 +438,9 @@ namespace TestBed
 			return p;
 		}
 
-		#endregion GL
-
 		private void SimulationLoop()
 		{
+#if GLRender
 			Gl.glClear(Gl.GL_COLOR_BUFFER_BIT | Gl.GL_DEPTH_BUFFER_BIT);
 
 			CurrentTest.SetTextLine(30);
@@ -447,6 +454,9 @@ namespace TestBed
 			{
 				redrawTimer.Stop();
 			}
+#endif
 		}
+
+		#endregion Render
 	}
 }

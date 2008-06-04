@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <BaseIntermediateOutputPath>..\Build\VCS9\Box2DX\obj\</BaseIntermediateOutputPath>
+    <BaseIntermediateOutputPath>..\Build\VCS\Box2DX\obj\</BaseIntermediateOutputPath>
     <ProductVersion>9.0.21022</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{C157BCA5-BAC7-455F-A7DE-59D506D46ECF}</ProjectGuid>
@@ -15,7 +15,7 @@
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <BaseIntermediateOutputPath>..\Build\VCS9\Box2DX\obj\</BaseIntermediateOutputPath>
+    <BaseIntermediateOutputPath>..\Build\VCS\Box2DX\obj\</BaseIntermediateOutputPath>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -29,7 +29,7 @@
     <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <BaseIntermediateOutputPath>..\Build\VCS9\Box2DX\obj\</BaseIntermediateOutputPath>
+    <BaseIntermediateOutputPath>..\Build\VCS\Box2DX\obj\</BaseIntermediateOutputPath>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>..\Build\VCS\Box2DX\bin\Release\</OutputPath>
@@ -80,9 +80,6 @@
     <Compile Include="Dynamics\World.cs" />
     <Compile Include="Dynamics\WorldCallbacks.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Common\_toport.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.

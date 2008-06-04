@@ -351,16 +351,35 @@ namespace Box2DX.Dynamics
 			}
 		}
 
-		public void SolveTOI(TimeStep subStep)
+		public void SolveTOI(ref TimeStep subStep)
 		{
 			ContactSolver contactSolver = new ContactSolver(subStep, _contacts, _contactCount);
 
-			// No warm starting needed for TOI events.
+			// No warm starting needed for TOI contact events.
+
+#if B2_TOI_JOINTS
+			// For joints, initialize with the last full step warm starting values
+			subStep.WarmStarting = true;
+
+			for (int i = 0; i < _jointCount; ++i)
+			{
+				_joints[i].InitVelocityConstraints(subStep);
+			}
+
+			// ...but don't update the warm starting during TOI solve!
+			subStep.WarmStarting = false;
+#endif
 
 			// Solve velocity constraints.
 			for (int i = 0; i < subStep.MaxIterations; ++i)
 			{
 				contactSolver.SolveVelocityConstraints();
+#if B2_TOI_JOINTS
+			for (int j = 0; j < _jointCount; ++j)
+			{
+				_joints[j].SolveVelocityConstraints(subStep);
+			}
+#endif
 			}
 
 			// Don't store the TOI contact forces for warm starting
@@ -393,10 +412,24 @@ namespace Box2DX.Dynamics
 			for (int i = 0; i < subStep.MaxIterations; ++i)
 			{
 				bool contactsOkay = contactSolver.SolvePositionConstraints(k_toiBaumgarte);
+#if B2_TOI_JOINTS
+				bool jointsOkay = true;
+				for (int j = 0; j < _jointCount; ++j)
+				{
+					bool jointOkay = _joints[j].SolvePositionConstraints();
+					jointsOkay = jointsOkay && jointOkay;
+				}
+				
+				if (contactsOkay && jointsOkay)
+				{
+					break;
+				}
+#else
 				if (contactsOkay)
 				{
 					break;
 				}
+#endif
 			}
 
 			Report(contactSolver._constraints);

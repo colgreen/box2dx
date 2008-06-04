@@ -76,6 +76,11 @@ namespace Box2DX.Common
 		public static readonly int MaxTOIContactsPerIsland = 32;
 
 		/// <summary>
+		/// Maximum number of joints to be handled to solve a TOI island.
+		/// </summary>
+		public static readonly int MaxTOIJointsPerIsland = 32;
+
+		/// <summary>
 		/// A velocity threshold for elastic collisions. Any collision with a relative linear
 		/// velocity below this threshold will be treated as inelastic.
 		/// </summary>

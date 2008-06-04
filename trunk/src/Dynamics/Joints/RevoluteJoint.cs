@@ -165,6 +165,10 @@ namespace Box2DX.Dynamics
 		public float _upperAngle;
 		public LimitState _limitState;
 
+#if B2_TOI_JOINTS
+		publiv Vector2 _lastWarmStartingPivotForce;
+#endif
+
 		public override Vector2 Anchor1
 		{
 			get { return _body1.GetWorldPoint(_localAnchor1); }
@@ -419,7 +423,21 @@ namespace Box2DX.Dynamics
 			Vector2 pivotCdot = b2._linearVelocity + Vector2.Cross(b2._angularVelocity, r2) - b1._linearVelocity -
 				Vector2.Cross(b1._angularVelocity, r1);
 			Vector2 pivotForce = -Settings.FORCE_INV_SCALE(step.Inv_Dt) * Box2DXMath.Mul(_pivotMass, pivotCdot);
+
+#if B2_TOI_JOINTS
+			if (step.WarmStarting)
+			{
+					_pivotForce += pivotForce;
+					_lastWarmStartingPivotForce = _pivotForce;
+			}
+			else
+			{
+				_pivotForce = _lastWarmStartingPivotForce;
+				//Do not update warm starting value!
+			}
+#else
 			_pivotForce += pivotForce;
+#endif
 
 			Vector2 P = Settings.FORCE_SCALE(step.Dt) * pivotForce;
 			b1._linearVelocity -= b1._invMass * P;
