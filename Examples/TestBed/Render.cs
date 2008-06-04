@@ -153,7 +153,7 @@ namespace TestBed
 			Gl.glEnd();
 		}
 
-		public static void DrawSegment(Vector2 p1, Vector2 p2, Color color, params object[] fake)
+		public static void DrawSegment(Vector2 p1, Vector2 p2, Color color, params object[] p)
 		{
 			Gl.glColor3f(color.R, color.G, color.B);
 			Gl.glBegin(Gl.GL_LINES);
