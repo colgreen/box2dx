@@ -18,7 +18,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\..\Build\VCS\HelloWorld\bin\Debug\</OutputPath>
+    <OutputPath>..\..\Output\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -29,7 +29,7 @@
     <BaseIntermediateOutputPath>..\..\Build\VCS\HelloWorld\obj\</BaseIntermediateOutputPath>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\..\Build\VCS\HelloWorld\bin\Release\</OutputPath>
+    <OutputPath>..\..\Output\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -48,6 +48,7 @@
     <ProjectReference Include="..\..\src\Box2DX.csproj">
       <Project>{C157BCA5-BAC7-455F-A7DE-59D506D46ECF}</Project>
       <Name>Box2DX</Name>
+      <Private>False</Private>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
