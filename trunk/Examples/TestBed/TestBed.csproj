@@ -18,7 +18,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\..\Build\VCS\TestBed\bin\Debug\</OutputPath>
+    <OutputPath>..\..\Output\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -29,7 +29,7 @@
     <BaseIntermediateOutputPath>..\..\Build\VCS\TestBed\obj\</BaseIntermediateOutputPath>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\..\Build\VCS\TestBed\bin\Release\</OutputPath>
+    <OutputPath>..\..\Output\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -44,15 +44,20 @@
     <Reference Include="System.Xml" />
     <Reference Include="Tao.FreeGlut, Version=2.4.0.1, Culture=neutral, PublicKeyToken=6e602a6ad6c0d06d, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>F:\WINXP32\Program Files\Tao\bin\Tao.FreeGlut.dll</HintPath>
+      <HintPath>..\..\Libraries\Tao.FreeGlut.dll</HintPath>
     </Reference>
     <Reference Include="Tao.FreeType, Version=2.3.5.0, Culture=neutral, PublicKeyToken=e499629dc69cd531, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\Libraries\Tao.FreeType.dll</HintPath>
-      <Private>False</Private>
     </Reference>
-    <Reference Include="Tao.OpenGl, Version=2.1.0.4, Culture=neutral, PublicKeyToken=1ca010269a4501ef" />
-    <Reference Include="Tao.Platform.Windows, Version=1.0.0.4, Culture=neutral, PublicKeyToken=701104b2da67a104, processorArchitecture=MSIL" />
+    <Reference Include="Tao.OpenGl, Version=2.1.0.4, Culture=neutral, PublicKeyToken=1ca010269a4501ef, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Libraries\Tao.OpenGl.dll</HintPath>
+    </Reference>
+    <Reference Include="Tao.Platform.Windows, Version=1.0.0.4, Culture=neutral, PublicKeyToken=701104b2da67a104, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Libraries\Tao.Platform.Windows.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="MainForm.cs">
@@ -137,6 +142,7 @@
     <ProjectReference Include="..\..\src\Box2DX.csproj">
       <Project>{C157BCA5-BAC7-455F-A7DE-59D506D46ECF}</Project>
       <Name>Box2DX</Name>
+      <Private>False</Private>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
