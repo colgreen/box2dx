@@ -77,8 +77,8 @@ namespace Box2DX.Dynamics
 					if (listener!=null)
 					{
 						cp.Position = b1.GetWorldPoint(mp.LocalPoint1);
-						Vector2 v1 = b1.GetLinearVelocityFromLocalPoint(mp.LocalPoint1);
-						Vector2 v2 = b2.GetLinearVelocityFromLocalPoint(mp.LocalPoint2);
+						Vec2 v1 = b1.GetLinearVelocityFromLocalPoint(mp.LocalPoint1);
+						Vec2 v2 = b2.GetLinearVelocityFromLocalPoint(mp.LocalPoint2);
 						cp.Velocity = v2 - v1;
 						cp.Normal = _manifold.Normal;
 						cp.Separation = mp.Separation;
@@ -95,8 +95,8 @@ namespace Box2DX.Dynamics
 					if (listener!=null)
 					{
 						cp.Position = b1.GetWorldPoint(mp.LocalPoint1);
-						Vector2 v1 = b1.GetLinearVelocityFromLocalPoint(mp.LocalPoint1);
-						Vector2 v2 = b2.GetLinearVelocityFromLocalPoint(mp.LocalPoint2);
+						Vec2 v1 = b1.GetLinearVelocityFromLocalPoint(mp.LocalPoint1);
+						Vec2 v2 = b2.GetLinearVelocityFromLocalPoint(mp.LocalPoint2);
 						cp.Velocity = v2 - v1;
 						cp.Normal = _manifold.Normal;
 						cp.Separation = mp.Separation;
@@ -112,8 +112,8 @@ namespace Box2DX.Dynamics
 				{
 					ManifoldPoint mp0 = m0.Points[0];
 					cp.Position = b1.GetWorldPoint(mp0.LocalPoint1);
-					Vector2 v1 = b1.GetLinearVelocityFromLocalPoint(mp0.LocalPoint1);
-					Vector2 v2 = b2.GetLinearVelocityFromLocalPoint(mp0.LocalPoint2);
+					Vec2 v1 = b1.GetLinearVelocityFromLocalPoint(mp0.LocalPoint1);
+					Vec2 v2 = b2.GetLinearVelocityFromLocalPoint(mp0.LocalPoint2);
 					cp.Velocity = v2 - v1;
 					cp.Normal = m0.Normal;
 					cp.Separation = mp0.Separation;

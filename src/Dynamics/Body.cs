@@ -44,7 +44,7 @@ namespace Box2DX.Dynamics
 			MassData.Mass = 0.0f;
 			MassData.I = 0.0f;
 			UserData = null;
-			Position = new Vector2();
+			Position = new Vec2();
 			Position.Set(0.0f, 0.0f);
 			Angle = 0.0f;
 			LinearDamping = 0.0f;
@@ -71,7 +71,7 @@ namespace Box2DX.Dynamics
 		/// The world position of the body. Avoid creating bodies at the origin
 		/// since this can lead to many overlapping shapes.
 		/// </summary>
-		public Vector2 Position;
+		public Vec2 Position;
 
 		/// <summary>
 		/// The world angle of the body in radians.
@@ -148,10 +148,10 @@ namespace Box2DX.Dynamics
 
 		internal Sweep _sweep;	// the swept motion for CCD
 
-		internal Vector2 _linearVelocity;
+		internal Vec2 _linearVelocity;
 		internal float _angularVelocity;
 
-		internal Vector2 _force;
+		internal Vec2 _force;
 		internal float _torque;
 
 		private World _world;
@@ -429,7 +429,7 @@ namespace Box2DX.Dynamics
 			_I = 0.0f;
 			_invI = 0.0f;
 
-			Vector2 center = Vector2.Zero;
+			Vec2 center = Vec2.Zero;
 			for (Shape s = _shapeList; s!=null; s = s._next)
 			{
 				MassData massData;
@@ -449,7 +449,7 @@ namespace Box2DX.Dynamics
 			if (_I > 0.0f && (_flags & BodyFlags.FixedRotation) == 0)
 			{
 				// Center the inertia about the center of mass.
-				_I -= _mass * Vector2.Dot(center, center);
+				_I -= _mass * Vec2.Dot(center, center);
 				Box2DXDebug.Assert(_I > 0.0f);
 				_invI = 1.0f / _I;
 			}
@@ -498,7 +498,7 @@ namespace Box2DX.Dynamics
 		/// <param name="angle">The new world rotation angle of the body in radians.</param>
 		/// <returns>Return false if the movement put a shape outside the world. In this case the
 		/// body is automatically frozen.</returns>
-		public bool SetXForm(Vector2 position, float angle)
+		public bool SetXForm(Vec2 position, float angle)
 		{
 			Box2DXDebug.Assert(_world._lock == false);
 			if (_world._lock == true)
@@ -561,7 +561,7 @@ namespace Box2DX.Dynamics
 		/// Get the world body origin position.
 		/// </summary>
 		/// <returns>Return the world position of the body's origin.</returns>
-		public Vector2 GetPosition()
+		public Vec2 GetPosition()
 		{
 			return _xf.Position;
 		}
@@ -579,7 +579,7 @@ namespace Box2DX.Dynamics
 		/// Get the world position of the center of mass.
 		/// </summary>
 		/// <returns></returns>
-		public Vector2 GetWorldCenter()
+		public Vec2 GetWorldCenter()
 		{
 			return _sweep.C;
 		}
@@ -588,7 +588,7 @@ namespace Box2DX.Dynamics
 		/// Get the local position of the center of mass.
 		/// </summary>
 		/// <returns></returns>
-		public Vector2 GetLocalCenter()
+		public Vec2 GetLocalCenter()
 		{
 			return _sweep.LocalCenter;
 		}
@@ -597,7 +597,7 @@ namespace Box2DX.Dynamics
 		/// Set the linear velocity of the center of mass.
 		/// </summary>
 		/// <param name="v">The new linear velocity of the center of mass.</param>
-		public void SetLinearVelocity(Vector2 v)
+		public void SetLinearVelocity(Vec2 v)
 		{
 			_linearVelocity = v;
 		}
@@ -606,7 +606,7 @@ namespace Box2DX.Dynamics
 		/// Get the linear velocity of the center of mass.
 		/// </summary>
 		/// <returns>Return the linear velocity of the center of mass.</returns>
-		public Vector2 GetLinearVelocity()
+		public Vec2 GetLinearVelocity()
 		{
 			return _linearVelocity;
 		}
@@ -636,14 +636,14 @@ namespace Box2DX.Dynamics
 		/// </summary>
 		/// <param name="force">The world force vector, usually in Newtons (N).</param>
 		/// <param name="point">The world position of the point of application.</param>
-		public void ApplyForce(Vector2 force, Vector2 point)
+		public void ApplyForce(Vec2 force, Vec2 point)
 		{
 			if (IsSleeping())
 			{
 				WakeUp();
 			}
 			_force += force;
-			_torque += Vector2.Cross(point - _sweep.C, force);
+			_torque += Vec2.Cross(point - _sweep.C, force);
 		}
 
 		/// <summary>
@@ -668,14 +668,14 @@ namespace Box2DX.Dynamics
 		/// </summary>
 		/// <param name="impulse">The world impulse vector, usually in N-seconds or kg-m/s.</param>
 		/// <param name="point">The world position of the point of application.</param>
-		public void ApplyImpulse(Vector2 impulse, Vector2 point)
+		public void ApplyImpulse(Vec2 impulse, Vec2 point)
 		{
 			if (IsSleeping())
 			{
 				WakeUp();
 			}
 			_linearVelocity += _invMass * impulse;
-			_angularVelocity += _invI * Vector2.Cross(point - _sweep.C, impulse);
+			_angularVelocity += _invI * Vec2.Cross(point - _sweep.C, impulse);
 		}
 
 		/// <summary>
@@ -701,7 +701,7 @@ namespace Box2DX.Dynamics
 		/// </summary>
 		/// <param name="localPoint">A point on the body measured relative the the body's origin.</param>
 		/// <returns>Return the same point expressed in world coordinates.</returns>
-		public Vector2 GetWorldPoint(Vector2 localPoint)
+		public Vec2 GetWorldPoint(Vec2 localPoint)
 		{
 			return Common.Math.Mul(_xf, localPoint);
 		}
@@ -711,7 +711,7 @@ namespace Box2DX.Dynamics
 		/// </summary>
 		/// <param name="localVector">A vector fixed in the body.</param>
 		/// <returns>Return the same vector expressed in world coordinates.</returns>
-		public Vector2 GetWorldVector(Vector2 localVector)
+		public Vec2 GetWorldVector(Vec2 localVector)
 		{
 			return Common.Math.Mul(_xf.R, localVector);
 		}
@@ -721,7 +721,7 @@ namespace Box2DX.Dynamics
 		/// </summary>
 		/// <param name="worldPoint">A point in world coordinates.</param>
 		/// <returns>Return the corresponding local point relative to the body's origin.</returns>
-		public Vector2 GetLocalPoint(Vector2 worldPoint)
+		public Vec2 GetLocalPoint(Vec2 worldPoint)
 		{
 			return Common.Math.MulT(_xf, worldPoint);
 		}
@@ -731,7 +731,7 @@ namespace Box2DX.Dynamics
 		/// </summary>
 		/// <param name="worldVector">A vector in world coordinates.</param>
 		/// <returns>Return the corresponding local vector.</returns>
-		public Vector2 GetLocalVector(Vector2 worldVector)
+		public Vec2 GetLocalVector(Vec2 worldVector)
 		{
 			return Common.Math.MulT(_xf.R, worldVector);
 		}
@@ -741,9 +741,9 @@ namespace Box2DX.Dynamics
 		/// </summary>
 		/// <param name="worldPoint">A point in world coordinates.</param>
 		/// <returns>The world velocity of a point.</returns>
-		public Vector2 GetLinearVelocityFromWorldPoint(Vector2 worldPoint)
+		public Vec2 GetLinearVelocityFromWorldPoint(Vec2 worldPoint)
 		{
-			return _linearVelocity + Vector2.Cross(_angularVelocity, worldPoint - _sweep.C);
+			return _linearVelocity + Vec2.Cross(_angularVelocity, worldPoint - _sweep.C);
 		}
 
 		/// <summary>
@@ -751,7 +751,7 @@ namespace Box2DX.Dynamics
 		/// </summary>
 		/// <param name="localPoint">A point in local coordinates.</param>
 		/// <returns>The world velocity of a point.</returns>
-		public Vector2 GetLinearVelocityFromLocalPoint(Vector2 localPoint)
+		public Vec2 GetLinearVelocityFromLocalPoint(Vec2 localPoint)
 		{
 			return GetLinearVelocityFromWorldPoint(GetWorldPoint(localPoint));
 		}

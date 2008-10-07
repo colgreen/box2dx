@@ -40,7 +40,7 @@ namespace TestBed
 	// inside World.Step.
 	public class OpenGLDebugDraw : DebugDraw
 	{
-		public override void DrawPolygon(Vector2[] vertices, int vertexCount, Color color)
+		public override void DrawPolygon(Vec2[] vertices, int vertexCount, Color color)
 		{
 			Gl.glColor3f(color.R, color.G, color.B);
 			Gl.glBegin(Gl.GL_LINE_LOOP);
@@ -51,7 +51,7 @@ namespace TestBed
 			Gl.glEnd();			
 		}
 
-		public override void DrawSolidPolygon(Vector2[] vertices, int vertexCount, Color color)
+		public override void DrawSolidPolygon(Vec2[] vertices, int vertexCount, Color color)
 		{
 			Gl.glEnable(Gl.GL_BLEND);
 			Gl.glBlendFunc(Gl.GL_SRC_ALPHA, Gl.GL_ONE_MINUS_SRC_ALPHA);
@@ -73,7 +73,7 @@ namespace TestBed
 			Gl.glEnd();
 		}
 
-		public override void DrawCircle(Vector2 center, float radius, Color color)
+		public override void DrawCircle(Vec2 center, float radius, Color color)
 		{
 			float k_segments = 16.0f;
 			float k_increment = 2.0f * Box2DX.Common.Settings.Pi / k_segments;
@@ -82,14 +82,14 @@ namespace TestBed
 			Gl.glBegin(Gl.GL_LINE_LOOP);
 			for (int i = 0; i < k_segments; ++i)
 			{
-				Vector2 v = center + radius * new Vector2((float)SysMath.Cos(theta), (float)SysMath.Sin(theta));
+				Vec2 v = center + radius * new Vec2((float)SysMath.Cos(theta), (float)SysMath.Sin(theta));
 				Gl.glVertex2f(v.X, v.Y);
 				theta += k_increment;
 			}
 			Gl.glEnd();
 		}
 
-		public override void DrawSolidCircle(Vector2 center, float radius, Vector2 axis, Color color)
+		public override void DrawSolidCircle(Vec2 center, float radius, Vec2 axis, Color color)
 		{
 			float k_segments = 16.0f;
 			float k_increment = 2.0f * Box2DX.Common.Settings.Pi / k_segments;
@@ -100,7 +100,7 @@ namespace TestBed
 			Gl.glBegin(Gl.GL_TRIANGLE_FAN);
 			for (int i = 0; i < k_segments; ++i)
 			{
-				Vector2 v = center + radius * new Vector2((float)SysMath.Cos(theta), (float)SysMath.Sin(theta));
+				Vec2 v = center + radius * new Vec2((float)SysMath.Cos(theta), (float)SysMath.Sin(theta));
 				Gl.glVertex2f(v.X, v.Y);
 				theta += k_increment;
 			}
@@ -112,20 +112,20 @@ namespace TestBed
 			Gl.glBegin(Gl.GL_LINE_LOOP);
 			for (int i = 0; i < k_segments; ++i)
 			{
-				Vector2 v = center + radius * new Vector2((float)SysMath.Cos(theta), (float)SysMath.Sin(theta));
+				Vec2 v = center + radius * new Vec2((float)SysMath.Cos(theta), (float)SysMath.Sin(theta));
 				Gl.glVertex2f(v.X, v.Y);
 				theta += k_increment;
 			}
 			Gl.glEnd();
 
-			Vector2 p = center + radius * axis;
+			Vec2 p = center + radius * axis;
 			Gl.glBegin(Gl.GL_LINES);
 			Gl.glVertex2f(center.X, center.Y);
 			Gl.glVertex2f(p.X, p.Y);
 			Gl.glEnd();
 		}
 
-		public override void DrawSegment(Vector2 p1, Vector2 p2, Color color)
+		public override void DrawSegment(Vec2 p1, Vec2 p2, Color color)
 		{
 			Gl.glColor3f(color.R, color.G, color.B);
 			Gl.glBegin(Gl.GL_LINES);
@@ -136,7 +136,7 @@ namespace TestBed
 
 		public override void DrawXForm(XForm xf)
 		{
-			Vector2 p1 = xf.Position, p2;
+			Vec2 p1 = xf.Position, p2;
 			float k_axisScale = 0.4f;
 			Gl.glBegin(Gl.GL_LINES);
 
@@ -153,7 +153,7 @@ namespace TestBed
 			Gl.glEnd();
 		}
 
-		public static void DrawSegment(Vector2 p1, Vector2 p2, Color color, params object[] p)
+		public static void DrawSegment(Vec2 p1, Vec2 p2, Color color, params object[] p)
 		{
 			Gl.glColor3f(color.R, color.G, color.B);
 			Gl.glBegin(Gl.GL_LINES);
@@ -162,7 +162,7 @@ namespace TestBed
 			Gl.glEnd();
 		}
 
-		public static void DrawPoint(Vector2 p, float size, Color color)
+		public static void DrawPoint(Vec2 p, float size, Color color)
 		{
 			Gl.glPointSize(size);
 			Gl.glBegin(Gl.GL_POINTS);

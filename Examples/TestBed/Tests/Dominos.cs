@@ -72,7 +72,7 @@ namespace TestBed
 
 			{
 				PolygonDef sd = new PolygonDef();
-				sd.SetAsBox(7.0f, 0.25f, Vector2.Zero, 0.3f);
+				sd.SetAsBox(7.0f, 0.25f, Vec2.Zero, 0.3f);
 
 				BodyDef bd = new BodyDef();
 				bd.Position.Set(1.0f, 6.0f);
@@ -107,7 +107,7 @@ namespace TestBed
 			}
 
 			RevoluteJointDef jd = new RevoluteJointDef();
-			Vector2 anchor = new Vector2();
+			Vec2 anchor = new Vec2();
 
 			anchor.Set(-2.0f, 1.0f);
 			jd.Initialize(b1, b3, anchor);
@@ -141,13 +141,13 @@ namespace TestBed
 				sd.Density = 10.0f;
 				sd.Friction = 0.1f;
 
-				sd.SetAsBox(1.0f, 0.1f, new Vector2(0.0f, -0.9f), 0.0f);
+				sd.SetAsBox(1.0f, 0.1f, new Vec2(0.0f, -0.9f), 0.0f);
 				b5.CreateShape(sd);
 
-				sd.SetAsBox(0.1f, 1.0f, new Vector2(-0.9f, 0.0f), 0.0f);
+				sd.SetAsBox(0.1f, 1.0f, new Vec2(-0.9f, 0.0f), 0.0f);
 				b5.CreateShape(sd);
 
-				sd.SetAsBox(0.1f, 1.0f, new Vector2(0.9f, 0.0f), 0.0f);
+				sd.SetAsBox(0.1f, 1.0f, new Vec2(0.9f, 0.0f), 0.0f);
 				b5.CreateShape(sd);
 
 				b5.SetMassFromShapes();
@@ -194,7 +194,7 @@ namespace TestBed
 			djd.Body2 = b7;
 			djd.LocalAnchor1.Set(6.0f, 0.0f);
 			djd.LocalAnchor2.Set(0.0f, -1.0f);
-			Vector2 d = djd.Body2.GetWorldPoint(djd.LocalAnchor2) - djd.Body1.GetWorldPoint(djd.LocalAnchor1);
+			Vec2 d = djd.Body2.GetWorldPoint(djd.LocalAnchor2) - djd.Body1.GetWorldPoint(djd.LocalAnchor1);
 			djd.Length = d.Length();
 			_world.CreateJoint(djd);
 

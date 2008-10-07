@@ -59,11 +59,11 @@ namespace Box2DX.Dynamics
 		internal int _contactCount;
 		private int _jointCount;
 
-		private Vector2 _gravity;
+		private Vec2 _gravity;
 		/// <summary>
 		/// Get\Set global gravity vector.
 		/// </summary>
-		public Vector2 Gravity { get { return _gravity; } set { _gravity = value; } }
+		public Vec2 Gravity { get { return _gravity; } set { _gravity = value; } }
 
 		private bool _allowSleep;
 
@@ -94,7 +94,7 @@ namespace Box2DX.Dynamics
 		/// <param name="worldAABB">A bounding box that completely encompasses all your shapes.</param>
 		/// <param name="gravity">The world gravity vector.</param>
 		/// <param name="doSleep">Improve performance by not simulating inactive bodies.</param>
-		public World(AABB worldAABB, Vector2 gravity, bool doSleep)
+		public World(AABB worldAABB, Vec2 gravity, bool doSleep)
 		{
 			_destructionListener = null;
 			_boundaryListener = null;
@@ -1072,10 +1072,10 @@ namespace Box2DX.Dynamics
 			Body b2 = joint.GetBody2();
 			XForm xf1 = b1.GetXForm();
 			XForm xf2 = b2.GetXForm();
-			Vector2 x1 = xf1.Position;
-			Vector2 x2 = xf2.Position;
-			Vector2 p1 = joint.Anchor1;
-			Vector2 p2 = joint.Anchor2;
+			Vec2 x1 = xf1.Position;
+			Vec2 x2 = xf2.Position;
+			Vec2 p1 = joint.Anchor1;
+			Vec2 p2 = joint.Anchor2;
 
 			Color color = new Color(0.5f, 0.8f, 0.8f);
 
@@ -1088,8 +1088,8 @@ namespace Box2DX.Dynamics
 				case JointType.PulleyJoint:
 					{
 						PulleyJoint pulley = (PulleyJoint)joint;
-						Vector2 s1 = pulley.GroundAnchor1;
-						Vector2 s2 = pulley.GroundAnchor2;
+						Vec2 s1 = pulley.GroundAnchor1;
+						Vec2 s2 = pulley.GroundAnchor2;
 						_debugDraw.DrawSegment(s1, p1, color);
 						_debugDraw.DrawSegment(s2, p2, color);
 						_debugDraw.DrawSegment(s1, s2, color);
@@ -1118,9 +1118,9 @@ namespace Box2DX.Dynamics
 					{
 						CircleShape circle = (CircleShape)shape;
 
-						Vector2 center = Common.Math.Mul(xf, circle.GetLocalPosition());
+						Vec2 center = Common.Math.Mul(xf, circle.GetLocalPosition());
 						float radius = circle.GetRadius();
-						Vector2 axis = xf.R.Col1;
+						Vec2 axis = xf.R.Col1;
 
 						_debugDraw.DrawSolidCircle(center, radius, axis, color);
 
@@ -1135,10 +1135,10 @@ namespace Box2DX.Dynamics
 					{
 						PolygonShape poly = (PolygonShape)shape;
 						int vertexCount = poly.VertexCount;
-						Vector2[] localVertices = poly.GetVertices();
+						Vec2[] localVertices = poly.GetVertices();
 
 						Box2DXDebug.Assert(vertexCount <= Settings.MaxPolygonVertices);
-						Vector2[] vertices = new Vector2[Settings.MaxPolygonVertices];
+						Vec2[] vertices = new Vec2[Settings.MaxPolygonVertices];
 
 						for (int i = 0; i < vertexCount; ++i)
 						{
@@ -1149,7 +1149,7 @@ namespace Box2DX.Dynamics
 
 						if (core)
 						{
-							Vector2[] localCoreVertices = poly.GetCoreVertices();
+							Vec2[] localCoreVertices = poly.GetCoreVertices();
 							for (int i = 0; i < vertexCount; ++i)
 							{
 								vertices[i] = Common.Math.Mul(xf, localCoreVertices[i]);
@@ -1209,7 +1209,7 @@ namespace Box2DX.Dynamics
 			if ((flags & DebugDraw.DrawFlags.Pair) != 0)
 			{
 				BroadPhase bp = _broadPhase;
-				Vector2 invQ = new Vector2();
+				Vec2 invQ = new Vec2();
 				invQ.Set(1.0f / bp._quantizationFactor.X, 1.0f / bp._quantizationFactor.Y);
 				Color color = new Color(0.9f, 0.9f, 0.3f);
 
@@ -1232,8 +1232,8 @@ namespace Box2DX.Dynamics
 						b2.UpperBound.X = bp._worldAABB.LowerBound.X + invQ.X * bp._bounds[0][p2.UpperBounds[0]].Value;
 						b2.UpperBound.Y = bp._worldAABB.LowerBound.Y + invQ.Y * bp._bounds[1][p2.UpperBounds[1]].Value;
 
-						Vector2 x1 = 0.5f * (b1.LowerBound + b1.UpperBound);
-						Vector2 x2 = 0.5f * (b2.LowerBound + b2.UpperBound);
+						Vec2 x1 = 0.5f * (b1.LowerBound + b1.UpperBound);
+						Vec2 x2 = 0.5f * (b2.LowerBound + b2.UpperBound);
 
 						_debugDraw.DrawSegment(x1, x2, color);
 
@@ -1245,10 +1245,10 @@ namespace Box2DX.Dynamics
 			if ((flags & DebugDraw.DrawFlags.Aabb) != 0)
 			{
 				BroadPhase bp = _broadPhase;
-				Vector2 worldLower = bp._worldAABB.LowerBound;
-				Vector2 worldUpper = bp._worldAABB.UpperBound;
+				Vec2 worldLower = bp._worldAABB.LowerBound;
+				Vec2 worldUpper = bp._worldAABB.UpperBound;
 
-				Vector2 invQ = new Vector2();
+				Vec2 invQ = new Vec2();
 				invQ.Set(1.0f / bp._quantizationFactor.X, 1.0f / bp._quantizationFactor.Y);
 				Color color = new Color(0.9f, 0.3f, 0.9f);
 				for (int i = 0; i < Settings.MaxProxies; ++i)
@@ -1265,7 +1265,7 @@ namespace Box2DX.Dynamics
 					b.UpperBound.X = worldLower.X + invQ.X * bp._bounds[0][p.UpperBounds[0]].Value;
 					b.UpperBound.Y = worldLower.Y + invQ.Y * bp._bounds[1][p.UpperBounds[1]].Value;
 
-					Vector2[] vs1 = new Vector2[4];
+					Vec2[] vs1 = new Vec2[4];
 					vs1[0].Set(b.LowerBound.X, b.LowerBound.Y);
 					vs1[1].Set(b.UpperBound.X, b.LowerBound.Y);
 					vs1[2].Set(b.UpperBound.X, b.UpperBound.Y);
@@ -1274,7 +1274,7 @@ namespace Box2DX.Dynamics
 					_debugDraw.DrawPolygon(vs1, 4, color);
 				}
 
-				Vector2[] vs = new Vector2[4];
+				Vec2[] vs = new Vec2[4];
 				vs[0].Set(worldLower.X, worldLower.Y);
 				vs[1].Set(worldUpper.X, worldLower.Y);
 				vs[2].Set(worldUpper.X, worldUpper.Y);
@@ -1298,8 +1298,8 @@ namespace Box2DX.Dynamics
 
 						PolygonShape poly = (PolygonShape)s;
 						OBB obb = poly.GetOBB();
-						Vector2 h = obb.Extents;
-						Vector2[] vs = new Vector2[4];
+						Vec2 h = obb.Extents;
+						Vec2[] vs = new Vec2[4];
 						vs[0].Set(-h.X, -h.Y);
 						vs[1].Set(h.X, -h.Y);
 						vs[2].Set(h.X, h.Y);

@@ -181,8 +181,8 @@ namespace Box2DX.Dynamics
 					{
 						ManifoldPoint mp = manifold.Points[j];
 						cp.Position = b1.GetWorldPoint(mp.LocalPoint1);
-						Vector2 v1 = b1.GetLinearVelocityFromLocalPoint(mp.LocalPoint1);
-						Vector2 v2 = b2.GetLinearVelocityFromLocalPoint(mp.LocalPoint2);
+						Vec2 v1 = b1.GetLinearVelocityFromLocalPoint(mp.LocalPoint1);
+						Vec2 v2 = b2.GetLinearVelocityFromLocalPoint(mp.LocalPoint2);
 						cp.Velocity = v2 - v1;
 						cp.Separation = mp.Separation;
 						cp.ID = mp.ID;

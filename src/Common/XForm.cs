@@ -31,7 +31,7 @@ namespace Box2DX.Common
 	/// </summary>
 	public struct XForm
 	{
-		public Vector2 Position;
+		public Vec2 Position;
 		public Mat22 R;
 
 		/// <summary>
@@ -39,7 +39,7 @@ namespace Box2DX.Common
 		/// </summary>
 		/// <param name="position"></param>
 		/// <param name="R"></param>
-		public XForm(Vector2 position, Mat22 rotation)
+		public XForm(Vec2 position, Mat22 rotation)
 		{
 			Position = position;
 			R = rotation;
@@ -54,6 +54,6 @@ namespace Box2DX.Common
 			R.SetIdentity();
 		}
 
-		public static XForm Identity { get { return new XForm(Vector2.Zero, Mat22.Identity); } }
+		public static XForm Identity { get { return new XForm(Vec2.Zero, Mat22.Identity); } }
 	}
 }

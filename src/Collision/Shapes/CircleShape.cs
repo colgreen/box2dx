@@ -32,13 +32,13 @@ namespace Box2DX.Collision
 	/// </summary>
 	public class CircleDef : ShapeDef
 	{
-		public Vector2 LocalPosition;
+		public Vec2 LocalPosition;
 		public float Radius;
 
 		public CircleDef()
 		{
 			Type = ShapeType.CircleShape;
-			LocalPosition = Vector2.Zero;
+			LocalPosition = Vec2.Zero;
 			Radius = 1.0f;
 		}
 	}
@@ -49,7 +49,7 @@ namespace Box2DX.Collision
 	public class CircleShape : Shape
 	{
 		// Local position in parent body
-		private Vector2 _localPosition;
+		private Vec2 _localPosition;
 		// Radius of this circle.
 		private float _radius;
 
@@ -64,33 +64,33 @@ namespace Box2DX.Collision
 			_radius = circleDef.Radius;
 		}
 
-		internal override void UpdateSweepRadius(Vector2 center)
+		internal override void UpdateSweepRadius(Vec2 center)
 		{
 			// Update the sweep radius (maximum radius) as measured from
 			// a local center point.
-			Vector2 d = _localPosition - center;
+			Vec2 d = _localPosition - center;
 			_sweepRadius = d.Length() + _radius - Settings.ToiSlop;
 		}
 
-		public override bool TestPoint(XForm transform, Vector2 p)
+		public override bool TestPoint(XForm transform, Vec2 p)
 		{
-			Vector2 center = transform.Position + Common.Math.Mul(transform.R, _localPosition);
-			Vector2 d = p - center;
-			return Vector2.Dot(d, d) <= _radius * _radius;
+			Vec2 center = transform.Position + Common.Math.Mul(transform.R, _localPosition);
+			Vec2 d = p - center;
+			return Vec2.Dot(d, d) <= _radius * _radius;
 		}
 
 		// Collision Detection in Interactive 3D Environments by Gino van den Bergen
 		// From Section 3.1.2
 		// x = s + a * r
 		// norm(x) = radius
-		public override bool TestSegment(XForm transform, out float lambda, out Vector2 normal, Segment segment, float maxLambda)
+		public override bool TestSegment(XForm transform, out float lambda, out Vec2 normal, Segment segment, float maxLambda)
 		{
 			lambda = 0f;
-			normal = Vector2.Zero;
+			normal = Vec2.Zero;
 
-			Vector2 position = transform.Position + Common.Math.Mul(transform.R, _localPosition);
-			Vector2 s = segment.P1 - position;
-			float b = Vector2.Dot(s, s) - _radius * _radius;
+			Vec2 position = transform.Position + Common.Math.Mul(transform.R, _localPosition);
+			Vec2 s = segment.P1 - position;
+			float b = Vec2.Dot(s, s) - _radius * _radius;
 
 			// Does the segment start inside the circle?
 			if (b < 0.0f)
@@ -99,9 +99,9 @@ namespace Box2DX.Collision
 			}
 
 			// Solve quadratic equation.
-			Vector2 r = segment.P2 - segment.P1;
-			float c = Vector2.Dot(s, r);
-			float rr = Vector2.Dot(r, r);
+			Vec2 r = segment.P2 - segment.P1;
+			float c = Vec2.Dot(s, r);
+			float rr = Vec2.Dot(r, r);
 			float sigma = c * c - rr * b;
 
 			// Check for negative discriminant and short segment.
@@ -130,7 +130,7 @@ namespace Box2DX.Collision
 		{
 			aabb = new AABB();
 
-			Vector2 p = transform.Position + Common.Math.Mul(transform.R, _localPosition);
+			Vec2 p = transform.Position + Common.Math.Mul(transform.R, _localPosition);
 			aabb.LowerBound.Set(p.X - _radius, p.Y - _radius);
 			aabb.UpperBound.Set(p.X + _radius, p.Y + _radius);
 		}
@@ -139,10 +139,10 @@ namespace Box2DX.Collision
 		{
 			aabb = new AABB();
 
-			Vector2 p1 = transform1.Position + Common.Math.Mul(transform1.R, _localPosition);
-			Vector2 p2 = transform2.Position + Common.Math.Mul(transform2.R, _localPosition);
-			Vector2 lower = Common.Math.Min(p1, p2);
-			Vector2 upper = Common.Math.Max(p1, p2);
+			Vec2 p1 = transform1.Position + Common.Math.Mul(transform1.R, _localPosition);
+			Vec2 p2 = transform2.Position + Common.Math.Mul(transform2.R, _localPosition);
+			Vec2 lower = Common.Math.Min(p1, p2);
+			Vec2 upper = Common.Math.Max(p1, p2);
 
 			aabb.LowerBound.Set(lower.X - _radius, lower.Y - _radius);
 			aabb.UpperBound.Set(upper.X + _radius, upper.Y + _radius);
@@ -156,14 +156,14 @@ namespace Box2DX.Collision
 			massData.Center = _localPosition;
 
 			// inertia about the local origin
-			massData.I = massData.Mass * (0.5f * _radius * _radius + Vector2.Dot(_localPosition, _localPosition));
+			massData.I = massData.Mass * (0.5f * _radius * _radius + Vec2.Dot(_localPosition, _localPosition));
 		}
 
 		/// <summary>
 		/// Get the local position of this circle in its parent body.
 		/// </summary>
 		/// <returns></returns>
-		public Vector2 GetLocalPosition()
+		public Vec2 GetLocalPosition()
 		{
 			return _localPosition;
 		}

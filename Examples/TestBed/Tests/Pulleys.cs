@@ -69,10 +69,10 @@ namespace TestBed
 				body2.SetMassFromShapes();
 
 				PulleyJointDef pulleyDef = new PulleyJointDef();
-				Vector2 anchor1 = new Vector2(-10.0f, y + b);
-				Vector2 anchor2 = new Vector2(10.0f, y + b);
-				Vector2 groundAnchor1 = new Vector2(-10.0f, y + b + L);
-				Vector2 groundAnchor2 = new Vector2(10.0f, y + b + L);
+				Vec2 anchor1 = new Vec2(-10.0f, y + b);
+				Vec2 anchor2 = new Vec2(10.0f, y + b);
+				Vec2 groundAnchor1 = new Vec2(-10.0f, y + b + L);
+				Vec2 groundAnchor2 = new Vec2(10.0f, y + b + L);
 				pulleyDef.Initialize(body1, body2, groundAnchor1, groundAnchor2, anchor1, anchor2, 2.0f);
 
 				_joint1 = (PulleyJoint)_world.CreateJoint(pulleyDef);

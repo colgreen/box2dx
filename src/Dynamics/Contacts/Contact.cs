@@ -83,15 +83,15 @@ namespace Box2DX.Dynamics
 		/// <summary>
 		/// Position in world coordinates.
 		/// </summary>
-		public Vector2 Position;
+		public Vec2 Position;
 		/// <summary>
 		/// Velocity of point on body2 relative to point on body1 (pre-solver).
 		/// </summary>
-		public Vector2 Velocity;
+		public Vec2 Velocity;
 		/// <summary>
 		/// Points from shape1 to shape2.
 		/// </summary>
-		public Vector2 Normal;
+		public Vec2 Normal;
 		/// <summary>
 		/// The separation is negative when shapes are touching.
 		/// </summary>
@@ -127,11 +127,11 @@ namespace Box2DX.Dynamics
 		/// <summary>
 		/// Position in world coordinates.
 		/// </summary>
-		public Vector2 Position;
+		public Vec2 Position;
 		/// <summary>
 		/// Points from shape1 to shape2.
 		/// </summary>
-		public Vector2 Normal;
+		public Vec2 Normal;
 		/// <summary>
 		/// The normal impulse applied to body2.
 		/// </summary>

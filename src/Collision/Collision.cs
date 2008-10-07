@@ -36,7 +36,7 @@ namespace Box2DX.Collision
 
 		public static bool TestOverlap(AABB a, AABB b)
 		{
-			Vector2 d1, d2;
+			Vec2 d1, d2;
 			d1 = b.LowerBound - a.UpperBound;
 			d2 = a.LowerBound - b.UpperBound;
 
@@ -105,12 +105,12 @@ namespace Box2DX.Collision
 		/// <summary>
 		/// Local position of the contact point in body1.
 		/// </summary>
-		public Vector2 LocalPoint1;
+		public Vec2 LocalPoint1;
 
 		/// <summary>
 		/// Local position of the contact point in body2.
 		/// </summary>
-		public Vector2 LocalPoint2;
+		public Vec2 LocalPoint2;
 
 		/// <summary>
 		/// The separation of the shapes along the normal vector.
@@ -159,7 +159,7 @@ namespace Box2DX.Collision
 		/// <summary>
 		/// The shared unit normal vector.
 		/// </summary>
-		public Vector2 Normal;
+		public Vec2 Normal;
 
 		/// <summary>
 		/// The number of manifold points.
@@ -216,25 +216,25 @@ namespace Box2DX.Collision
 		/// <param name="segment"></param>
 		/// <param name="maxLambda"></param>
 		/// <returns></returns>
-		public bool TestSegment(out float lambda, out Vector2 normal, Segment segment, float maxLambda)
+		public bool TestSegment(out float lambda, out Vec2 normal, Segment segment, float maxLambda)
 		{
 			lambda = 0f;
-			normal = new Vector2();
+			normal = new Vec2();
 
-			Vector2 s = segment.P1;
-			Vector2 r = segment.P2 - s;
-			Vector2 d = P2 - P1;
-			Vector2 n = Vector2.Cross(d, 1.0f);
+			Vec2 s = segment.P1;
+			Vec2 r = segment.P2 - s;
+			Vec2 d = P2 - P1;
+			Vec2 n = Vec2.Cross(d, 1.0f);
 
 			float k_slop = 100.0f * Common.Settings.FLT_EPSILON;
-			float denom = -Vector2.Dot(r, n);
+			float denom = -Vec2.Dot(r, n);
 
 			// Cull back facing collision and ignore parallel segments.
 			if (denom > k_slop)
 			{
 				// Does the segment intersect the infinite line associated with this segment?
-				Vector2 b = s - P1;
-				float a = Vector2.Dot(b, n);
+				Vec2 b = s - P1;
+				float a = Vec2.Dot(b, n);
 
 				if (0.0f <= a && a <= maxLambda * denom)
 				{
@@ -258,12 +258,12 @@ namespace Box2DX.Collision
 		/// <summary>
 		/// The starting point.
 		/// </summary>
-		public Vector2 P1;
+		public Vec2 P1;
 
 		/// <summary>
 		/// The ending point.
 		/// </summary>
-		public Vector2 P2;
+		public Vec2 P2;
 	}
 
 	/// <summary>
@@ -276,7 +276,7 @@ namespace Box2DX.Collision
 		{
 			get
 			{
-				Vector2 d = UpperBound - LowerBound;
+				Vec2 d = UpperBound - LowerBound;
 				bool valid = d.X >= 0.0f && d.Y >= 0.0f;
 				valid = valid && LowerBound.IsValid && UpperBound.IsValid;
 				return valid;
@@ -287,12 +287,12 @@ namespace Box2DX.Collision
 		/// <summary>
 		/// The lower vertex.
 		/// </summary>
-		public Vector2 LowerBound;
+		public Vec2 LowerBound;
 
 		/// <summary>
 		/// The upper vertex.
 		/// </summary>
-		public Vector2 UpperBound;
+		public Vec2 UpperBound;
 	}
 
 	/// <summary>
@@ -308,11 +308,11 @@ namespace Box2DX.Collision
 		/// <summary>
 		/// The local centroid.
 		/// </summary>
-		public Vector2 Center;
+		public Vec2 Center;
 
 		/// <summary>
 		/// The half-widths.
 		/// </summary>
-		public Vector2 Extents;
+		public Vec2 Extents;
 	}
 }

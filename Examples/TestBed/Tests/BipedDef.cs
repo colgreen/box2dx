@@ -287,87 +287,87 @@ namespace TestBed
 		{
 			{	// feet
 				LFootPoly.VertexCount = RFootPoly.VertexCount = 5;
-				LFootPoly.Vertices[0] = RFootPoly.Vertices[0] = k_scale * new Vector2(.033f, .143f);
-				LFootPoly.Vertices[1] = RFootPoly.Vertices[1] = k_scale * new Vector2(.023f,.033f);
-				LFootPoly.Vertices[2] = RFootPoly.Vertices[2] = k_scale * new Vector2(.267f,.035f);
-				LFootPoly.Vertices[3] = RFootPoly.Vertices[3] = k_scale * new Vector2(.265f,.065f);
-				LFootPoly.Vertices[4] = RFootPoly.Vertices[4] = k_scale * new Vector2(.117f,.143f);
+				LFootPoly.Vertices[0] = RFootPoly.Vertices[0] = k_scale * new Vec2(.033f, .143f);
+				LFootPoly.Vertices[1] = RFootPoly.Vertices[1] = k_scale * new Vec2(.023f,.033f);
+				LFootPoly.Vertices[2] = RFootPoly.Vertices[2] = k_scale * new Vec2(.267f,.035f);
+				LFootPoly.Vertices[3] = RFootPoly.Vertices[3] = k_scale * new Vec2(.265f,.065f);
+				LFootPoly.Vertices[4] = RFootPoly.Vertices[4] = k_scale * new Vec2(.117f,.143f);
 			}
 			{	// calves
 				LCalfPoly.VertexCount = RCalfPoly.VertexCount = 4;
-				LCalfPoly.Vertices[0] = RCalfPoly.Vertices[0] = k_scale * new Vector2(.089f,.016f);
-				LCalfPoly.Vertices[1] = RCalfPoly.Vertices[1] = k_scale * new Vector2(.178f,.016f);
-				LCalfPoly.Vertices[2] = RCalfPoly.Vertices[2] = k_scale * new Vector2(.205f,.417f);
-				LCalfPoly.Vertices[3] = RCalfPoly.Vertices[3] = k_scale * new Vector2(.095f,.417f);
+				LCalfPoly.Vertices[0] = RCalfPoly.Vertices[0] = k_scale * new Vec2(.089f,.016f);
+				LCalfPoly.Vertices[1] = RCalfPoly.Vertices[1] = k_scale * new Vec2(.178f,.016f);
+				LCalfPoly.Vertices[2] = RCalfPoly.Vertices[2] = k_scale * new Vec2(.205f,.417f);
+				LCalfPoly.Vertices[3] = RCalfPoly.Vertices[3] = k_scale * new Vec2(.095f,.417f);
 			}
 			{	// thighs
 				LThighPoly.VertexCount = RThighPoly.VertexCount = 4;
-				LThighPoly.Vertices[0] = RThighPoly.Vertices[0] = k_scale * new Vector2(.137f,.032f);
-				LThighPoly.Vertices[1] = RThighPoly.Vertices[1] = k_scale * new Vector2(.243f,.032f);
-				LThighPoly.Vertices[2] = RThighPoly.Vertices[2] = k_scale * new Vector2(.318f,.343f);
-				LThighPoly.Vertices[3] = RThighPoly.Vertices[3] = k_scale * new Vector2(.142f,.343f);
+				LThighPoly.Vertices[0] = RThighPoly.Vertices[0] = k_scale * new Vec2(.137f,.032f);
+				LThighPoly.Vertices[1] = RThighPoly.Vertices[1] = k_scale * new Vec2(.243f,.032f);
+				LThighPoly.Vertices[2] = RThighPoly.Vertices[2] = k_scale * new Vec2(.318f,.343f);
+				LThighPoly.Vertices[3] = RThighPoly.Vertices[3] = k_scale * new Vec2(.142f,.343f);
 			}
 			{	// pelvis
 				PelvisPoly.VertexCount = 5;
-				PelvisPoly.Vertices[0] = k_scale * new Vector2(.105f,.051f);
-				PelvisPoly.Vertices[1] = k_scale * new Vector2(.277f,.053f);
-				PelvisPoly.Vertices[2] = k_scale * new Vector2(.320f,.233f);
-				PelvisPoly.Vertices[3] = k_scale * new Vector2(.112f,.233f);
-				PelvisPoly.Vertices[4] = k_scale * new Vector2(.067f,.152f);
+				PelvisPoly.Vertices[0] = k_scale * new Vec2(.105f,.051f);
+				PelvisPoly.Vertices[1] = k_scale * new Vec2(.277f,.053f);
+				PelvisPoly.Vertices[2] = k_scale * new Vec2(.320f,.233f);
+				PelvisPoly.Vertices[3] = k_scale * new Vec2(.112f,.233f);
+				PelvisPoly.Vertices[4] = k_scale * new Vec2(.067f,.152f);
 			}
 			{	// stomach
 				StomachPoly.VertexCount = 4;
-				StomachPoly.Vertices[0] = k_scale * new Vector2(.088f,.043f);
-				StomachPoly.Vertices[1] = k_scale * new Vector2(.284f,.043f);
-				StomachPoly.Vertices[2] = k_scale * new Vector2(.295f,.231f);
-				StomachPoly.Vertices[3] = k_scale * new Vector2(.100f,.231f);
+				StomachPoly.Vertices[0] = k_scale * new Vec2(.088f,.043f);
+				StomachPoly.Vertices[1] = k_scale * new Vec2(.284f,.043f);
+				StomachPoly.Vertices[2] = k_scale * new Vec2(.295f,.231f);
+				StomachPoly.Vertices[3] = k_scale * new Vec2(.100f,.231f);
 			}
 			{	// chest
 				ChestPoly.VertexCount = 4;
-				ChestPoly.Vertices[0] = k_scale * new Vector2(.091f,.042f);
-				ChestPoly.Vertices[1] = k_scale * new Vector2(.283f,.042f);
-				ChestPoly.Vertices[2] = k_scale * new Vector2(.177f,.289f);
-				ChestPoly.Vertices[3] = k_scale * new Vector2(.065f,.289f);
+				ChestPoly.Vertices[0] = k_scale * new Vec2(.091f,.042f);
+				ChestPoly.Vertices[1] = k_scale * new Vec2(.283f,.042f);
+				ChestPoly.Vertices[2] = k_scale * new Vec2(.177f,.289f);
+				ChestPoly.Vertices[3] = k_scale * new Vec2(.065f,.289f);
 			}
 			{	// head
 				HeadCirc.Radius = k_scale * .115f;
 			}
 			{	// neck
 				NeckPoly.VertexCount = 4;
-				NeckPoly.Vertices[0] = k_scale * new Vector2(.038f,.054f);
-				NeckPoly.Vertices[1] = k_scale * new Vector2(.149f,.054f);
-				NeckPoly.Vertices[2] = k_scale * new Vector2(.154f,.102f);
-				NeckPoly.Vertices[3] = k_scale * new Vector2(.054f,.113f);
+				NeckPoly.Vertices[0] = k_scale * new Vec2(.038f,.054f);
+				NeckPoly.Vertices[1] = k_scale * new Vec2(.149f,.054f);
+				NeckPoly.Vertices[2] = k_scale * new Vec2(.154f,.102f);
+				NeckPoly.Vertices[3] = k_scale * new Vec2(.054f,.113f);
 			}
 			{	// upper arms
 				LUpperArmPoly.VertexCount = RUpperArmPoly.VertexCount = 5;
-				LUpperArmPoly.Vertices[0] = RUpperArmPoly.Vertices[0] = k_scale * new Vector2(.092f,.059f);
-				LUpperArmPoly.Vertices[1] = RUpperArmPoly.Vertices[1] = k_scale * new Vector2(.159f,.059f);
-				LUpperArmPoly.Vertices[2] = RUpperArmPoly.Vertices[2] = k_scale * new Vector2(.169f,.335f);
-				LUpperArmPoly.Vertices[3] = RUpperArmPoly.Vertices[3] = k_scale * new Vector2(.078f,.335f);
-				LUpperArmPoly.Vertices[4] = RUpperArmPoly.Vertices[4] = k_scale * new Vector2(.064f,.248f);
+				LUpperArmPoly.Vertices[0] = RUpperArmPoly.Vertices[0] = k_scale * new Vec2(.092f,.059f);
+				LUpperArmPoly.Vertices[1] = RUpperArmPoly.Vertices[1] = k_scale * new Vec2(.159f,.059f);
+				LUpperArmPoly.Vertices[2] = RUpperArmPoly.Vertices[2] = k_scale * new Vec2(.169f,.335f);
+				LUpperArmPoly.Vertices[3] = RUpperArmPoly.Vertices[3] = k_scale * new Vec2(.078f,.335f);
+				LUpperArmPoly.Vertices[4] = RUpperArmPoly.Vertices[4] = k_scale * new Vec2(.064f,.248f);
 			}
 			{	// forearms
 				LForearmPoly.VertexCount = RForearmPoly.VertexCount = 4;
-				LForearmPoly.Vertices[0] = RForearmPoly.Vertices[0] = k_scale * new Vector2(.082f,.054f);
-				LForearmPoly.Vertices[1] = RForearmPoly.Vertices[1] = k_scale * new Vector2(.138f,.054f);
-				LForearmPoly.Vertices[2] = RForearmPoly.Vertices[2] = k_scale * new Vector2(.149f,.296f);
-				LForearmPoly.Vertices[3] = RForearmPoly.Vertices[3] = k_scale * new Vector2(.088f,.296f);
+				LForearmPoly.Vertices[0] = RForearmPoly.Vertices[0] = k_scale * new Vec2(.082f,.054f);
+				LForearmPoly.Vertices[1] = RForearmPoly.Vertices[1] = k_scale * new Vec2(.138f,.054f);
+				LForearmPoly.Vertices[2] = RForearmPoly.Vertices[2] = k_scale * new Vec2(.149f,.296f);
+				LForearmPoly.Vertices[3] = RForearmPoly.Vertices[3] = k_scale * new Vec2(.088f,.296f);
 			}
 			{	// hands
 				LHandPoly.VertexCount = RHandPoly.VertexCount = 5;
-				LHandPoly.Vertices[0] = RHandPoly.Vertices[0] = k_scale * new Vector2(.066f,.031f);
-				LHandPoly.Vertices[1] = RHandPoly.Vertices[1] = k_scale * new Vector2(.123f,.020f);
-				LHandPoly.Vertices[2] = RHandPoly.Vertices[2] = k_scale * new Vector2(.160f,.127f);
-				LHandPoly.Vertices[3] = RHandPoly.Vertices[3] = k_scale * new Vector2(.127f,.178f);
-				LHandPoly.Vertices[4] = RHandPoly.Vertices[4] = k_scale * new Vector2(.074f,.178f);
+				LHandPoly.Vertices[0] = RHandPoly.Vertices[0] = k_scale * new Vec2(.066f,.031f);
+				LHandPoly.Vertices[1] = RHandPoly.Vertices[1] = k_scale * new Vec2(.123f,.020f);
+				LHandPoly.Vertices[2] = RHandPoly.Vertices[2] = k_scale * new Vec2(.160f,.127f);
+				LHandPoly.Vertices[3] = RHandPoly.Vertices[3] = k_scale * new Vec2(.127f,.178f);
+				LHandPoly.Vertices[4] = RHandPoly.Vertices[4] = k_scale * new Vec2(.074f,.178f);
 			}
 		}
 
 		public void DefaultJoints()
 		{
 			{	// ankles
-				Vector2 anchor = k_scale * new Vector2(-.045f, -.75f);
+				Vec2 anchor = k_scale * new Vec2(-.045f, -.75f);
 				LAnkleDef.LocalAnchor1 = RAnkleDef.LocalAnchor1 = anchor - LFootDef.Position;
 				LAnkleDef.LocalAnchor2 = RAnkleDef.LocalAnchor2 = anchor - LCalfDef.Position;
 				LAnkleDef.ReferenceAngle = RAnkleDef.ReferenceAngle = 0.0f;
@@ -376,7 +376,7 @@ namespace TestBed
 			}
 
 			{	// knees
-				Vector2 anchor = k_scale * new Vector2(-.030f, -.355f);
+				Vec2 anchor = k_scale * new Vec2(-.030f, -.355f);
 				LKneeDef.LocalAnchor1 = RKneeDef.LocalAnchor1 = anchor - LCalfDef.Position;
 				LKneeDef.LocalAnchor2 = RKneeDef.LocalAnchor2 = anchor - LThighDef.Position;
 				LKneeDef.ReferenceAngle = RKneeDef.ReferenceAngle = 0.0f;
@@ -385,7 +385,7 @@ namespace TestBed
 			}
 
 			{	// hips
-				Vector2 anchor = k_scale * new Vector2(.005f, -.045f);
+				Vec2 anchor = k_scale * new Vec2(.005f, -.045f);
 				LHipDef.LocalAnchor1 = RHipDef.LocalAnchor1 = anchor - LThighDef.Position;
 				LHipDef.LocalAnchor2 = RHipDef.LocalAnchor2 = anchor - PelvisDef.Position;
 				LHipDef.ReferenceAngle = RHipDef.ReferenceAngle = 0.0f;
@@ -394,7 +394,7 @@ namespace TestBed
 			}
 
 			{	// lower abs
-				Vector2 anchor = k_scale * new Vector2(.035f, .135f);
+				Vec2 anchor = k_scale * new Vec2(.035f, .135f);
 				LowerAbsDef.LocalAnchor1 = anchor - PelvisDef.Position;
 				LowerAbsDef.LocalAnchor2 = anchor - StomachDef.Position;
 				LowerAbsDef.ReferenceAngle = 0.0f;
@@ -403,7 +403,7 @@ namespace TestBed
 			}
 
 			{	// upper abs
-				Vector2 anchor = k_scale * new Vector2(.045f, .320f);
+				Vec2 anchor = k_scale * new Vec2(.045f, .320f);
 				UpperAbsDef.LocalAnchor1 = anchor - StomachDef.Position;
 				UpperAbsDef.LocalAnchor2 = anchor - ChestDef.Position;
 				UpperAbsDef.ReferenceAngle = 0.0f;
@@ -412,7 +412,7 @@ namespace TestBed
 			}
 
 			{	// lower neck
-				Vector2 anchor = k_scale * new Vector2(-.015f, .575f);
+				Vec2 anchor = k_scale * new Vec2(-.015f, .575f);
 				LowerNeckDef.LocalAnchor1 = anchor - ChestDef.Position;
 				LowerNeckDef.LocalAnchor2 = anchor - NeckDef.Position;
 				LowerNeckDef.ReferenceAngle = 0.0f;
@@ -421,7 +421,7 @@ namespace TestBed
 			}
 
 			{	// upper neck
-				Vector2 anchor = k_scale * new Vector2(-.005f, .630f);
+				Vec2 anchor = k_scale * new Vec2(-.005f, .630f);
 				UpperNeckDef.LocalAnchor1 = anchor - ChestDef.Position;
 				UpperNeckDef.LocalAnchor2 = anchor - HeadDef.Position;
 				UpperNeckDef.ReferenceAngle = 0.0f;
@@ -430,7 +430,7 @@ namespace TestBed
 			}
 
 			{	// shoulders
-				Vector2 anchor = k_scale * new Vector2(-.015f, .545f);
+				Vec2 anchor = k_scale * new Vec2(-.015f, .545f);
 				LShoulderDef.LocalAnchor1 = RShoulderDef.LocalAnchor1 = anchor - ChestDef.Position;
 				LShoulderDef.LocalAnchor2 = RShoulderDef.LocalAnchor2 = anchor - LUpperArmDef.Position;
 				LShoulderDef.ReferenceAngle = RShoulderDef.ReferenceAngle = 0.0f;
@@ -439,7 +439,7 @@ namespace TestBed
 			}
 
 			{	// elbows
-				Vector2 anchor = k_scale * new Vector2(-.005f, .290f);
+				Vec2 anchor = k_scale * new Vec2(-.005f, .290f);
 				LElbowDef.LocalAnchor1 = RElbowDef.LocalAnchor1 = anchor - LForearmDef.Position;
 				LElbowDef.LocalAnchor2 = RElbowDef.LocalAnchor2 = anchor - LUpperArmDef.Position;
 				LElbowDef.ReferenceAngle = RElbowDef.ReferenceAngle = 0.0f;
@@ -448,7 +448,7 @@ namespace TestBed
 			}
 
 			{	// wrists
-				Vector2 anchor = k_scale * new Vector2(-.010f, .045f);
+				Vec2 anchor = k_scale * new Vec2(-.010f, .045f);
 				LWristDef.LocalAnchor1 = RWristDef.LocalAnchor1 = anchor - LHandDef.Position;
 				LWristDef.LocalAnchor2 = RWristDef.LocalAnchor2 = anchor - LForearmDef.Position;
 				LWristDef.ReferenceAngle = RWristDef.ReferenceAngle = 0.0f;
@@ -459,18 +459,18 @@ namespace TestBed
 
 		public void DefaultPositions()
 		{
-			LFootDef.Position		= RFootDef.Position			= k_scale * new Vector2(-.122f,-.901f);
-			LCalfDef.Position		= RCalfDef.Position			= k_scale * new Vector2(-.177f,-.771f);
-			LThighDef.Position		= RThighDef.Position		= k_scale * new Vector2(-.217f,-.391f);
-			LUpperArmDef.Position	= RUpperArmDef.Position		= k_scale * new Vector2(-.127f,.228f);
-			LForearmDef.Position	= RForearmDef.Position		= k_scale * new Vector2(-.117f,-.011f);
-			LHandDef.Position		= RHandDef.Position			= k_scale * new Vector2(-.112f,-.136f);
-			PelvisDef0.Position									= k_scale * new Vector2(-.177f, -.101f);
-			PelvisDef.Position									= k_scale * new Vector2(-.177f,-.101f);
-			StomachDef.Position									= k_scale * new Vector2(-.142f,.088f);
-			ChestDef.Position									= k_scale * new Vector2(-.132f,.282f);
-			NeckDef.Position									= k_scale * new Vector2(-.102f,.518f);
-			HeadDef.Position									= k_scale * new Vector2(.022f,.738f);
+			LFootDef.Position		= RFootDef.Position			= k_scale * new Vec2(-.122f,-.901f);
+			LCalfDef.Position		= RCalfDef.Position			= k_scale * new Vec2(-.177f,-.771f);
+			LThighDef.Position		= RThighDef.Position		= k_scale * new Vec2(-.217f,-.391f);
+			LUpperArmDef.Position	= RUpperArmDef.Position		= k_scale * new Vec2(-.127f,.228f);
+			LForearmDef.Position	= RForearmDef.Position		= k_scale * new Vec2(-.117f,-.011f);
+			LHandDef.Position		= RHandDef.Position			= k_scale * new Vec2(-.112f,-.136f);
+			PelvisDef0.Position									= k_scale * new Vec2(-.177f, -.101f);
+			PelvisDef.Position									= k_scale * new Vec2(-.177f,-.101f);
+			StomachDef.Position									= k_scale * new Vec2(-.142f,.088f);
+			ChestDef.Position									= k_scale * new Vec2(-.132f,.282f);
+			NeckDef.Position									= k_scale * new Vec2(-.102f,.518f);
+			HeadDef.Position									= k_scale * new Vec2(.022f,.738f);
 		}
 	}
 }

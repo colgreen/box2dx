@@ -62,7 +62,7 @@ namespace TestBed
 			_shape2 = _body2.CreateShape(sd2);
 			_body2.SetMassFromShapes();
 
-			_world.Gravity = new Vector2(0.0f, 0.0f);
+			_world.Gravity = new Vec2(0.0f, 0.0f);
 			_world.SetPositionCorrection(false);
 		}
 
@@ -72,7 +72,7 @@ namespace TestBed
 			base.Step(settings);
 			settings.pause = 0;
 
-			Vector2 x1, x2;
+			Vec2 x1, x2;
 			float distance = Collision.Distance(out x1, out x2, _shape1, _body1.GetXForm(), _shape2, _body2.GetXForm());
 
 			StringBuilder strBld = new StringBuilder();
@@ -92,7 +92,7 @@ namespace TestBed
 
 		public override void Keyboard(System.Windows.Forms.Keys key)
 		{
-			Vector2 p = _body2.GetPosition();
+			Vec2 p = _body2.GetPosition();
 			float a = _body2.GetAngle();
 
 			switch (key)

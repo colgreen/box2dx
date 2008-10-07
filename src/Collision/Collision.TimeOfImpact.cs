@@ -54,17 +54,17 @@ namespace Box2DX.Collision
 			Box2DXDebug.Assert(1.0f - sweep1.T0 > Common.Settings.FLT_EPSILON);
 
 			float t0 = sweep1.T0;
-			Vector2 v1 = sweep1.C - sweep1.C0;
-			Vector2 v2 = sweep2.C - sweep2.C0;
+			Vec2 v1 = sweep1.C - sweep1.C0;
+			Vec2 v2 = sweep2.C - sweep2.C0;
 			float omega1 = sweep1.A - sweep1.A0;
 			float omega2 = sweep2.A - sweep2.A0;
 
 			float alpha = 0.0f;
 
-			Vector2 p1, p2;
+			Vec2 p1, p2;
 			int k_maxIterations = 20;	// TODO_ERIN b2Settings
 			int iter = 0;
-			Vector2 normal = Vector2.Zero;
+			Vec2 normal = Vec2.Zero;
 			float distance = 0.0f;
 			float targetDistance = 0.0f;
 
@@ -101,7 +101,7 @@ namespace Box2DX.Collision
 				normal.Normalize();
 
 				// Compute upper bound on remaining movement.
-				float approachVelocityBound = Vector2.Dot(normal, v1 - v2) +
+				float approachVelocityBound = Vec2.Dot(normal, v1 - v2) +
 					Common.Math.Abs(omega1) * r1 + Common.Math.Abs(omega2) * r2;
 				if (Common.Math.Abs(approachVelocityBound) < Common.Settings.FLT_EPSILON)
 				{

@@ -98,7 +98,7 @@ namespace TestBed
 			}
 
 			{	// join wheels to chassis
-				Vector2 anchor = new Vector2();
+				Vec2 anchor = new Vec2();
 				RevoluteJointDef jd = new RevoluteJointDef();
 				jd.Initialize(_vehicle, _leftWheel, _leftWheel.GetWorldCenter());
 				jd.CollideConnected = false;
@@ -128,7 +128,7 @@ namespace TestBed
 				PolygonDef box = new PolygonDef();
 				BodyDef bd = new BodyDef();
 
-				box.SetAsBox(9.5f, 0.5f, Vector2.Zero, 0.1f * Box2DX.Common.Settings.Pi);
+				box.SetAsBox(9.5f, 0.5f, Vec2.Zero, 0.1f * Box2DX.Common.Settings.Pi);
 				box.Friction = 0.62f;
 				bd.Position.Set(27.0f - 30.0f, 3.1f);
 
@@ -140,7 +140,7 @@ namespace TestBed
 				PolygonDef box = new PolygonDef();
 				BodyDef bd = new BodyDef();
 
-				box.SetAsBox(9.5f, 0.5f, Vector2.Zero, -0.1f * Box2DX.Common.Settings.Pi);
+				box.SetAsBox(9.5f, 0.5f, Vec2.Zero, -0.1f * Box2DX.Common.Settings.Pi);
 				box.Friction = 0.62f;
 				bd.Position.Set(55.0f - 30.0f, 3.1f);
 
@@ -152,7 +152,7 @@ namespace TestBed
 				PolygonDef box = new PolygonDef();
 				BodyDef bd = new BodyDef();
 
-				box.SetAsBox(9.5f, 0.5f, Vector2.Zero, 0.03f * Box2DX.Common.Settings.Pi);
+				box.SetAsBox(9.5f, 0.5f, Vec2.Zero, 0.03f * Box2DX.Common.Settings.Pi);
 				box.Friction = 0.62f;
 				bd.Position.Set(41.0f, 2.0f);
 
@@ -164,7 +164,7 @@ namespace TestBed
 				PolygonDef box = new PolygonDef();
 				BodyDef bd = new BodyDef();
 
-				box.SetAsBox(5.0f, 0.5f, Vector2.Zero, 0.15f * Box2DX.Common.Settings.Pi);
+				box.SetAsBox(5.0f, 0.5f, Vec2.Zero, 0.15f * Box2DX.Common.Settings.Pi);
 				box.Friction = 0.62f;
 				bd.Position.Set(50.0f, 4.0f);
 

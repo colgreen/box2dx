@@ -44,20 +44,20 @@ namespace TestBed
 				sd.Density = 0.0f;
 				sd.Restitution = k_restitution;
 
-				sd.SetAsBox(0.1f, 10.0f, new Vector2(-10.0f, 0.0f), 0.0f);
+				sd.SetAsBox(0.1f, 10.0f, new Vec2(-10.0f, 0.0f), 0.0f);
 				body.CreateShape(sd);
 
-				sd.SetAsBox(0.1f, 10.0f, new Vector2(10.0f, 0.0f), 0.0f);
+				sd.SetAsBox(0.1f, 10.0f, new Vec2(10.0f, 0.0f), 0.0f);
 				body.CreateShape(sd);
 
-				sd.SetAsBox(0.1f, 10.0f, new Vector2(0.0f, -10.0f), 0.5f * Box2DX.Common.Settings.Pi);
+				sd.SetAsBox(0.1f, 10.0f, new Vec2(0.0f, -10.0f), 0.5f * Box2DX.Common.Settings.Pi);
 				body.CreateShape(sd);
 
-				sd.SetAsBox(0.1f, 10.0f, new Vector2(0.0f, 10.0f), -0.5f * Box2DX.Common.Settings.Pi);
+				sd.SetAsBox(0.1f, 10.0f, new Vec2(0.0f, 10.0f), -0.5f * Box2DX.Common.Settings.Pi);
 				body.CreateShape(sd);
 			}
 
-			_biped = new Biped(_world, new Vector2(0.0f, 20.0f));
+			_biped = new Biped(_world, new Vec2(0.0f, 20.0f));
 
 			for (int i = 0; i < 8; ++i)
 			{
@@ -65,7 +65,7 @@ namespace TestBed
 				bd.Position.Set(5.0f, 20.0f + i);
 				bd.IsBullet = true;
 				Body body = _world.CreateBody(bd);
-				body.SetLinearVelocity(new Vector2(0.0f, -100.0f));
+				body.SetLinearVelocity(new Vec2(0.0f, -100.0f));
 				body.SetAngularVelocity(Box2DX.Common.Math.Random(-50.0f, 50.0f));
 
 				CircleDef sd = new CircleDef();

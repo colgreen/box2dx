@@ -32,7 +32,7 @@ namespace TestBed
 	// Ragdoll class thanks to darkzerox.
 	public class Biped: IDisposable
 	{
-		public Biped(World w, Vector2 position)				
+		public Biped(World w, Vec2 position)				
 		{
 			_world = w;
 
