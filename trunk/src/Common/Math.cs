@@ -39,8 +39,6 @@ namespace Box2DX.Common
 		/// This function is used to ensure that a floating point number is
 		/// not a NaN or infinity.
 		/// </summary>
-		/// <param name="x"></param>
-		/// <returns></returns>
 		public static bool IsValid(float x)
 		{
 			return !(float.IsNaN(x) || float.IsNegativeInfinity(x) || float.IsPositiveInfinity(x));
@@ -59,8 +57,6 @@ namespace Box2DX.Common
 		/// <summary>
 		/// This is a approximate yet fast inverse square-root.
 		/// </summary>
-		/// <param name="x"></param>
-		/// <returns></returns>
 		public static float InvSqrt(float x)
 		{
 			Convert convert = new Convert();
@@ -77,14 +73,13 @@ namespace Box2DX.Common
 			return (float)System.Math.Sqrt(x);
 		}
 
+		private static Random s_rnd = new Random();
 		/// <summary>
 		/// Random number in range [-1,1]
 		/// </summary>
-		/// <returns></returns>
 		public static float Random()
 		{
-			Random rnd = new Random();
-			float r = (float)(rnd.Next() & RAND_LIMIT);
+			float r = (float)(s_rnd.Next() & RAND_LIMIT);
 			r /= RAND_LIMIT;
 			r = 2.0f * r - 1.0f;
 			return r;
@@ -93,16 +88,12 @@ namespace Box2DX.Common
 		/// <summary>
 		/// Random floating point number in range [lo, hi]
 		/// </summary>
-		/// <param name="lo"></param>
-		/// <param name="hi"></param>
-		/// <returns></returns>
 		public static float Random(float lo, float hi)
 		{
-			Random rnd = new Random();
-			float r = (float)(rnd.Next() & RAND_LIMIT);
+			float r = (float)(s_rnd.Next() & RAND_LIMIT);
 			r /= RAND_LIMIT;
 			r = (hi - lo) * r + lo;
-			return r;
+			return r;		
 		}
 
 		/// <summary>
@@ -112,8 +103,6 @@ namespace Box2DX.Common
 		/// the same most significant 1 as x, but all 1's below it. Adding 1 to that value yields the next
 		/// largest power of 2. For a 32-bit value:"
 		/// </summary>
-		/// <param name="x"></param>
-		/// <returns></returns>
 		public static uint NextPowerOfTwo(uint x)
 		{
 			x |= (x >> 1);
@@ -211,9 +200,6 @@ namespace Box2DX.Common
 		/// Multiply a matrix times a vector. If a rotation matrix is provided,
 		/// then this transforms the vector from one frame to another.
 		/// </summary>
-		/// <param name="A"></param>
-		/// <param name="v"></param>
-		/// <returns></returns>
 		public static Vector2 Mul(Mat22 A, Vector2 v)
 		{
 			Vector2 u = new Vector2();
@@ -225,9 +211,6 @@ namespace Box2DX.Common
 		/// Multiply a matrix transpose times a vector. If a rotation matrix is provided,
 		/// then this transforms the vector from one frame to another (inverse transform).
 		/// </summary>
-		/// <param name="A"></param>
-		/// <param name="v"></param>
-		/// <returns></returns>
 		public static Vector2 MulT(Mat22 A, Vector2 v)
 		{
 			Vector2 u = new Vector2();
@@ -238,9 +221,6 @@ namespace Box2DX.Common
 		/// <summary>
 		/// A * B
 		/// </summary>
-		/// <param name="A"></param>
-		/// <param name="B"></param>
-		/// <returns></returns>
 		public static Mat22 Mul(Mat22 A, Mat22 B)
 		{
 			Mat22 C = new Mat22();
@@ -251,9 +231,6 @@ namespace Box2DX.Common
 		/// <summary>
 		/// A^T * B
 		/// </summary>
-		/// <param name="A"></param>
-		/// <param name="B"></param>
-		/// <returns></returns>
 		public static Mat22 MulT(Mat22 A, Mat22 B)
 		{
 			Vector2 c1 = new Vector2();

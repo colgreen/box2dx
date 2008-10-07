@@ -315,8 +315,7 @@ namespace TestBed
 
 		private void Action()
 		{
-			Random rnd = new Random(888);
-			int choice = rnd.Next() % 20;
+			int choice = (int)Box2DXMath.Random(0,2);
 
 			switch (choice)
 			{
