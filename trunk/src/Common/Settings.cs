@@ -142,9 +142,6 @@ namespace Box2DX.Common
 		/// <summary>
 		/// Friction mixing law. Feel free to customize this.
 		/// </summary>
-		/// <param name="friction1"></param>
-		/// <param name="friction2"></param>
-		/// <returns></returns>
 		public static float MixFriction(float friction1, float friction2)
 		{
 			return (float)System.Math.Sqrt(friction1 * friction2);
@@ -153,9 +150,6 @@ namespace Box2DX.Common
 		/// <summary>
 		/// Restitution mixing law. Feel free to customize this.
 		/// </summary>
-		/// <param name="restitution1"></param>
-		/// <param name="restitution2"></param>
-		/// <returns></returns>
 		public static float MixRestitution(float restitution1, float restitution2)
 		{
 			return restitution1 > restitution2 ? restitution1 : restitution2;

@@ -251,5 +251,14 @@ namespace Box2DX.Common
 		{
 			return Math.MulT(T.R, v - T.Position);
 		}
+
+		/// <summary>
+		/// Multiply a matrix times a vector.
+		/// </summary>
+		public static Vec3 Mul(Mat33 A, Vec3 v)
+		{
+			Vec3 u = v.X * A.Col1 + v.Y * A.Col2 + v.Z * A.Col3;
+			return u;
+		}
 	}
 }

@@ -35,8 +35,6 @@ namespace Box2DX.Common
 		/// <summary>
 		/// Construct using coordinates.
 		/// </summary>
-		/// <param name="x"></param>
-		/// <param name="y"></param>
 		public Vector2(float x, float y)
 		{
 			X = x;
@@ -51,21 +49,20 @@ namespace Box2DX.Common
 		/// <summary>
 		/// Set this vector to some specified coordinates.
 		/// </summary>
-		/// <param name="x_"></param>
-		/// <param name="y_"></param>
 		public void Set(float x, float y) { X = x; Y = y; }
 
 		/// <summary>
 		///  Get the length of this vector (the norm).
 		/// </summary>
-		/// <returns></returns>
 		public float Length()
 		{
 			return (float)System.Math.Sqrt(X * X + Y * Y);
 		}
 
+		/// <summary>
 		/// Get the length squared. For performance, use this instead of
 		/// Length (if possible).
+		/// </summary>
 		public float LengthSquared()
 		{
 			return X * X + Y * Y;
@@ -91,7 +88,6 @@ namespace Box2DX.Common
 		/// <summary>
 		/// Does this vector contain finite coordinates?
 		/// </summary>
-		/// <returns></returns>
 		public bool IsValid
 		{
 			get { return Math.IsValid(X) && Math.IsValid(Y); }
@@ -100,8 +96,6 @@ namespace Box2DX.Common
 		/// <summary>
 		/// Negate this vector.
 		/// </summary>
-		/// <param name="v"></param>
-		/// <returns></returns>
 		public static Vector2 operator -(Vector2 v1)
 		{
 			Vector2 v = new Vector2();
@@ -152,9 +146,6 @@ namespace Box2DX.Common
 		/// <summary>
 		/// Peform the dot product on two vectors.
 		/// </summary>
-		/// <param name="a"></param>
-		/// <param name="b"></param>
-		/// <returns></returns>
 		public static float Dot(Vector2 a, Vector2 b)
 		{
 			return a.X * b.X + a.Y * b.Y;
@@ -163,9 +154,6 @@ namespace Box2DX.Common
 		/// <summary>
 		/// Perform the cross product on two vectors. In 2D this produces a scalar.
 		/// </summary>
-		/// <param name="a"></param>
-		/// <param name="b"></param>
-		/// <returns></returns>
 		public static float Cross(Vector2 a, Vector2 b)
 		{
 			return a.X * b.Y - a.Y * b.X;
@@ -175,9 +163,6 @@ namespace Box2DX.Common
 		/// Perform the cross product on a vector and a scalar. 
 		/// In 2D this produces a vector.
 		/// </summary>
-		/// <param name="a"></param>
-		/// <param name="b"></param>
-		/// <returns></returns>
 		public static Vector2 Cross(Vector2 a, float s)
 		{
 			Vector2 v = new Vector2();
@@ -189,9 +174,6 @@ namespace Box2DX.Common
 		/// Perform the cross product on a scalar and a vector. 
 		/// In 2D this produces a vector.
 		/// </summary>
-		/// <param name="s"></param>
-		/// <param name="a"></param>
-		/// <returns></returns>
 		public static Vector2 Cross(float s, Vector2 a)
 		{
 			Vector2 v = new Vector2();
