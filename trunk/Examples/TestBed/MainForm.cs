@@ -50,10 +50,10 @@ namespace TestBed
 
 		private Settings settings = new Settings();
 		private float viewZoom = 1f;
-		private Vector2 viewCenter = new Vector2(0.0f, 20.0f);
+		private Vec2 viewCenter = new Vec2(0.0f, 20.0f);
 		private TestEntry testEntry;
 		private bool rMouseDown = false;
-		private Vector2 lastp;		
+		private Vec2 lastp;		
 
 		public MainForm()
 		{
@@ -167,12 +167,12 @@ namespace TestBed
 
 		private void openGlControl_MouseMove(object sender, MouseEventArgs e)
 		{
-			Vector2 p = ConvertScreenToWorld(e.X, e.Y);
+			Vec2 p = ConvertScreenToWorld(e.X, e.Y);
 			CurrentTest.MouseMove(p);
 
 			if (rMouseDown)
 			{
-				Vector2 diff = p - lastp;
+				Vec2 diff = p - lastp;
 				viewCenter.X -= diff.X;
 				viewCenter.Y -= diff.Y;
 				SetView();
@@ -404,11 +404,11 @@ namespace TestBed
 
 			float ratio = (float)width / (float)height;
 
-			Vector2 extents = new Vector2(ratio * 25.0f, 25.0f);
+			Vec2 extents = new Vec2(ratio * 25.0f, 25.0f);
 			extents *= viewZoom;
 
-			Vector2 lower = viewCenter - extents;
-			Vector2 upper = viewCenter + extents;
+			Vec2 lower = viewCenter - extents;
+			Vec2 upper = viewCenter + extents;
 
 			// L/R/B/T
 			Glu.gluOrtho2D(lower.X, upper.X, lower.Y, upper.Y);
@@ -418,7 +418,7 @@ namespace TestBed
 #endif
 		}
 
-		private Vector2 ConvertScreenToWorld(float x, float y)
+		private Vec2 ConvertScreenToWorld(float x, float y)
 		{
 			float tw = openGlControl.Width;
 			float th = openGlControl.Height;
@@ -426,13 +426,13 @@ namespace TestBed
 			float v = (th - y) / th;
 
 			float ratio = tw / th;
-			Vector2 extents = new Vector2(ratio * 25.0f, 25.0f);
+			Vec2 extents = new Vec2(ratio * 25.0f, 25.0f);
 			extents *= viewZoom;
 
-			Vector2 lower = viewCenter - extents;
-			Vector2 upper = viewCenter + extents;
+			Vec2 lower = viewCenter - extents;
+			Vec2 upper = viewCenter + extents;
 
-			Vector2 p = new Vector2();
+			Vec2 p = new Vec2();
 			p.X = (1.0f - u) * lower.X + u * upper.X;
 			p.Y = (1.0f - v) * lower.Y + v * upper.Y;
 			return p;

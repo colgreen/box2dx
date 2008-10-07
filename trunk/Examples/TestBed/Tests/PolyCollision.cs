@@ -68,7 +68,7 @@ namespace TestBed
 				_body2.SetMassFromShapes();
 			}
 
-			_world.Gravity = Vector2.Zero;
+			_world.Gravity = Vec2.Zero;
 			_world.SetPositionCorrection(false);
 		}
 
@@ -86,7 +86,7 @@ namespace TestBed
 
 		public override void Keyboard(System.Windows.Forms.Keys key)
 		{
-			Vector2 p = _body2.GetPosition();
+			Vec2 p = _body2.GetPosition();
 			float a = _body2.GetAngle();
 
 			switch (key)

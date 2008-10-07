@@ -74,7 +74,7 @@ namespace TestBed
 				_bodies[3].SetMassFromShapes();
 
 				DistanceJointDef jd = new DistanceJointDef();
-				Vector2 p1, p2, d;
+				Vec2 p1, p2, d;
 
 				jd.FrequencyHz = 4.0f;
 				jd.DampingRatio = 0.5f;

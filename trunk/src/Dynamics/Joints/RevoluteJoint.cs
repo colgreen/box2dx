@@ -79,7 +79,7 @@ namespace Box2DX.Dynamics
 		/// <param name="body1"></param>
 		/// <param name="body2"></param>
 		/// <param name="anchor"></param>
-		public void Initialize(Body body1, Body body2, Vector2 anchor)
+		public void Initialize(Body body1, Body body2, Vec2 anchor)
 		{
 			Body1 = body1;
 			Body2 = body2;
@@ -91,12 +91,12 @@ namespace Box2DX.Dynamics
 		/// <summary>
 		/// The local anchor point relative to body1's origin.
 		/// </summary>
-		public Vector2 LocalAnchor1;
+		public Vec2 LocalAnchor1;
 
 		/// <summary>
 		/// The local anchor point relative to body2's origin.
 		/// </summary>
-		public Vector2 LocalAnchor2;
+		public Vec2 LocalAnchor2;
 
 		/// <summary>
 		/// The body2 angle minus body1 angle in the reference state (radians).
@@ -145,9 +145,9 @@ namespace Box2DX.Dynamics
 	/// </summary>
 	public class RevoluteJoint : Joint
 	{
-		public Vector2 _localAnchor1;	// relative
-		public Vector2 _localAnchor2;
-		public Vector2 _pivotForce;
+		public Vec2 _localAnchor1;	// relative
+		public Vec2 _localAnchor2;
+		public Vec2 _pivotForce;
 		public float _motorForce;
 		public float _limitForce;
 		public float _limitPositionImpulse;
@@ -169,17 +169,17 @@ namespace Box2DX.Dynamics
 		publiv Vector2 _lastWarmStartingPivotForce;
 #endif
 
-		public override Vector2 Anchor1
+		public override Vec2 Anchor1
 		{
 			get { return _body1.GetWorldPoint(_localAnchor1); }
 		}
 
-		public override Vector2 Anchor2
+		public override Vec2 Anchor2
 		{
 			get { return _body2.GetWorldPoint(_localAnchor2); }
 		}
 
-		public override Vector2 ReactionForce
+		public override Vec2 ReactionForce
 		{
 			get { return Settings.FORCE_SCALE(1.0f) * _pivotForce; }
 		}
@@ -328,8 +328,8 @@ namespace Box2DX.Dynamics
 			Body b2 = _body2;
 
 			// Compute the effective mass matrix.
-			Vector2 r1 = Box2DXMath.Mul(b1.GetXForm().R, _localAnchor1 - b1.GetLocalCenter());
-			Vector2 r2 = Box2DXMath.Mul(b2.GetXForm().R, _localAnchor2 - b2.GetLocalCenter());
+			Vec2 r1 = Box2DXMath.Mul(b1.GetXForm().R, _localAnchor1 - b1.GetLocalCenter());
+			Vec2 r2 = Box2DXMath.Mul(b2.GetXForm().R, _localAnchor2 - b2.GetLocalCenter());
 
 			// K    = [(1/m1 + 1/m2) * eye(2) - skew(r1) * invI1 * skew(r1) - skew(r2) * invI2 * skew(r2)]
 			//      = [1/m1+1/m2     0    ] + invI1 * [r1.y*r1.y -r1.x*r1.y] + invI2 * [r1.y*r1.y -r1.x*r1.y]
@@ -396,10 +396,10 @@ namespace Box2DX.Dynamics
 			if (step.WarmStarting)
 			{
 				b1._linearVelocity -= Settings.FORCE_SCALE(step.Dt) * invMass1 * _pivotForce;
-				b1._angularVelocity -= Settings.FORCE_SCALE(step.Dt) * invI1 * (Vector2.Cross(r1, _pivotForce) + Settings.FORCE_INV_SCALE(_motorForce + _limitForce));
+				b1._angularVelocity -= Settings.FORCE_SCALE(step.Dt) * invI1 * (Vec2.Cross(r1, _pivotForce) + Settings.FORCE_INV_SCALE(_motorForce + _limitForce));
 
 				b2._linearVelocity += Settings.FORCE_SCALE(step.Dt) * invMass2 * _pivotForce;
-				b2._angularVelocity += Settings.FORCE_SCALE(step.Dt) * invI2 * (Vector2.Cross(r2, _pivotForce) + Settings.FORCE_INV_SCALE(_motorForce + _limitForce));
+				b2._angularVelocity += Settings.FORCE_SCALE(step.Dt) * invI2 * (Vec2.Cross(r2, _pivotForce) + Settings.FORCE_INV_SCALE(_motorForce + _limitForce));
 			}
 			else
 			{
@@ -416,13 +416,13 @@ namespace Box2DX.Dynamics
 			Body b1 = _body1;
 			Body b2 = _body2;
 
-			Vector2 r1 = Box2DXMath.Mul(b1.GetXForm().R, _localAnchor1 - b1.GetLocalCenter());
-			Vector2 r2 = Box2DXMath.Mul(b2.GetXForm().R, _localAnchor2 - b2.GetLocalCenter());
+			Vec2 r1 = Box2DXMath.Mul(b1.GetXForm().R, _localAnchor1 - b1.GetLocalCenter());
+			Vec2 r2 = Box2DXMath.Mul(b2.GetXForm().R, _localAnchor2 - b2.GetLocalCenter());
 
 			// Solve point-to-point constraint
-			Vector2 pivotCdot = b2._linearVelocity + Vector2.Cross(b2._angularVelocity, r2) - b1._linearVelocity -
-				Vector2.Cross(b1._angularVelocity, r1);
-			Vector2 pivotForce = -Settings.FORCE_INV_SCALE(step.Inv_Dt) * Box2DXMath.Mul(_pivotMass, pivotCdot);
+			Vec2 pivotCdot = b2._linearVelocity + Vec2.Cross(b2._angularVelocity, r2) - b1._linearVelocity -
+				Vec2.Cross(b1._angularVelocity, r1);
+			Vec2 pivotForce = -Settings.FORCE_INV_SCALE(step.Inv_Dt) * Box2DXMath.Mul(_pivotMass, pivotCdot);
 
 #if B2_TOI_JOINTS
 			if (step.WarmStarting)
@@ -439,12 +439,12 @@ namespace Box2DX.Dynamics
 			_pivotForce += pivotForce;
 #endif
 
-			Vector2 P = Settings.FORCE_SCALE(step.Dt) * pivotForce;
+			Vec2 P = Settings.FORCE_SCALE(step.Dt) * pivotForce;
 			b1._linearVelocity -= b1._invMass * P;
-			b1._angularVelocity -= b1._invI * Vector2.Cross(r1, P);
+			b1._angularVelocity -= b1._invI * Vec2.Cross(r1, P);
 
 			b2._linearVelocity += b2._invMass * P;
-			b2._angularVelocity += b2._invI * Vector2.Cross(r2, P);
+			b2._angularVelocity += b2._invI * Vec2.Cross(r2, P);
 
 			if (_enableMotor && _limitState != LimitState.EqualLimits)
 			{
@@ -495,12 +495,12 @@ namespace Box2DX.Dynamics
 			float positionError = 0.0f;
 
 			// Solve point-to-point position error.
-			Vector2 r1 = Box2DXMath.Mul(b1.GetXForm().R, _localAnchor1 - b1.GetLocalCenter());
-			Vector2 r2 = Box2DXMath.Mul(b2.GetXForm().R, _localAnchor2 - b2.GetLocalCenter());
+			Vec2 r1 = Box2DXMath.Mul(b1.GetXForm().R, _localAnchor1 - b1.GetLocalCenter());
+			Vec2 r2 = Box2DXMath.Mul(b2.GetXForm().R, _localAnchor2 - b2.GetLocalCenter());
 
-			Vector2 p1 = b1._sweep.C + r1;
-			Vector2 p2 = b2._sweep.C + r2;
-			Vector2 ptpC = p2 - p1;
+			Vec2 p1 = b1._sweep.C + r1;
+			Vec2 p2 = b2._sweep.C + r2;
+			Vec2 ptpC = p2 - p1;
 
 			positionError = ptpC.Length();
 
@@ -524,13 +524,13 @@ namespace Box2DX.Dynamics
 			K3.Col1.Y = -invI2 * r2.X * r2.Y; K3.Col2.Y = invI2 * r2.X * r2.X;
 
 			Mat22 K = K1 + K2 + K3;
-			Vector2 impulse = K.Solve(-ptpC);
+			Vec2 impulse = K.Solve(-ptpC);
 
 			b1._sweep.C -= b1._invMass * impulse;
-			b1._sweep.A -= b1._invI * Vector2.Cross(r1, impulse);
+			b1._sweep.A -= b1._invI * Vec2.Cross(r1, impulse);
 
 			b2._sweep.C += b2._invMass * impulse;
-			b2._sweep.A += b2._invI * Vector2.Cross(r2, impulse);
+			b2._sweep.A += b2._invI * Vec2.Cross(r2, impulse);
 
 			b1.SynchronizeTransform();
 			b2.SynchronizeTransform();

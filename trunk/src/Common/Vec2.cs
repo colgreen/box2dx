@@ -28,14 +28,14 @@ namespace Box2DX.Common
 	/// <summary>
 	/// A 2D column vector.
 	/// </summary>
-	public struct Vector2
+	public struct Vec2
 	{
 		public float X, Y;
 
 		/// <summary>
 		/// Construct using coordinates.
 		/// </summary>
-		public Vector2(float x, float y)
+		public Vec2(float x, float y)
 		{
 			X = x;
 			Y = y;
@@ -96,57 +96,57 @@ namespace Box2DX.Common
 		/// <summary>
 		/// Negate this vector.
 		/// </summary>
-		public static Vector2 operator -(Vector2 v1)
+		public static Vec2 operator -(Vec2 v1)
 		{
-			Vector2 v = new Vector2();
+			Vec2 v = new Vec2();
 			v.Set(-v1.X, -v1.Y);
 			return v;
 		}
 
-		public static Vector2 operator +(Vector2 v1, Vector2 v2)
+		public static Vec2 operator +(Vec2 v1, Vec2 v2)
 		{
-			Vector2 v = new Vector2();
+			Vec2 v = new Vec2();
 			v.Set(v1.X + v2.X, v1.Y + v2.Y);
 			return v;
 		}
 
-		public static Vector2 operator -(Vector2 v1, Vector2 v2)
+		public static Vec2 operator -(Vec2 v1, Vec2 v2)
 		{
-			Vector2 v = new Vector2();
+			Vec2 v = new Vec2();
 			v.Set(v1.X - v2.X, v1.Y - v2.Y);
 			return v;
 		}
 
-		public static Vector2 operator *(Vector2 v1, float a)
+		public static Vec2 operator *(Vec2 v1, float a)
 		{
-			Vector2 v = new Vector2();
+			Vec2 v = new Vec2();
 			v.Set(v1.X * a, v1.Y * a);
 			return v;
 		}
 
-		public static Vector2 operator *(float a, Vector2 v1)
+		public static Vec2 operator *(float a, Vec2 v1)
 		{
-			Vector2 v = new Vector2();
+			Vec2 v = new Vec2();
 			v.Set(v1.X * a, v1.Y * a);
 			return v;
 		}
 
-		public static bool operator ==(Vector2 a, Vector2 b)
+		public static bool operator ==(Vec2 a, Vec2 b)
 		{
 			return a.X == b.X && a.Y == b.Y;
 		}
 
-		public static bool operator !=(Vector2 a, Vector2 b)
+		public static bool operator !=(Vec2 a, Vec2 b)
 		{
 			return a.X != b.X && a.Y != b.Y;
 		}
 
-		public static Vector2 Zero { get { return new Vector2(0, 0); } }
+		public static Vec2 Zero { get { return new Vec2(0, 0); } }
 
 		/// <summary>
 		/// Peform the dot product on two vectors.
 		/// </summary>
-		public static float Dot(Vector2 a, Vector2 b)
+		public static float Dot(Vec2 a, Vec2 b)
 		{
 			return a.X * b.X + a.Y * b.Y;
 		}
@@ -154,7 +154,7 @@ namespace Box2DX.Common
 		/// <summary>
 		/// Perform the cross product on two vectors. In 2D this produces a scalar.
 		/// </summary>
-		public static float Cross(Vector2 a, Vector2 b)
+		public static float Cross(Vec2 a, Vec2 b)
 		{
 			return a.X * b.Y - a.Y * b.X;
 		}
@@ -163,9 +163,9 @@ namespace Box2DX.Common
 		/// Perform the cross product on a vector and a scalar. 
 		/// In 2D this produces a vector.
 		/// </summary>
-		public static Vector2 Cross(Vector2 a, float s)
+		public static Vec2 Cross(Vec2 a, float s)
 		{
-			Vector2 v = new Vector2();
+			Vec2 v = new Vec2();
 			v.Set(s * a.Y, -s * a.X);
 			return v;
 		}
@@ -174,23 +174,23 @@ namespace Box2DX.Common
 		/// Perform the cross product on a scalar and a vector. 
 		/// In 2D this produces a vector.
 		/// </summary>
-		public static Vector2 Cross(float s, Vector2 a)
+		public static Vec2 Cross(float s, Vec2 a)
 		{
-			Vector2 v = new Vector2();
+			Vec2 v = new Vec2();
 			v.Set(-s * a.Y, s * a.X);
 			return v;
 		}
 
-		public static float Distance(Vector2 a, Vector2 b)
+		public static float Distance(Vec2 a, Vec2 b)
 		{
-			Vector2 c = a - b;
+			Vec2 c = a - b;
 			return c.Length();
 		}
 
-		public static float DistanceSquared(Vector2 a, Vector2 b)
+		public static float DistanceSquared(Vec2 a, Vec2 b)
 		{
-			Vector2 c = a - b;
-			return Vector2.Dot(c, c);
+			Vec2 c = a - b;
+			return Vec2.Dot(c, c);
 		}
 	}
 }

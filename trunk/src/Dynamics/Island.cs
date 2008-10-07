@@ -158,7 +158,7 @@ namespace Box2DX.Dynamics
 			_jointCount = 0;
 		}
 
-		public void Solve(TimeStep step, Vector2 gravity, bool correctPositions, bool allowSleep)
+		public void Solve(TimeStep step, Vec2 gravity, bool correctPositions, bool allowSleep)
 		{
 			// Integrate velocities and apply damping.
 			for (int i = 0; i < _bodyCount; ++i)
@@ -200,7 +200,7 @@ namespace Box2DX.Dynamics
 					-Settings.MaxAngularVelocity, Settings.MaxAngularVelocity);
 
 #else
-				if (Vector2.Dot(b._linearVelocity, b._linearVelocity) > Settings.MaxLinearVelocitySquared)
+				if (Vec2.Dot(b._linearVelocity, b._linearVelocity) > Settings.MaxLinearVelocitySquared)
 				{
 					b._linearVelocity.Normalize();
 					b._linearVelocity *= Settings.MaxLinearVelocity;
@@ -325,7 +325,7 @@ namespace Box2DX.Dynamics
 						Common.Math.Abs(b._linearVelocity.Y) > Settings.LinearSleepTolerance)
 #else
 						b._angularVelocity * b._angularVelocity > angTolSqr ||
-						Vector2.Dot(b._linearVelocity, b._linearVelocity) > linTolSqr)
+						Vec2.Dot(b._linearVelocity, b._linearVelocity) > linTolSqr)
 #endif
 					{
 						b._sleepTime = 0.0f;
@@ -344,7 +344,7 @@ namespace Box2DX.Dynamics
 					{
 						Body b = _bodies[i];
 						b._flags |= Body.BodyFlags.Sleep;
-						b._linearVelocity = Vector2.Zero;
+						b._linearVelocity = Vec2.Zero;
 						b._angularVelocity = 0.0f;
 					}
 				}

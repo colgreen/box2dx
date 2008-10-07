@@ -33,10 +33,10 @@ namespace Box2DX.Dynamics
 #warning "CAS"
 	public class ContactConstraintPoint
 	{
-		public Vector2 LocalAnchor1;
-		public Vector2 LocalAnchor2;
-		public Vector2 R1;
-		public Vector2 R2;
+		public Vec2 LocalAnchor1;
+		public Vec2 LocalAnchor2;
+		public Vec2 R1;
+		public Vec2 R2;
 		public float NormalImpulse;
 		public float TangentImpulse;
 		public float NormalMass;
@@ -50,7 +50,7 @@ namespace Box2DX.Dynamics
 	public class ContactConstraint
 	{
 		public ContactConstraintPoint[] Points = new ContactConstraintPoint[Settings.MaxManifoldPoints];
-		public Vector2 Normal;
+		public Vec2 Normal;
 		public Mat22 NormalMass;
 		public Mat22 K;
 		public Manifold Manifold;
@@ -100,8 +100,8 @@ namespace Box2DX.Dynamics
 				float friction = contact._friction;
 				float restitution = contact._restitution;
 
-				Vector2 v1 = b1._linearVelocity;
-				Vector2 v2 = b2._linearVelocity;
+				Vec2 v1 = b1._linearVelocity;
+				Vec2 v2 = b2._linearVelocity;
 				float w1 = b1._angularVelocity;
 				float w2 = b2._angularVelocity;
 
@@ -111,7 +111,7 @@ namespace Box2DX.Dynamics
 
 					Box2DXDebug.Assert(manifold.PointCount > 0);
 
-					Vector2 normal = manifold.Normal;
+					Vec2 normal = manifold.Normal;
 
 					Box2DXDebug.Assert(count < _constraintCount);
 					ContactConstraint cc = _constraints[count];
@@ -137,8 +137,8 @@ namespace Box2DX.Dynamics
 						ccp.R1 = Common.Math.Mul(b1.GetXForm().R, cp.LocalPoint1 - b1.GetLocalCenter());
 						ccp.R2 = Common.Math.Mul(b2.GetXForm().R, cp.LocalPoint2 - b2.GetLocalCenter());
 
-						float rn1 = Vector2.Cross(ccp.R1, normal);
-						float rn2 = Vector2.Cross(ccp.R2, normal);
+						float rn1 = Vec2.Cross(ccp.R1, normal);
+						float rn2 = Vec2.Cross(ccp.R2, normal);
 						rn1 *= rn1;
 						rn2 *= rn2;
 
@@ -153,10 +153,10 @@ namespace Box2DX.Dynamics
 						Box2DXDebug.Assert(kEqualized > Common.Settings.FLT_EPSILON);
 						ccp.EqualizedMass = 1.0f / kEqualized;
 
-						Vector2 tangent = Vector2.Cross(normal, 1.0f);
+						Vec2 tangent = Vec2.Cross(normal, 1.0f);
 
-						float rt1 = Vector2.Cross(ccp.R1, tangent);
-						float rt2 = Vector2.Cross(ccp.R2, tangent);
+						float rt1 = Vec2.Cross(ccp.R1, tangent);
+						float rt2 = Vec2.Cross(ccp.R2, tangent);
 						rt1 *= rt1;
 						rt2 *= rt2;
 
@@ -173,7 +173,7 @@ namespace Box2DX.Dynamics
 						}
 						else
 						{
-							float vRel = Vector2.Dot(cc.Normal, v2 + Vector2.Cross(w2, ccp.R2) - v1 - Vector2.Cross(w1, ccp.R1));
+							float vRel = Vec2.Dot(cc.Normal, v2 + Vec2.Cross(w2, ccp.R2) - v1 - Vec2.Cross(w1, ccp.R1));
 							if (vRel < -Settings.VelocityThreshold)
 							{
 								ccp.VelocityBias = -cc.Restitution * vRel;
@@ -192,10 +192,10 @@ namespace Box2DX.Dynamics
 						float invMass2 = b2._invMass;
 						float invI2 = b2._invI;
 
-						float rn11 = Vector2.Cross(ccp1.R1, normal);
-						float rn12 = Vector2.Cross(ccp1.R2, normal);
-						float rn21 = Vector2.Cross(ccp2.R1, normal);
-						float rn22 = Vector2.Cross(ccp2.R2, normal);
+						float rn11 = Vec2.Cross(ccp1.R1, normal);
+						float rn12 = Vec2.Cross(ccp1.R2, normal);
+						float rn21 = Vec2.Cross(ccp2.R1, normal);
+						float rn22 = Vec2.Cross(ccp2.R2, normal);
 
 						float k11 = invMass1 + invMass2 + invI1 * rn11 * rn11 + invI2 * rn12 * rn12;
 						float k22 = invMass1 + invMass2 + invI1 * rn21 * rn21 + invI2 * rn22 * rn22;
@@ -242,8 +242,8 @@ namespace Box2DX.Dynamics
 				float invI1 = b1._invI;
 				float invMass2 = b2._invMass;
 				float invI2 = b2._invI;
-				Vector2 normal = c.Normal;
-				Vector2 tangent = Vector2.Cross(normal, 1.0f);
+				Vec2 normal = c.Normal;
+				Vec2 tangent = Vec2.Cross(normal, 1.0f);
 
 				if (step.WarmStarting)
 				{
@@ -252,10 +252,10 @@ namespace Box2DX.Dynamics
 						ContactConstraintPoint ccp = c.Points[j];
 						ccp.NormalImpulse *= step.DtRatio;
 						ccp.TangentImpulse *= step.DtRatio;
-						Vector2 P = ccp.NormalImpulse * normal + ccp.TangentImpulse * tangent;
-						b1._angularVelocity -= invI1 * Vector2.Cross(ccp.R1, P);
+						Vec2 P = ccp.NormalImpulse * normal + ccp.TangentImpulse * tangent;
+						b1._angularVelocity -= invI1 * Vec2.Cross(ccp.R1, P);
 						b1._linearVelocity -= invMass1 * P;
-						b2._angularVelocity += invI2 * Vector2.Cross(ccp.R2, P);
+						b2._angularVelocity += invI2 * Vec2.Cross(ccp.R2, P);
 						b2._linearVelocity += invMass2 * P;
 					}
 				}
@@ -280,14 +280,14 @@ namespace Box2DX.Dynamics
 				Body b2 = c.Body2;
 				float w1 = b1._angularVelocity;
 				float w2 = b2._angularVelocity;
-				Vector2 v1 = b1._linearVelocity;
-				Vector2 v2 = b2._linearVelocity;
+				Vec2 v1 = b1._linearVelocity;
+				Vec2 v2 = b2._linearVelocity;
 				float invMass1 = b1._invMass;
 				float invI1 = b1._invI;
 				float invMass2 = b2._invMass;
 				float invI2 = b2._invI;
-				Vector2 normal = c.Normal;
-				Vector2 tangent = Vector2.Cross(normal, 1.0f);
+				Vec2 normal = c.Normal;
+				Vec2 tangent = Vec2.Cross(normal, 1.0f);
 				float friction = c.Friction;
 
 				Box2DXDebug.Assert(c.PointCount == 1 || c.PointCount == 2);
@@ -298,10 +298,10 @@ namespace Box2DX.Dynamics
 					ContactConstraintPoint ccp = c.Points[0];
 
 					// Relative velocity at contact
-					Vector2 dv = v2 + Vector2.Cross(w2, ccp.R2) - v1 - Vector2.Cross(w1, ccp.R1);
+					Vec2 dv = v2 + Vec2.Cross(w2, ccp.R2) - v1 - Vec2.Cross(w1, ccp.R1);
 
 					// Compute normal impulse
-					float vn = Vector2.Dot(dv, normal);
+					float vn = Vec2.Dot(dv, normal);
 					float lambda = -ccp.NormalMass * (vn - ccp.VelocityBias);
 
 					// Clamp the accumulated impulse
@@ -309,13 +309,13 @@ namespace Box2DX.Dynamics
 					lambda = newImpulse - ccp.NormalImpulse;
 
 					// Apply contact impulse
-					Vector2 P = lambda * normal;
+					Vec2 P = lambda * normal;
 
 					v1 -= invMass1 * P;
-					w1 -= invI1 * Vector2.Cross(ccp.R1, P);
+					w1 -= invI1 * Vec2.Cross(ccp.R1, P);
 
 					v2 += invMass2 * P;
-					w2 += invI2 * Vector2.Cross(ccp.R2, P);
+					w2 += invI2 * Vec2.Cross(ccp.R2, P);
 
 					ccp.NormalImpulse = newImpulse;
 				}
@@ -352,18 +352,18 @@ namespace Box2DX.Dynamics
 					ContactConstraintPoint cp1 = c.Points[0];
 					ContactConstraintPoint cp2 = c.Points[1];
 
-					Vector2 a = new Vector2(cp1.NormalImpulse, cp2.NormalImpulse);
+					Vec2 a = new Vec2(cp1.NormalImpulse, cp2.NormalImpulse);
 					Box2DXDebug.Assert(a.X >= 0.0f && a.Y >= 0.0f);
 
 					// Relative velocity at contact
-					Vector2 dv1 = v2 + Vector2.Cross(w2, cp1.R2) - v1 - Vector2.Cross(w1, cp1.R1);
-					Vector2 dv2 = v2 + Vector2.Cross(w2, cp2.R2) - v1 - Vector2.Cross(w1, cp2.R1);
+					Vec2 dv1 = v2 + Vec2.Cross(w2, cp1.R2) - v1 - Vec2.Cross(w1, cp1.R1);
+					Vec2 dv2 = v2 + Vec2.Cross(w2, cp2.R2) - v1 - Vec2.Cross(w1, cp2.R1);
 
 					// Compute normal velocity
-					float vn1 = Vector2.Dot(dv1, normal);
-					float vn2 = Vector2.Dot(dv2, normal);
+					float vn1 = Vec2.Dot(dv1, normal);
+					float vn2 = Vec2.Dot(dv2, normal);
 
-					Vector2 b;
+					Vec2 b;
 					b.X = vn1 - cp1.VelocityBias;
 					b.Y = vn2 - cp2.VelocityBias;
 					b -= Common.Math.Mul(c.K, a);
@@ -380,21 +380,21 @@ namespace Box2DX.Dynamics
 						//
 						// x' = - inv(A) * b'
 						//
-						Vector2 x = -Common.Math.Mul(c.NormalMass, b);
+						Vec2 x = -Common.Math.Mul(c.NormalMass, b);
 
 						if (x.X >= 0.0f && x.Y >= 0.0f)
 						{
 							// Resubstitute for the incremental impulse
-							Vector2 d = x - a;
+							Vec2 d = x - a;
 
 							// Apply incremental impulse
-							Vector2 P1 = d.X * normal;
-							Vector2 P2 = d.Y * normal;
+							Vec2 P1 = d.X * normal;
+							Vec2 P2 = d.Y * normal;
 							v1 -= invMass1 * (P1 + P2);
-							w1 -= invI1 * (Vector2.Cross(cp1.R1, P1) + Vector2.Cross(cp2.R1, P2));
+							w1 -= invI1 * (Vec2.Cross(cp1.R1, P1) + Vec2.Cross(cp2.R1, P2));
 
 							v2 += invMass2 * (P1 + P2);
-							w2 += invI2 * (Vector2.Cross(cp1.R2, P1) + Vector2.Cross(cp2.R2, P2));
+							w2 += invI2 * (Vec2.Cross(cp1.R2, P1) + Vec2.Cross(cp2.R2, P2));
 
 							// Accumulate
 							cp1.NormalImpulse = x.X;
@@ -429,16 +429,16 @@ namespace Box2DX.Dynamics
 						if (x.X >= 0.0f && vn2 >= 0.0f)
 						{
 							// Resubstitute for the incremental impulse
-							Vector2 d = x - a;
+							Vec2 d = x - a;
 
 							// Apply incremental impulse
-							Vector2 P1 = d.X * normal;
-							Vector2 P2 = d.Y * normal;
+							Vec2 P1 = d.X * normal;
+							Vec2 P2 = d.Y * normal;
 							v1 -= invMass1 * (P1 + P2);
-							w1 -= invI1 * (Vector2.Cross(cp1.R1, P1) + Vector2.Cross(cp2.R1, P2));
+							w1 -= invI1 * (Vec2.Cross(cp1.R1, P1) + Vec2.Cross(cp2.R1, P2));
 
 							v2 += invMass2 * (P1 + P2);
-							w2 += invI2 * (Vector2.Cross(cp1.R2, P1) + Vector2.Cross(cp2.R2, P2));
+							w2 += invI2 * (Vec2.Cross(cp1.R2, P1) + Vec2.Cross(cp2.R2, P2));
 
 							// Accumulate
 							cp1.NormalImpulse = x.X;
@@ -471,16 +471,16 @@ namespace Box2DX.Dynamics
 						if (x.Y >= 0.0f && vn1 >= 0.0f)
 						{
 							// Resubstitute for the incremental impulse
-							Vector2 d = x - a;
+							Vec2 d = x - a;
 
 							// Apply incremental impulse
-							Vector2 P1 = d.X * normal;
-							Vector2 P2 = d.Y * normal;
+							Vec2 P1 = d.X * normal;
+							Vec2 P2 = d.Y * normal;
 							v1 -= invMass1 * (P1 + P2);
-							w1 -= invI1 * (Vector2.Cross(cp1.R1, P1) + Vector2.Cross(cp2.R1, P2));
+							w1 -= invI1 * (Vec2.Cross(cp1.R1, P1) + Vec2.Cross(cp2.R1, P2));
 
 							v2 += invMass2 * (P1 + P2);
-							w2 += invI2 * (Vector2.Cross(cp1.R2, P1) + Vector2.Cross(cp2.R2, P2));
+							w2 += invI2 * (Vec2.Cross(cp1.R2, P1) + Vec2.Cross(cp2.R2, P2));
 
 							// Accumulate
 							cp1.NormalImpulse = x.X;
@@ -511,16 +511,16 @@ namespace Box2DX.Dynamics
 						if (vn1 >= 0.0f && vn2 >= 0.0f)
 						{
 							// Resubstitute for the incremental impulse
-							Vector2 d = x - a;
+							Vec2 d = x - a;
 
 							// Apply incremental impulse
-							Vector2 P1 = d.X * normal;
-							Vector2 P2 = d.Y * normal;
+							Vec2 P1 = d.X * normal;
+							Vec2 P2 = d.Y * normal;
 							v1 -= invMass1 * (P1 + P2);
-							w1 -= invI1 * (Vector2.Cross(cp1.R1, P1) + Vector2.Cross(cp2.R1, P2));
+							w1 -= invI1 * (Vec2.Cross(cp1.R1, P1) + Vec2.Cross(cp2.R1, P2));
 
 							v2 += invMass2 * (P1 + P2);
-							w2 += invI2 * (Vector2.Cross(cp1.R2, P1) + Vector2.Cross(cp2.R2, P2));
+							w2 += invI2 * (Vec2.Cross(cp1.R2, P1) + Vec2.Cross(cp2.R2, P2));
 
 							// Accumulate
 							cp1.NormalImpulse = x.X;
@@ -540,10 +540,10 @@ namespace Box2DX.Dynamics
 					ContactConstraintPoint ccp = c.Points[j];
 
 					// Relative velocity at contact
-					Vector2 dv = v2 + Vector2.Cross(w2, ccp.R2) - v1 - Vector2.Cross(w1, ccp.R1);
+					Vec2 dv = v2 + Vec2.Cross(w2, ccp.R2) - v1 - Vec2.Cross(w1, ccp.R1);
 
 					// Compute tangent force
-					float vt = Vector2.Dot(dv, tangent);
+					float vt = Vec2.Dot(dv, tangent);
 					float lambda = ccp.TangentMass * (-vt);
 
 					// Clamp the accumulated force
@@ -552,13 +552,13 @@ namespace Box2DX.Dynamics
 					lambda = newImpulse - ccp.TangentImpulse;
 
 					// Apply contact impulse
-					Vector2 P = lambda * tangent;
+					Vec2 P = lambda * tangent;
 
 					v1 -= invMass1 * P;
-					w1 -= invI1 * Vector2.Cross(ccp.R1, P);
+					w1 -= invI1 * Vec2.Cross(ccp.R1, P);
 
 					v2 += invMass2 * P;
-					w2 += invI2 * Vector2.Cross(ccp.R2, P);
+					w2 += invI2 * Vec2.Cross(ccp.R2, P);
 
 					ccp.TangentImpulse = newImpulse;
 				}
@@ -599,22 +599,22 @@ namespace Box2DX.Dynamics
 				float invMass2 = b2._mass * b2._invMass;
 				float invI2 = b2._mass * b2._invI;
 
-				Vector2 normal = c.Normal;
+				Vec2 normal = c.Normal;
 
 				// Solver normal constraints
 				for (int j = 0; j < c.PointCount; ++j)
 				{
 					ContactConstraintPoint ccp = c.Points[j];
 
-					Vector2 r1 = Common.Math.Mul(b1.GetXForm().R, ccp.LocalAnchor1 - b1.GetLocalCenter());
-					Vector2 r2 = Common.Math.Mul(b2.GetXForm().R, ccp.LocalAnchor2 - b2.GetLocalCenter());
+					Vec2 r1 = Common.Math.Mul(b1.GetXForm().R, ccp.LocalAnchor1 - b1.GetLocalCenter());
+					Vec2 r2 = Common.Math.Mul(b2.GetXForm().R, ccp.LocalAnchor2 - b2.GetLocalCenter());
 
-					Vector2 p1 = b1._sweep.C + r1;
-					Vector2 p2 = b2._sweep.C + r2;
-					Vector2 dp = p2 - p1;
+					Vec2 p1 = b1._sweep.C + r1;
+					Vec2 p2 = b2._sweep.C + r2;
+					Vec2 dp = p2 - p1;
 
 					// Approximate the current separation.
-					float separation = Vector2.Dot(dp, normal) + ccp.Separation;
+					float separation = Vec2.Dot(dp, normal) + ccp.Separation;
 
 					// Track max constraint error.
 					minSeparation = Common.Math.Min(minSeparation, separation);
@@ -625,14 +625,14 @@ namespace Box2DX.Dynamics
 					// Compute normal impulse
 					float impulse = -ccp.EqualizedMass * C;
 
-					Vector2 P = impulse * normal;
+					Vec2 P = impulse * normal;
 
 					b1._sweep.C -= invMass1 * P;
-					b1._sweep.A -= invI1 * Vector2.Cross(r1, P);
+					b1._sweep.A -= invI1 * Vec2.Cross(r1, P);
 					b1.SynchronizeTransform();
 
 					b2._sweep.C += invMass2 * P;
-					b2._sweep.A += invI2 * Vector2.Cross(r2, P);
+					b2._sweep.A += invI2 * Vec2.Cross(r2, P);
 					b2.SynchronizeTransform();
 				}
 			}

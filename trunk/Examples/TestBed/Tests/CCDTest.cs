@@ -46,16 +46,16 @@ namespace TestBed
 				sd.Density = 0.0f;
 				sd.Restitution = k_restitution;
 
-				sd.SetAsBox(0.1f, 10.0f, new Vector2(-10.0f, 0.0f), 0.0f);
+				sd.SetAsBox(0.1f, 10.0f, new Vec2(-10.0f, 0.0f), 0.0f);
 				body.CreateShape(sd);
 
-				sd.SetAsBox(0.1f, 10.0f, new Vector2(10.0f, 0.0f), 0.0f);
+				sd.SetAsBox(0.1f, 10.0f, new Vec2(10.0f, 0.0f), 0.0f);
 				body.CreateShape(sd);
 
-				sd.SetAsBox(0.1f, 10.0f, new Vector2(0.0f, -10.0f), 0.5f * Box2DX.Common.Settings.Pi);
+				sd.SetAsBox(0.1f, 10.0f, new Vec2(0.0f, -10.0f), 0.5f * Box2DX.Common.Settings.Pi);
 				body.CreateShape(sd);
 
-				sd.SetAsBox(0.1f, 10.0f, new Vector2(0.0f, 10.0f), -0.5f * Box2DX.Common.Settings.Pi);
+				sd.SetAsBox(0.1f, 10.0f, new Vec2(0.0f, 10.0f), -0.5f * Box2DX.Common.Settings.Pi);
 				body.CreateShape(sd);
 			}
 
@@ -65,11 +65,11 @@ namespace TestBed
 				sd_bottom.Density = 4.0f;
 
 				PolygonDef sd_left = new PolygonDef();
-				sd_left.SetAsBox(0.15f, 2.7f, new Vector2(-1.45f, 2.35f), 0.2f);
+				sd_left.SetAsBox(0.15f, 2.7f, new Vec2(-1.45f, 2.35f), 0.2f);
 				sd_left.Density = 4.0f;
 
 				PolygonDef sd_right = new PolygonDef();
-				sd_right.SetAsBox(0.15f, 2.7f, new Vector2(1.45f, 2.35f), -0.2f);
+				sd_right.SetAsBox(0.15f, 2.7f, new Vec2(1.45f, 2.35f), -0.2f);
 				sd_right.Density = 4.0f;
 
 				BodyDef bd = new BodyDef();

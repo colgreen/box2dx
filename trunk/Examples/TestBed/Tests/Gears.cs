@@ -94,7 +94,7 @@ namespace TestBed
 				body3.SetMassFromShapes();
 
 				PrismaticJointDef jd3 = new PrismaticJointDef();
-				jd3.Initialize(ground, body3, bd3.Position, new Vector2(0.0f, 1.0f));
+				jd3.Initialize(ground, body3, bd3.Position, new Vec2(0.0f, 1.0f));
 				jd3.LowerTranslation = -5.0f;
 				jd3.UpperTranslation = 5.0f;
 				jd3.EnableLimit = true;

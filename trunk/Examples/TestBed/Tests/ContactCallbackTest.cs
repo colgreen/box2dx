@@ -132,10 +132,10 @@ namespace TestBed
 			sd.Vertices[0].Set(-10, 0);
 			_world.GetGroundBody().CreateShape(sd);
 
-			sd.SetAsBox(.5f, 6, new Vector2(10.5f, 6), 0);
+			sd.SetAsBox(.5f, 6, new Vec2(10.5f, 6), 0);
 			_world.GetGroundBody().CreateShape(sd);
 
-			sd.SetAsBox(.5f, 6, new Vector2(-10.5f, 6), 0);
+			sd.SetAsBox(.5f, 6, new Vec2(-10.5f, 6), 0);
 			_world.GetGroundBody().CreateShape(sd);
 
 			BodyDef bd = new BodyDef();

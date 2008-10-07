@@ -202,7 +202,7 @@ namespace Box2DX.Dynamics
 		/// <param name="vertices"></param>
 		/// <param name="vertexCount"></param>
 		/// <param name="color"></param>
-		public abstract void DrawPolygon(Vector2[] vertices, int vertexCount, Color color);
+		public abstract void DrawPolygon(Vec2[] vertices, int vertexCount, Color color);
 
 		/// <summary>
 		/// Draw a solid closed polygon provided in CCW order.
@@ -210,7 +210,7 @@ namespace Box2DX.Dynamics
 		/// <param name="vertices"></param>
 		/// <param name="vertexCount"></param>
 		/// <param name="color"></param>
-		public abstract void DrawSolidPolygon(Vector2[] vertices, int vertexCount, Color color);
+		public abstract void DrawSolidPolygon(Vec2[] vertices, int vertexCount, Color color);
 
 		/// <summary>
 		/// Draw a circle.
@@ -218,7 +218,7 @@ namespace Box2DX.Dynamics
 		/// <param name="center"></param>
 		/// <param name="radius"></param>
 		/// <param name="color"></param>
-		public abstract void DrawCircle(Vector2 center, float radius, Color color);
+		public abstract void DrawCircle(Vec2 center, float radius, Color color);
 
 		/// <summary>
 		/// Draw a solid circle.
@@ -227,7 +227,7 @@ namespace Box2DX.Dynamics
 		/// <param name="radius"></param>
 		/// <param name="axis"></param>
 		/// <param name="color"></param>
-		public abstract void DrawSolidCircle(Vector2 center, float radius, Vector2 axis, Color color);
+		public abstract void DrawSolidCircle(Vec2 center, float radius, Vec2 axis, Color color);
 
 		/// <summary>
 		/// Draw a line segment.
@@ -235,7 +235,7 @@ namespace Box2DX.Dynamics
 		/// <param name="p1"></param>
 		/// <param name="p2"></param>
 		/// <param name="color"></param>
-		public abstract void DrawSegment(Vector2 p1, Vector2 p2, Color color);
+		public abstract void DrawSegment(Vec2 p1, Vec2 p2, Color color);
 
 		/// <summary>
 		/// Draw a transform. Choose your own length scale.

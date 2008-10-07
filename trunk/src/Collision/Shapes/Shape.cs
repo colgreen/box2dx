@@ -41,7 +41,7 @@ namespace Box2DX.Collision
 		/// <summary>
 		/// The position of the shape's centroid relative to the shape's origin.
 		/// </summary>
-		public Vector2 Center;
+		public Vec2 Center;
 
 		/// <summary>
 		/// The rotational inertia of the shape.
@@ -241,7 +241,7 @@ namespace Box2DX.Collision
 		/// <param name="xf">The shape world transform.</param>
 		/// <param name="p">A point in world coordinates.</param>
 		/// <returns></returns>
-		public abstract bool TestPoint(XForm xf, Vector2 p);
+		public abstract bool TestPoint(XForm xf, Vec2 p);
 
 		/// <summary>
 		/// Perform a ray cast against this shape.
@@ -254,7 +254,7 @@ namespace Box2DX.Collision
 		/// <param name="segment">Defines the begin and end point of the ray cast.</param>
 		/// <param name="maxLambda">A number typically in the range [0,1].</param>
 		/// <returns>True if there was an intersection.</returns>
-		public abstract bool TestSegment(XForm xf, out float lambda, out Vector2 normal, Segment segment, float maxLambda);
+		public abstract bool TestSegment(XForm xf, out float lambda, out Vec2 normal, Segment segment, float maxLambda);
 
 		/// <summary>
 		/// Given a transform, compute the associated axis aligned bounding box for this shape.
@@ -278,7 +278,7 @@ namespace Box2DX.Collision
 		/// <param name="massData">Returns the mass data for this shape</param>
 		public abstract void ComputeMass(out MassData massData);
 
-		internal abstract void UpdateSweepRadius(Vector2 center);
+		internal abstract void UpdateSweepRadius(Vec2 center);
 
 		internal static Shape Create(ShapeDef def)
 		{

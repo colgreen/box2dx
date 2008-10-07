@@ -55,7 +55,7 @@ namespace Box2DX.Dynamics
 		/// The initial world target point. This is assumed
 		/// to coincide with the body anchor initially.
 		/// </summary>
-		public Vector2 Target;
+		public Vec2 Target;
 
 		/// <summary>
 		/// The maximum constraint force that can be exerted
@@ -88,27 +88,27 @@ namespace Box2DX.Dynamics
 	/// </summary>
 	public class MouseJoint : Joint
 	{
-		public Vector2 _localAnchor;
-		public Vector2 _target;
-		public Vector2 _impulse;
+		public Vec2 _localAnchor;
+		public Vec2 _target;
+		public Vec2 _impulse;
 
 		public Mat22 _mass;		// effective mass for point-to-point constraint.
-		public Vector2 _C;				// position error
+		public Vec2 _C;				// position error
 		public float _maxForce;
 		public float _beta;			// bias factor
 		public float _gamma;		// softness
 
-		public override Vector2 Anchor1
+		public override Vec2 Anchor1
 		{
 			get { return _target; }
 		}
 
-		public override Vector2 Anchor2
+		public override Vec2 Anchor2
 		{
 			get { return _body2.GetWorldPoint(_localAnchor); }
 		}
 
-		public override Vector2 ReactionForce
+		public override Vec2 ReactionForce
 		{
 			get { return Settings.FORCE_SCALE(1.0f) * _impulse; }
 		}
@@ -122,7 +122,7 @@ namespace Box2DX.Dynamics
 		/// Use this to update the target point.
 		/// </summary>
 		/// <param name="target"></param>
-		public void SetTarget(Vector2 target)
+		public void SetTarget(Vec2 target)
 		{
 			if (_body2.IsSleeping())
 			{
@@ -162,7 +162,7 @@ namespace Box2DX.Dynamics
 			Body b = _body2;
 
 			// Compute the effective mass matrix.
-			Vector2 r = Common.Math.Mul(b.GetXForm().R, _localAnchor - b.GetLocalCenter());
+			Vec2 r = Common.Math.Mul(b.GetXForm().R, _localAnchor - b.GetLocalCenter());
 
 			// K    = [(1/m1 + 1/m2) * eye(2) - skew(r1) * invI1 * skew(r1) - skew(r2) * invI2 * skew(r2)]
 			//      = [1/m1+1/m2     0    ] + invI1 * [r1.y*r1.y -r1.x*r1.y] + invI2 * [r1.y*r1.y -r1.x*r1.y]
@@ -190,23 +190,23 @@ namespace Box2DX.Dynamics
 			b._angularVelocity *= 0.98f;
 
 			// Warm starting.
-			Vector2 P = Settings.FORCE_SCALE(step.Dt) * _impulse;
+			Vec2 P = Settings.FORCE_SCALE(step.Dt) * _impulse;
 			b._linearVelocity += invMass * P;
-			b._angularVelocity += invI * Vector2.Cross(r, P);
+			b._angularVelocity += invI * Vec2.Cross(r, P);
 		}
 
 		internal override void SolveVelocityConstraints(TimeStep step)
 		{
 			Body b = _body2;
 
-			Vector2 r = Common.Math.Mul(b.GetXForm().R, _localAnchor - b.GetLocalCenter());
+			Vec2 r = Common.Math.Mul(b.GetXForm().R, _localAnchor - b.GetLocalCenter());
 
 			// Cdot = v + cross(w, r)
-			Vector2 Cdot = b._linearVelocity + Vector2.Cross(b._angularVelocity, r);
-			Vector2 force = -Settings.FORCE_INV_SCALE(step.Inv_Dt) * Common.Math.Mul(_mass, Cdot + 
+			Vec2 Cdot = b._linearVelocity + Vec2.Cross(b._angularVelocity, r);
+			Vec2 force = -Settings.FORCE_INV_SCALE(step.Inv_Dt) * Common.Math.Mul(_mass, Cdot + 
 				(_beta * step.Inv_Dt) * _C + Settings.FORCE_SCALE(step.Dt) * (_gamma * _impulse));
 
-			Vector2 oldForce = _impulse;
+			Vec2 oldForce = _impulse;
 			_impulse += force;
 			float forceMagnitude = _impulse.Length();
 			if (forceMagnitude > _maxForce)
@@ -215,9 +215,9 @@ namespace Box2DX.Dynamics
 			}
 			force = _impulse - oldForce;
 
-			Vector2 P = Settings.FORCE_SCALE(step.Dt) * force;
+			Vec2 P = Settings.FORCE_SCALE(step.Dt) * force;
 			b._linearVelocity += b._invMass * P;
-			b._angularVelocity += b._invI * Vector2.Cross(r, P);
+			b._angularVelocity += b._invI * Vec2.Cross(r, P);
 		}
 
 		internal override bool SolvePositionConstraints()

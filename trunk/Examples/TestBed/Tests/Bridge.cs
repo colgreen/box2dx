@@ -62,14 +62,14 @@ namespace TestBed
 					body.CreateShape(sd);
 					body.SetMassFromShapes();
 
-					Vector2 anchor = new Vector2(-15.0f + 1.0f * i, 5.0f);
+					Vec2 anchor = new Vec2(-15.0f + 1.0f * i, 5.0f);
 					jd.Initialize(prevBody, body, anchor);
 					_world.CreateJoint(jd);
 
 					prevBody = body;
 				}
 
-				Vector2 anchor_ = new Vector2(-15.0f + 1.0f * numPlanks, 5.0f);
+				Vec2 anchor_ = new Vec2(-15.0f + 1.0f * numPlanks, 5.0f);
 				jd.Initialize(prevBody, ground, anchor_);
 				_world.CreateJoint(jd);
 			}

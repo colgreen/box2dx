@@ -67,7 +67,7 @@ namespace TestBed
 				body.CreateShape(sd);
 				body.SetMassFromShapes();
 
-				rjd.Initialize(prevBody, body, new Vector2(0.0f, y));
+				rjd.Initialize(prevBody, body, new Vec2(0.0f, y));
 				rjd.MotorSpeed = 1.0f * Box2DX.Common.Settings.Pi;
 				rjd.MaxMotorTorque = 10000.0f;
 				rjd.EnableMotor = true;
@@ -81,7 +81,7 @@ namespace TestBed
 				body.CreateShape(sd);
 				body.SetMassFromShapes();
 
-				rjd.Initialize(prevBody, body, new Vector2(6.0f, y));
+				rjd.Initialize(prevBody, body, new Vec2(6.0f, y));
 				rjd.MotorSpeed = 0.5f * Box2DX.Common.Settings.Pi;
 				rjd.MaxMotorTorque = 2000.0f;
 				rjd.EnableMotor = true;
@@ -98,7 +98,7 @@ namespace TestBed
 				body.SetMassFromShapes();
 
 				PrismaticJointDef pjd = new PrismaticJointDef();
-				pjd.Initialize(ground, body, new Vector2(-10.0f, 10.0f), new Vector2(1.0f, 0.0f));
+				pjd.Initialize(ground, body, new Vec2(-10.0f, 10.0f), new Vec2(1.0f, 0.0f));
 				pjd.MotorSpeed = 10.0f;
 				pjd.MaxMotorForce = 1000.0f;
 				pjd.EnableMotor = true;

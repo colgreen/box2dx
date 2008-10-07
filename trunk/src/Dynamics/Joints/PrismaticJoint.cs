@@ -80,7 +80,7 @@ namespace Box2DX.Dynamics
 		/// <param name="body2"></param>
 		/// <param name="anchor"></param>
 		/// <param name="axis"></param>
-		public void Initialize(Body body1, Body body2, Vector2 anchor, Vector2 axis)
+		public void Initialize(Body body1, Body body2, Vec2 anchor, Vec2 axis)
 		{
 			Body1 = body1;
 			Body2 = body2;
@@ -93,17 +93,17 @@ namespace Box2DX.Dynamics
 		/// <summary>
 		/// The local anchor point relative to body1's origin.
 		/// </summary>
-		public Vector2 LocalAnchor1;
+		public Vec2 LocalAnchor1;
 
 		/// <summary>
 		/// The local anchor point relative to body2's origin.
 		/// </summary>
-		public Vector2 LocalAnchor2;
+		public Vec2 LocalAnchor2;
 
 		/// <summary>
 		/// The local translation axis in body1.
 		/// </summary>
-		public Vector2 LocalAxis1;
+		public Vec2 LocalAxis1;
 
 		/// <summary>
 		/// The constrained angle between the bodies: body2_angle - body1_angle.
@@ -149,10 +149,10 @@ namespace Box2DX.Dynamics
 	/// </summary>
 	public class PrismaticJoint : Joint
 	{
-		public Vector2 _localAnchor1;
-		public Vector2 _localAnchor2;
-		public Vector2 _localXAxis1;
-		public Vector2 _localYAxis1;
+		public Vec2 _localAnchor1;
+		public Vec2 _localAnchor2;
+		public Vec2 _localXAxis1;
+		public Vec2 _localYAxis1;
 		public float _refAngle;
 
 		public Jacobian _linearJacobian;
@@ -177,22 +177,22 @@ namespace Box2DX.Dynamics
 		public bool _enableMotor;
 		public LimitState _limitState;
 
-		public override Vector2 Anchor1
+		public override Vec2 Anchor1
 		{
 			get { return _body1.GetWorldPoint(_localAnchor1); }
 		}
 
-		public override Vector2 Anchor2
+		public override Vec2 Anchor2
 		{
 			get { return _body2.GetWorldPoint(_localAnchor2); }
 		}
 
-		public override Vector2 ReactionForce
+		public override Vec2 ReactionForce
 		{
 			get
 			{
-				Vector2 ax1 = Common.Math.Mul(_body1.GetXForm().R, _localXAxis1);
-				Vector2 ay1 = Common.Math.Mul(_body1.GetXForm().R, _localYAxis1);
+				Vec2 ax1 = Common.Math.Mul(_body1.GetXForm().R, _localXAxis1);
+				Vec2 ay1 = Common.Math.Mul(_body1.GetXForm().R, _localYAxis1);
 
 				return Settings.FORCE_SCALE(1.0f) * (_limitForce * ax1 + _force * ay1);
 			}
@@ -213,12 +213,12 @@ namespace Box2DX.Dynamics
 				Body b1 = _body1;
 				Body b2 = _body2;
 
-				Vector2 p1 = b1.GetWorldPoint(_localAnchor1);
-				Vector2 p2 = b2.GetWorldPoint(_localAnchor2);
-				Vector2 d = p2 - p1;
-				Vector2 axis = b1.GetWorldVector(_localXAxis1);
+				Vec2 p1 = b1.GetWorldPoint(_localAnchor1);
+				Vec2 p2 = b2.GetWorldPoint(_localAnchor2);
+				Vec2 d = p2 - p1;
+				Vec2 axis = b1.GetWorldVector(_localXAxis1);
 
-				float translation = Vector2.Dot(d, axis);
+				float translation = Vec2.Dot(d, axis);
 				return translation;
 			}
 		}
@@ -233,19 +233,19 @@ namespace Box2DX.Dynamics
 				Body b1 = _body1;
 				Body b2 = _body2;
 
-				Vector2 r1 = Common.Math.Mul(b1.GetXForm().R, _localAnchor1 - b1.GetLocalCenter());
-				Vector2 r2 = Common.Math.Mul(b2.GetXForm().R, _localAnchor2 - b2.GetLocalCenter());
-				Vector2 p1 = b1._sweep.C + r1;
-				Vector2 p2 = b2._sweep.C + r2;
-				Vector2 d = p2 - p1;
-				Vector2 axis = b1.GetWorldVector(_localXAxis1);
+				Vec2 r1 = Common.Math.Mul(b1.GetXForm().R, _localAnchor1 - b1.GetLocalCenter());
+				Vec2 r2 = Common.Math.Mul(b2.GetXForm().R, _localAnchor2 - b2.GetLocalCenter());
+				Vec2 p1 = b1._sweep.C + r1;
+				Vec2 p2 = b2._sweep.C + r2;
+				Vec2 d = p2 - p1;
+				Vec2 axis = b1.GetWorldVector(_localXAxis1);
 
-				Vector2 v1 = b1._linearVelocity;
-				Vector2 v2 = b2._linearVelocity;
+				Vec2 v1 = b1._linearVelocity;
+				Vec2 v2 = b2._linearVelocity;
 				float w1 = b1._angularVelocity;
 				float w2 = b2._angularVelocity;
 
-				float speed = Vector2.Dot(d, Vector2.Cross(w1, axis)) + Vector2.Dot(axis, v2 + Vector2.Cross(w2, r2) - v1 - Vector2.Cross(w1, r1));
+				float speed = Vec2.Dot(d, Vec2.Cross(w1, axis)) + Vec2.Dot(axis, v2 + Vec2.Cross(w2, r2) - v1 - Vec2.Cross(w1, r1));
 				return speed;
 			}
 		}
@@ -344,7 +344,7 @@ namespace Box2DX.Dynamics
 			_localAnchor1 = def.LocalAnchor1;
 			_localAnchor2 = def.LocalAnchor2;
 			_localXAxis1 = def.LocalAxis1;
-			_localYAxis1 = Vector2.Cross(1.0f, _localXAxis1);
+			_localYAxis1 = Vec2.Cross(1.0f, _localXAxis1);
 			_refAngle = def.ReferenceAngle;
 
 			_linearJacobian.SetZero();
@@ -374,18 +374,18 @@ namespace Box2DX.Dynamics
 			Body b2 = _body2;
 
 			// Compute the effective masses.
-			Vector2 r1 = Box2DXMath.Mul(b1.GetXForm().R, _localAnchor1 - b1.GetLocalCenter());
-			Vector2 r2 = Box2DXMath.Mul(b2.GetXForm().R, _localAnchor2 - b2.GetLocalCenter());
+			Vec2 r1 = Box2DXMath.Mul(b1.GetXForm().R, _localAnchor1 - b1.GetLocalCenter());
+			Vec2 r2 = Box2DXMath.Mul(b2.GetXForm().R, _localAnchor2 - b2.GetLocalCenter());
 
 			float invMass1 = b1._invMass, invMass2 = b2._invMass;
 			float invI1 = b1._invI, invI2 = b2._invI;
 
 			// Compute point to line constraint effective mass.
 			// J = [-ay1 -cross(d+r1,ay1) ay1 cross(r2,ay1)]
-			Vector2 ay1 = Box2DXMath.Mul(b1.GetXForm().R, _localYAxis1);
-			Vector2 e = b2._sweep.C + r2 - b1._sweep.C;	// e = d + r1
+			Vec2 ay1 = Box2DXMath.Mul(b1.GetXForm().R, _localYAxis1);
+			Vec2 e = b2._sweep.C + r2 - b1._sweep.C;	// e = d + r1
 
-			_linearJacobian.Set(-ay1, -Vector2.Cross(e, ay1), ay1, Vector2.Cross(r2, ay1));
+			_linearJacobian.Set(-ay1, -Vec2.Cross(e, ay1), ay1, Vec2.Cross(r2, ay1));
 			_linearMass = invMass1 + invI1 * _linearJacobian.Angular1 * _linearJacobian.Angular1 +
 							invMass2 + invI2 * _linearJacobian.Angular2 * _linearJacobian.Angular2;
 			Box2DXDebug.Assert(_linearMass > Settings.FLT_EPSILON);
@@ -402,8 +402,8 @@ namespace Box2DX.Dynamics
 			if (_enableLimit || _enableMotor)
 			{
 				// The motor and limit share a Jacobian and effective mass.
-				Vector2 ax1 = Box2DXMath.Mul(b1.GetXForm().R, _localXAxis1);
-				_motorJacobian.Set(-ax1, -Vector2.Cross(e, ax1), ax1, Vector2.Cross(r2, ax1));
+				Vec2 ax1 = Box2DXMath.Mul(b1.GetXForm().R, _localXAxis1);
+				_motorJacobian.Set(-ax1, -Vec2.Cross(e, ax1), ax1, Vec2.Cross(r2, ax1));
 				_motorMass = invMass1 + invI1 * _motorJacobian.Angular1 * _motorJacobian.Angular1 +
 								invMass2 + invI2 * _motorJacobian.Angular2 * _motorJacobian.Angular2;
 				Box2DXDebug.Assert(_motorMass > Settings.FLT_EPSILON);
@@ -411,8 +411,8 @@ namespace Box2DX.Dynamics
 
 				if (_enableLimit)
 				{
-					Vector2 d = e - r1;	// p2 - p1
-					float jointTranslation = Vector2.Dot(ax1, d);
+					Vec2 d = e - r1;	// p2 - p1
+					float jointTranslation = Vec2.Dot(ax1, d);
 					if (Box2DXMath.Abs(_upperTranslation - _lowerTranslation) < 2.0f * Settings.LinearSlop)
 					{
 						_limitState = LimitState.EqualLimits;
@@ -453,8 +453,8 @@ namespace Box2DX.Dynamics
 
 			if (step.WarmStarting)
 			{
-				Vector2 P1 = Settings.FORCE_SCALE(step.Dt) * (_force * _linearJacobian.Linear1 + (_motorForce + _limitForce) * _motorJacobian.Linear1);
-				Vector2 P2 = Settings.FORCE_SCALE(step.Dt) * (_force * _linearJacobian.Linear2 + (_motorForce + _limitForce) * _motorJacobian.Linear2);
+				Vec2 P1 = Settings.FORCE_SCALE(step.Dt) * (_force * _linearJacobian.Linear1 + (_motorForce + _limitForce) * _motorJacobian.Linear1);
+				Vec2 P2 = Settings.FORCE_SCALE(step.Dt) * (_force * _linearJacobian.Linear2 + (_motorForce + _limitForce) * _motorJacobian.Linear2);
 				float L1 = Settings.FORCE_SCALE(step.Dt) * (_force * _linearJacobian.Angular1 - _torque + (_motorForce + _limitForce) * _motorJacobian.Angular1);
 				float L2 = Settings.FORCE_SCALE(step.Dt) * (_force * _linearJacobian.Angular2 + _torque + (_motorForce + _limitForce) * _motorJacobian.Angular2);
 
@@ -562,15 +562,15 @@ namespace Box2DX.Dynamics
 			float invMass1 = b1._invMass, invMass2 = b2._invMass;
 			float invI1 = b1._invI, invI2 = b2._invI;
 
-			Vector2 r1 = Box2DXMath.Mul(b1.GetXForm().R, _localAnchor1 - b1.GetLocalCenter());
-			Vector2 r2 = Box2DXMath.Mul(b2.GetXForm().R, _localAnchor2 - b2.GetLocalCenter());
-			Vector2 p1 = b1._sweep.C + r1;
-			Vector2 p2 = b2._sweep.C + r2;
-			Vector2 d = p2 - p1;
-			Vector2 ay1 = Box2DXMath.Mul(b1.GetXForm().R, _localYAxis1);
+			Vec2 r1 = Box2DXMath.Mul(b1.GetXForm().R, _localAnchor1 - b1.GetLocalCenter());
+			Vec2 r2 = Box2DXMath.Mul(b2.GetXForm().R, _localAnchor2 - b2.GetLocalCenter());
+			Vec2 p1 = b1._sweep.C + r1;
+			Vec2 p2 = b2._sweep.C + r2;
+			Vec2 d = p2 - p1;
+			Vec2 ay1 = Box2DXMath.Mul(b1.GetXForm().R, _localYAxis1);
 
 			// Solve linear (point-to-line) constraint.
-			float linearC = Vector2.Dot(ay1, d);
+			float linearC = Vec2.Dot(ay1, d);
 			// Prevent overly large corrections.
 			linearC = Box2DXMath.Clamp(linearC, -Settings.MaxLinearCorrection, Settings.MaxLinearCorrection);
 			float linearImpulse = -_linearMass * linearC;
@@ -601,14 +601,14 @@ namespace Box2DX.Dynamics
 			// Solve linear limit constraint.
 			if (_enableLimit && _limitState != LimitState.InactiveLimit)
 			{
-				Vector2 r1_ = Box2DXMath.Mul(b1.GetXForm().R, _localAnchor1 - b1.GetLocalCenter());
-				Vector2 r2_ = Box2DXMath.Mul(b2.GetXForm().R, _localAnchor2 - b2.GetLocalCenter());
-				Vector2 p1_ = b1._sweep.C + r1_;
-				Vector2 p2_ = b2._sweep.C + r2_;
-				Vector2 d_ = p2_ - p1_;
-				Vector2 ax1 = Box2DXMath.Mul(b1.GetXForm().R, _localXAxis1);
+				Vec2 r1_ = Box2DXMath.Mul(b1.GetXForm().R, _localAnchor1 - b1.GetLocalCenter());
+				Vec2 r2_ = Box2DXMath.Mul(b2.GetXForm().R, _localAnchor2 - b2.GetLocalCenter());
+				Vec2 p1_ = b1._sweep.C + r1_;
+				Vec2 p2_ = b2._sweep.C + r2_;
+				Vec2 d_ = p2_ - p1_;
+				Vec2 ax1 = Box2DXMath.Mul(b1.GetXForm().R, _localXAxis1);
 
-				float translation = Vector2.Dot(ax1, d_);
+				float translation = Vec2.Dot(ax1, d_);
 				float limitImpulse = 0.0f;
 
 				if (_limitState == LimitState.EqualLimits)

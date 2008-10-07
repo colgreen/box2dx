@@ -34,7 +34,7 @@ namespace TestBed
 {
 	public class TheoJansen : Test
 	{
-		Vector2 _offset;
+		Vec2 _offset;
 		Body _chassis;
 		Body _wheel;
 		RevoluteJoint _motorJoint;
@@ -46,7 +46,7 @@ namespace TestBed
 			_offset.Set(0.0f, 8.0f);
 			_motorSpeed = 2.0f;
 			_motorOn = true;
-			Vector2 pivot = new Vector2(0.0f, 0.8f);
+			Vec2 pivot = new Vec2(0.0f, 0.8f);
 
 			{
 				PolygonDef sd = new PolygonDef();
@@ -57,10 +57,10 @@ namespace TestBed
 				Body ground = _world.CreateBody(bd);
 				ground.CreateShape(sd);
 
-				sd.SetAsBox(0.5f, 5.0f, new Vector2(-50.0f, 15.0f), 0.0f);
+				sd.SetAsBox(0.5f, 5.0f, new Vec2(-50.0f, 15.0f), 0.0f);
 				ground.CreateShape(sd);
 
-				sd.SetAsBox(0.5f, 5.0f, new Vector2(50.0f, 15.0f), 0.0f);
+				sd.SetAsBox(0.5f, 5.0f, new Vec2(50.0f, 15.0f), 0.0f);
 				ground.CreateShape(sd);
 			}
 
@@ -112,9 +112,9 @@ namespace TestBed
 				_motorJoint = (RevoluteJoint)_world.CreateJoint(jd);
 			}
 
-			Vector2 wheelAnchor;
+			Vec2 wheelAnchor;
 			
-			wheelAnchor = pivot + new Vector2(0.0f, -0.8f);
+			wheelAnchor = pivot + new Vec2(0.0f, -0.8f);
 
 			CreateLeg(-1.0f, wheelAnchor);
 			CreateLeg(1.0f, wheelAnchor);
@@ -128,14 +128,14 @@ namespace TestBed
 			CreateLeg(1.0f, wheelAnchor);
 		}
 
-		public void CreateLeg(float s, Vector2 wheelAnchor)
+		public void CreateLeg(float s, Vec2 wheelAnchor)
 		{
-			Vector2 p1 = new Vector2(5.4f * s, -6.1f);
-			Vector2 p2 = new Vector2(7.2f * s, -1.2f);
-			Vector2 p3 = new Vector2(4.3f * s, -1.9f);
-			Vector2 p4 = new Vector2(3.1f * s, 0.8f);
-			Vector2 p5 = new Vector2(6.0f * s, 1.5f);
-			Vector2 p6 = new Vector2(2.5f * s, 3.7f);
+			Vec2 p1 = new Vec2(5.4f * s, -6.1f);
+			Vec2 p2 = new Vec2(7.2f * s, -1.2f);
+			Vec2 p3 = new Vec2(4.3f * s, -1.9f);
+			Vec2 p4 = new Vec2(3.1f * s, 0.8f);
+			Vec2 p5 = new Vec2(6.0f * s, 1.5f);
+			Vec2 p6 = new Vec2(2.5f * s, 3.7f);
 
 			PolygonDef sd1 = new PolygonDef(), sd2 = new PolygonDef();
 			sd1.VertexCount = 3;
@@ -151,7 +151,7 @@ namespace TestBed
 				sd1.Vertices[1] = p2;
 				sd1.Vertices[2] = p3;
 
-				sd2.Vertices[0] = Vector2.Zero;
+				sd2.Vertices[0] = Vec2.Zero;
 				sd2.Vertices[1] = p5 - p4;
 				sd2.Vertices[2] = p6 - p4;
 			}
@@ -161,7 +161,7 @@ namespace TestBed
 				sd1.Vertices[1] = p3;
 				sd1.Vertices[2] = p2;
 
-				sd2.Vertices[0] = Vector2.Zero;
+				sd2.Vertices[0] = Vec2.Zero;
 				sd2.Vertices[1] = p6 - p4;
 				sd2.Vertices[2] = p5 - p4;
 			}

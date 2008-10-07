@@ -53,7 +53,7 @@ namespace TestBed
 			_body = _world.CreateBody(bodydef);
 
 			PolygonDef sd_ = new PolygonDef();
-			sd_.SetAsBox(4.0f, 4.0f, new Vector2(0.0f, 0.0f), 0.0f);
+			sd_.SetAsBox(4.0f, 4.0f, new Vec2(0.0f, 0.0f), 0.0f);
 			sd_.Density = 10.0f;
 			_shape1 = _body.CreateShape(sd_);
 			_body.SetMassFromShapes();

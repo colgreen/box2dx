@@ -236,7 +236,7 @@ namespace TestBed
 
 		private void GetRandomAABB(ref AABB aabb)
 		{
-			Vector2 w = new Vector2(); w.Set(k_width, k_width);
+			Vec2 w = new Vec2(); w.Set(k_width, k_width);
 			aabb.LowerBound.X = Box2DXMath.Random(-k_extent, k_extent);
 			aabb.LowerBound.Y = Box2DXMath.Random(0.0f, 2.0f * k_extent);
 			aabb.UpperBound = aabb.LowerBound + w;
@@ -244,7 +244,7 @@ namespace TestBed
 
 		private void MoveAABB(ref AABB aabb)
 		{
-			Vector2 d = new Vector2();
+			Vec2 d = new Vec2();
 			d.X = Box2DXMath.Random(-0.5f, 0.5f);
 			d.Y = Box2DXMath.Random(-0.5f, 0.5f);
 			//d.x = 2.0f;
@@ -252,10 +252,10 @@ namespace TestBed
 			aabb.LowerBound += d;
 			aabb.UpperBound += d;
 
-			Vector2 c0 = 0.5f * (aabb.LowerBound + aabb.UpperBound);
-			Vector2 min = new Vector2(); min.Set(-k_extent, 0.0f);
-			Vector2 max = new Vector2(); max.Set(k_extent, 2.0f * k_extent);
-			Vector2 c = Box2DXMath.Clamp(c0, min, max);
+			Vec2 c0 = 0.5f * (aabb.LowerBound + aabb.UpperBound);
+			Vec2 min = new Vec2(); min.Set(-k_extent, 0.0f);
+			Vec2 max = new Vec2(); max.Set(k_extent, 2.0f * k_extent);
+			Vec2 c = Box2DXMath.Clamp(c0, min, max);
 
 			aabb.LowerBound += c - c0;
 			aabb.UpperBound += c - c0;

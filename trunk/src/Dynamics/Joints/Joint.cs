@@ -48,9 +48,9 @@ namespace Box2DX.Dynamics
 
 	public struct Jacobian
 	{
-		public Vector2 Linear1;
+		public Vec2 Linear1;
 		public float Angular1;
-		public Vector2 Linear2;
+		public Vec2 Linear2;
 		public float Angular2;
 
 		public void SetZero()
@@ -59,15 +59,15 @@ namespace Box2DX.Dynamics
 			Linear2.SetZero(); Angular2 = 0.0f;
 		}
 
-		public void Set(Vector2 x1, float a1, Vector2 x2, float a2)
+		public void Set(Vec2 x1, float a1, Vec2 x2, float a2)
 		{
 			Linear1 = x1; Angular1 = a1;
 			Linear2 = x2; Angular2 = a2;
 		}
 
-		public float Compute(Vector2 x1, float a1, Vector2 x2, float a2)
+		public float Compute(Vec2 x1, float a1, Vec2 x2, float a2)
 		{
-			return Vector2.Dot(Linear1, x1) + Angular1 * a1 + Vector2.Dot(Linear2, x2) + Angular2 * a2;
+			return Vec2.Dot(Linear1, x1) + Angular1 * a1 + Vec2.Dot(Linear2, x2) + Angular2 * a2;
 		}
 	}
 
@@ -195,19 +195,19 @@ namespace Box2DX.Dynamics
 		/// Get the anchor point on body1 in world coordinates.
 		/// </summary>
 		/// <returns></returns>
-		public abstract Vector2 Anchor1 { get; }
+		public abstract Vec2 Anchor1 { get; }
 
 		/// <summary>
 		/// Get the anchor point on body2 in world coordinates.
 		/// </summary>
 		/// <returns></returns>
-		public abstract Vector2 Anchor2 { get; }
+		public abstract Vec2 Anchor2 { get; }
 
 		/// <summary>
 		/// Get the reaction force on body2 at the joint anchor.
 		/// </summary>
 		/// <returns></returns>
-		public abstract Vector2 ReactionForce { get; }
+		public abstract Vec2 ReactionForce { get; }
 
 		/// <summary>
 		/// Get the reaction torque on body2.

@@ -43,7 +43,7 @@ namespace HelloWorld
 			worldAABB.UpperBound.Set(100.0f, 100.0f);
 
 			// Define the gravity vector.
-			Vector2 gravity = new Vector2(0.0f, -10.0f);
+			Vec2 gravity = new Vec2(0.0f, -10.0f);
 
 			// Do we want to let bodies sleep?
 			bool doSleep = true;
@@ -104,7 +104,7 @@ namespace HelloWorld
 				world.Step(timeStep, iterations);
 
 				// Now print the position and angle of the body.
-				Vector2 position = body.GetPosition();
+				Vec2 position = body.GetPosition();
 				float angle = body.GetAngle();
 
 				Console.WriteLine("Step: {3} - X: {0}, Y: {1}, Angle: {2}", new object[]{position.X.ToString(),position.Y.ToString(),angle.ToString(), i.ToString()});

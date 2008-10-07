@@ -104,16 +104,16 @@ namespace TestBed
 				Body ground = _sensor.GetBody();
 
 				CircleShape circle = (CircleShape)_sensor;
-				Vector2 center = ground.GetWorldPoint(circle.GetLocalPosition());
+				Vec2 center = ground.GetWorldPoint(circle.GetLocalPosition());
 
-				Vector2 d = center - point.position;
+				Vec2 d = center - point.position;
 				if (d.LengthSquared() < Box2DX.Common.Settings.FLT_EPSILON * Box2DX.Common.Settings.FLT_EPSILON)
 				{
 					continue;
 				}
 
 				d.Normalize();
-				Vector2 F = 100.0f * d;
+				Vec2 F = 100.0f * d;
 				other.ApplyForce(F, point.position);
 			}
 		}

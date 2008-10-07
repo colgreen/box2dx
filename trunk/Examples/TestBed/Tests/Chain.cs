@@ -63,7 +63,7 @@ namespace TestBed
 					body.CreateShape(sd);
 					body.SetMassFromShapes();
 
-					Vector2 anchor = new Vector2(i, y);
+					Vec2 anchor = new Vec2(i, y);
 					jd.Initialize(prevBody, body, anchor);
 					_world.CreateJoint(jd);
 

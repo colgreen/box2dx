@@ -36,14 +36,14 @@ namespace Box2DX.Collision
 
 		// The origin is either in the region of points[1] or in the edge region. The origin is
 		// not in region of points[0] because that is the old point.
-		public static int ProcessTwo(out Vector2 x1, out Vector2 x2, ref Vector2[] p1s, ref Vector2[] p2s,
-			ref Vector2[] points)
+		public static int ProcessTwo(out Vec2 x1, out Vec2 x2, ref Vec2[] p1s, ref Vec2[] p2s,
+			ref Vec2[] points)
 		{
 			// If in point[1] region
-			Vector2 r = -points[1];
-			Vector2 d = points[0] - points[1];
+			Vec2 r = -points[1];
+			Vec2 d = points[0] - points[1];
 			float length = d.Normalize();
-			float lambda = Vector2.Dot(r, d);
+			float lambda = Vec2.Dot(r, d);
 			if (lambda <= 0.0f || length < Common.Settings.FLT_EPSILON)
 			{
 				// The simplex is reduced to a point.
@@ -67,20 +67,20 @@ namespace Box2DX.Collision
 		// - edge points[0]-points[2]
 		// - edge points[1]-points[2]
 		// - inside the triangle
-		public static int ProcessThree(out Vector2 x1, out Vector2 x2, ref Vector2[] p1s, ref Vector2[] p2s,
-			ref Vector2[] points)
+		public static int ProcessThree(out Vec2 x1, out Vec2 x2, ref Vec2[] p1s, ref Vec2[] p2s,
+			ref Vec2[] points)
 		{
-			Vector2 a = points[0];
-			Vector2 b = points[1];
-			Vector2 c = points[2];
+			Vec2 a = points[0];
+			Vec2 b = points[1];
+			Vec2 c = points[2];
 
-			Vector2 ab = b - a;
-			Vector2 ac = c - a;
-			Vector2 bc = c - b;
+			Vec2 ab = b - a;
+			Vec2 ac = c - a;
+			Vec2 bc = c - b;
 
-			float sn = -Vector2.Dot(a, ab), sd = Vector2.Dot(b, ab);
-			float tn = -Vector2.Dot(a, ac), td = Vector2.Dot(c, ac);
-			float un = -Vector2.Dot(b, bc), ud = Vector2.Dot(c, bc);
+			float sn = -Vec2.Dot(a, ab), sd = Vec2.Dot(b, ab);
+			float tn = -Vec2.Dot(a, ac), td = Vec2.Dot(c, ac);
+			float un = -Vec2.Dot(b, bc), ud = Vec2.Dot(c, bc);
 
 			// In vertex c region?
 			if (td <= 0.0f && ud <= 0.0f)
@@ -101,18 +101,18 @@ namespace Box2DX.Collision
 			Box2DXDebug.Assert(sn > 0.0f || tn > 0.0f);
 			Box2DXDebug.Assert(sd > 0.0f || un > 0.0f);
 
-			float n = Vector2.Cross(ab, ac);
+			float n = Vec2.Cross(ab, ac);
 
 #if TARGET_FLOAT32_IS_FIXED
 				n = (n < 0.0f) ? -1.0f : ((n > 0.0f) ? 1.0f : 0.0f);
 #endif
 
 			// Should not be in edge ab region.
-			float vc = n * Vector2.Cross(a, b);
+			float vc = n * Vec2.Cross(a, b);
 			Box2DXDebug.Assert(vc > 0.0f || sn > 0.0f || sd > 0.0f);
 
 			// In edge bc region?
-			float va = n * Vector2.Cross(b, c);
+			float va = n * Vec2.Cross(b, c);
 			if (va <= 0.0f && un >= 0.0f && ud >= 0.0f && (un + ud) > 0.0f)
 			{
 				Box2DXDebug.Assert(un + ud > 0.0f);
@@ -126,7 +126,7 @@ namespace Box2DX.Collision
 			}
 
 			// In edge ac region?
-			float vb = n * Vector2.Cross(c, a);
+			float vb = n * Vec2.Cross(c, a);
 			if (vb <= 0.0f && tn >= 0.0f && td >= 0.0f && (tn + td) > 0.0f)
 			{
 				Box2DXDebug.Assert(tn + td > 0.0f);
@@ -156,13 +156,13 @@ namespace Box2DX.Collision
 			return 3;
 		}
 
-		public static bool InPoints(Vector2 w, Vector2[] points, int pointCount)
+		public static bool InPoints(Vec2 w, Vec2[] points, int pointCount)
 		{
 			float k_tolerance = 100.0f * Common.Settings.FLT_EPSILON;
 			for (int i = 0; i < pointCount; ++i)
 			{
-				Vector2 d = Common.Math.Abs(w - points[i]);
-				Vector2 m = Common.Math.Max(Common.Math.Abs(w), Common.Math.Abs(points[i]));
+				Vec2 d = Common.Math.Abs(w - points[i]);
+				Vec2 m = Common.Math.Max(Common.Math.Abs(w), Common.Math.Abs(points[i]));
 
 				if (d.X < k_tolerance * (m.X + 1.0f) &&
 					d.Y < k_tolerance * (m.Y + 1.0f))
@@ -176,11 +176,11 @@ namespace Box2DX.Collision
 
 		public interface IGenericShape
 		{
-			Vector2 Support(XForm xf, Vector2 v);
-			Vector2 GetFirstVertex(XForm xf);
+			Vec2 Support(XForm xf, Vec2 v);
+			Vec2 GetFirstVertex(XForm xf);
 		}
 
-		public static float DistanceGeneric<T1, T2>(out Vector2 x1, out Vector2 x2,
+		public static float DistanceGeneric<T1, T2>(out Vec2 x1, out Vec2 x2,
 						   T1 shape1_, XForm xf1, T2 shape2_, XForm xf2)
 		{
 			IGenericShape shape1 = shape1_ as IGenericShape;
@@ -189,8 +189,8 @@ namespace Box2DX.Collision
 			if (shape1 == null || shape2 == null)
 				Box2DXDebug.Assert(false, "Can not cast some parameters to IGenericShape");
 
-			Vector2[] p1s = new Vector2[3], p2s = new Vector2[3];
-			Vector2[] points = new Vector2[3];
+			Vec2[] p1s = new Vec2[3], p2s = new Vec2[3];
+			Vec2[] points = new Vec2[3];
 			int pointCount = 0;
 
 			x1 = shape1.GetFirstVertex(xf1);
@@ -201,13 +201,13 @@ namespace Box2DX.Collision
 
 			for (int iter = 0; iter < maxIterations; ++iter)
 			{
-				Vector2 v = x2 - x1;
-				Vector2 w1 = shape1.Support(xf1, v);
-				Vector2 w2 = shape2.Support(xf2, -v);
+				Vec2 v = x2 - x1;
+				Vec2 w1 = shape1.Support(xf1, v);
+				Vec2 w2 = shape2.Support(xf2, -v);
 
-				vSqr = Vector2.Dot(v, v);
-				Vector2 w = w2 - w1;
-				float vw = Vector2.Dot(v, w);
+				vSqr = Vec2.Dot(v, v);
+				Vec2 w = w2 - w1;
+				float vw = Vec2.Dot(v, w);
 				if (vSqr - vw <= 0.01f * vSqr || Collision.InPoints(w, points, pointCount)) // or w in points
 				{
 					if (pointCount == 0)
@@ -255,7 +255,7 @@ namespace Box2DX.Collision
 				float maxSqr = -Common.Settings.FLT_MAX;
 				for (int i = 0; i < pointCount; ++i)
 				{
-					maxSqr = Common.Math.Max(maxSqr, Vector2.Dot(points[i], points[i]));
+					maxSqr = Common.Math.Max(maxSqr, Vec2.Dot(points[i], points[i]));
 				}
 
 #if TARGET_FLOAT32_IS_FIXED
@@ -266,7 +266,7 @@ namespace Box2DX.Collision
 				{
 					Collision.GJKIterations = iter;
 					v = x2 - x1;
-					vSqr = Vector2.Dot(v, v);
+					vSqr = Vec2.Dot(v, v);
 
 					return Common.Math.Sqrt(vSqr);
 				}
@@ -276,14 +276,14 @@ namespace Box2DX.Collision
 			return Common.Math.Sqrt(vSqr);
 		}
 
-		public static float DistanceCC(out Vector2 x1, out Vector2 x2,
+		public static float DistanceCC(out Vec2 x1, out Vec2 x2,
 			CircleShape circle1, XForm xf1, CircleShape circle2, XForm xf2)
 		{
-			Vector2 p1 = Common.Math.Mul(xf1, circle1.GetLocalPosition());
-			Vector2 p2 = Common.Math.Mul(xf2, circle2.GetLocalPosition());
+			Vec2 p1 = Common.Math.Mul(xf1, circle1.GetLocalPosition());
+			Vec2 p2 = Common.Math.Mul(xf2, circle2.GetLocalPosition());
 
-			Vector2 d = p2 - p1;
-			float dSqr = Vector2.Dot(d, d);
+			Vec2 d = p2 - p1;
+			float dSqr = Vec2.Dot(d, d);
 			float r1 = circle1.GetRadius() - Settings.ToiSlop;
 			float r2 = circle2.GetRadius() - Settings.ToiSlop;
 			float r = r1 + r2;
@@ -312,14 +312,14 @@ namespace Box2DX.Collision
 		// This is used for polygon-vs-circle distance.
 		public class Point : Collision.IGenericShape
 		{
-			public Vector2 p;
+			public Vec2 p;
 
-			public Vector2 Support(XForm xf, Vector2 v)
+			public Vec2 Support(XForm xf, Vec2 v)
 			{
 				return p;
 			}
 
-			public Vector2 GetFirstVertex(XForm xf)
+			public Vec2 GetFirstVertex(XForm xf)
 			{
 				return p;
 			}
@@ -327,7 +327,7 @@ namespace Box2DX.Collision
 
 		// GJK is more robust with polygon-vs-point than polygon-vs-circle.
 		// So we convert polygon-vs-circle to polygon-vs-point.
-		public static float DistancePC(out Vector2 x1, out Vector2 x2,
+		public static float DistancePC(out Vec2 x1, out Vec2 x2,
 			PolygonShape polygon, XForm xf1, CircleShape circle, XForm xf2)
 		{
 			Point point = new Point();
@@ -340,7 +340,7 @@ namespace Box2DX.Collision
 			if (distance > r)
 			{
 				distance -= r;
-				Vector2 d = x2 - x1;
+				Vec2 d = x2 - x1;
 				d.Normalize();
 				x2 -= r * d;
 			}
@@ -353,11 +353,11 @@ namespace Box2DX.Collision
 			return distance;
 		}
 
-		public static float Distance(out Vector2 x1, out Vector2 x2,
+		public static float Distance(out Vec2 x1, out Vec2 x2,
 			Shape shape1, XForm xf1, Shape shape2, XForm xf2)
 		{
-			x1 = new Vector2();
-			x2 = new Vector2();
+			x1 = new Vec2();
+			x2 = new Vec2();
 
 			ShapeType type1 = shape1.GetType();
 			ShapeType type2 = shape2.GetType();

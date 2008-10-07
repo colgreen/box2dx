@@ -73,7 +73,7 @@ namespace TestBed
 				sd1.Density = 2.0f;
 
 				PolygonDef sd2 = new PolygonDef();
-				sd2.SetAsBox(0.25f, 0.5f, new Vector2(0.0f, -0.5f), 0.5f * Box2DX.Common.Settings.Pi);
+				sd2.SetAsBox(0.25f, 0.5f, new Vec2(0.0f, -0.5f), 0.5f * Box2DX.Common.Settings.Pi);
 				sd2.Density = 2.0f;
 
 				for (int i = 0; i < 10; ++i)
@@ -92,24 +92,24 @@ namespace TestBed
 			{
 				XForm xf1 = new XForm();
 				xf1.R.Set(0.3524f * Box2DX.Common.Settings.Pi);
-				xf1.Position = Box2DX.Common.Math.Mul(xf1.R, new Vector2(1.0f, 0.0f));
+				xf1.Position = Box2DX.Common.Math.Mul(xf1.R, new Vec2(1.0f, 0.0f));
 
 				PolygonDef sd1 = new PolygonDef();
 				sd1.VertexCount = 3;
-				sd1.Vertices[0] = Box2DX.Common.Math.Mul(xf1, new Vector2(-1.0f, 0.0f));
-				sd1.Vertices[1] = Box2DX.Common.Math.Mul(xf1, new Vector2(1.0f, 0.0f));
-				sd1.Vertices[2] = Box2DX.Common.Math.Mul(xf1, new Vector2(0.0f, 0.5f));
+				sd1.Vertices[0] = Box2DX.Common.Math.Mul(xf1, new Vec2(-1.0f, 0.0f));
+				sd1.Vertices[1] = Box2DX.Common.Math.Mul(xf1, new Vec2(1.0f, 0.0f));
+				sd1.Vertices[2] = Box2DX.Common.Math.Mul(xf1, new Vec2(0.0f, 0.5f));
 				sd1.Density = 2.0f;
 
 				XForm xf2 = new XForm();
 				xf2.R.Set(-0.3524f * Box2DX.Common.Settings.Pi);
-				xf2.Position = Box2DX.Common.Math.Mul(xf2.R, new Vector2(-1.0f, 0.0f));
+				xf2.Position = Box2DX.Common.Math.Mul(xf2.R, new Vec2(-1.0f, 0.0f));
 
 				PolygonDef sd2 = new PolygonDef();
 				sd2.VertexCount = 3;
-				sd2.Vertices[0] = Box2DX.Common.Math.Mul(xf2, new Vector2(-1.0f, 0.0f));
-				sd2.Vertices[1] = Box2DX.Common.Math.Mul(xf2, new Vector2(1.0f, 0.0f));
-				sd2.Vertices[2] = Box2DX.Common.Math.Mul(xf2, new Vector2(0.0f, 0.5f));
+				sd2.Vertices[0] = Box2DX.Common.Math.Mul(xf2, new Vec2(-1.0f, 0.0f));
+				sd2.Vertices[1] = Box2DX.Common.Math.Mul(xf2, new Vec2(1.0f, 0.0f));
+				sd2.Vertices[2] = Box2DX.Common.Math.Mul(xf2, new Vec2(0.0f, 0.5f));
 				sd2.Density = 2.0f;
 
 				for (int i = 0; i < 10; ++i)
@@ -131,11 +131,11 @@ namespace TestBed
 				sd_bottom.Density = 4.0f;
 
 				PolygonDef sd_left = new PolygonDef();
-				sd_left.SetAsBox(0.15f, 2.7f, new Vector2(-1.45f, 2.35f), 0.2f);
+				sd_left.SetAsBox(0.15f, 2.7f, new Vec2(-1.45f, 2.35f), 0.2f);
 				sd_left.Density = 4.0f;
 
 				PolygonDef sd_right = new PolygonDef();
-				sd_right.SetAsBox(0.15f, 2.7f, new Vector2(1.45f, 2.35f), -0.2f);
+				sd_right.SetAsBox(0.15f, 2.7f, new Vec2(1.45f, 2.35f), -0.2f);
 				sd_right.Density = 4.0f;
 
 				BodyDef bd = new BodyDef();

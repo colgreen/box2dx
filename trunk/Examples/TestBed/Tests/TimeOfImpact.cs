@@ -42,7 +42,7 @@ namespace TestBed
 				PolygonDef sd = new PolygonDef();
 				sd.Density = 0.0f;
 
-				sd.SetAsBox(0.1f, 10.0f, new Vector2(10.0f, 0.0f), 0.0f);
+				sd.SetAsBox(0.1f, 10.0f, new Vec2(10.0f, 0.0f), 0.0f);
 
 				BodyDef bd = new BodyDef();
 				bd.Position.Set(0.0f, 20.0f);
@@ -82,7 +82,7 @@ namespace TestBed
 			Sweep sweep2 = new Sweep();
 			sweep2.C0.Set(9.6363468f, 28.050615f);
 			sweep2.A0 = 1.6408679f;
-			sweep2.C = sweep2.C0 + new Vector2(-0.075121880f, 0.27358246f);
+			sweep2.C = sweep2.C0 + new Vec2(-0.075121880f, 0.27358246f);
 			sweep2.A = sweep2.A0 - 10.434675f;
 			sweep2.T0 = 0.0f;
 			sweep2.LocalCenter = _body2.GetLocalCenter();
@@ -95,8 +95,8 @@ namespace TestBed
 			XForm xf2 = new XForm();
 			sweep2.GetXForm(out xf2, toi);
 			int vertexCount = _shape2.VertexCount;
-			Vector2[] vertices = new Vector2[Box2DX.Common.Settings.MaxPolygonVertices];
-			Vector2[] localVertices = _shape2.GetVertices();
+			Vec2[] vertices = new Vec2[Box2DX.Common.Settings.MaxPolygonVertices];
+			Vec2[] localVertices = _shape2.GetVertices();
 			for (int i = 0; i < vertexCount; ++i)
 			{
 				vertices[i] = Box2DX.Common.Math.Mul(xf2, localVertices[i]);

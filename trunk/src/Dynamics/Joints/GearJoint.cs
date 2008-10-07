@@ -103,11 +103,11 @@ namespace Box2DX.Dynamics
 		public RevoluteJoint _revolute2;
 		public PrismaticJoint _prismatic2;
 
-		public Vector2 _groundAnchor1;
-		public Vector2 _groundAnchor2;
+		public Vec2 _groundAnchor1;
+		public Vec2 _groundAnchor2;
 
-		public Vector2 _localAnchor1;
-		public Vector2 _localAnchor2;
+		public Vec2 _localAnchor1;
+		public Vec2 _localAnchor2;
 
 		public Jacobian _J;
 
@@ -120,15 +120,15 @@ namespace Box2DX.Dynamics
 		// Impulse for accumulation/warm starting.
 		public float _force;
 
-		public override Vector2 Anchor1 { get { return _body1.GetWorldPoint(_localAnchor1); } }
-		public override Vector2 Anchor2 { get { return _body2.GetWorldPoint(_localAnchor2); } }
+		public override Vec2 Anchor1 { get { return _body1.GetWorldPoint(_localAnchor1); } }
+		public override Vec2 Anchor2 { get { return _body2.GetWorldPoint(_localAnchor2); } }
 
-		public override Vector2 ReactionForce
+		public override Vec2 ReactionForce
 		{
 			get
 			{
 				// TODO_ERIN not tested
-				Vector2 F = Settings.FORCE_SCALE(_force) * _J.Linear2;
+				Vec2 F = Settings.FORCE_SCALE(_force) * _J.Linear2;
 				return F;
 			}
 		}
@@ -138,9 +138,9 @@ namespace Box2DX.Dynamics
 			get
 			{
 				// TODO_ERIN not tested
-				Vector2 r = Common.Math.Mul(_body2.GetXForm().R, _localAnchor2 - _body2.GetLocalCenter());
-				Vector2 F = _force * _J.Linear2;
-				float T = Settings.FORCE_SCALE(_force * _J.Angular2 - Vector2.Cross(r, F));
+				Vec2 r = Common.Math.Mul(_body2.GetXForm().R, _localAnchor2 - _body2.GetLocalCenter());
+				Vec2 F = _force * _J.Linear2;
+				float T = Settings.FORCE_SCALE(_force * _J.Angular2 - Vec2.Cross(r, F));
 				return T;
 			}
 		}
@@ -226,9 +226,9 @@ namespace Box2DX.Dynamics
 			}
 			else
 			{
-				Vector2 ug = Common.Math.Mul(g1.GetXForm().R, _prismatic1._localXAxis1);
-				Vector2 r = Common.Math.Mul(b1.GetXForm().R, _localAnchor1 - b1.GetLocalCenter());
-				float crug = Vector2.Cross(r, ug);
+				Vec2 ug = Common.Math.Mul(g1.GetXForm().R, _prismatic1._localXAxis1);
+				Vec2 r = Common.Math.Mul(b1.GetXForm().R, _localAnchor1 - b1.GetLocalCenter());
+				float crug = Vec2.Cross(r, ug);
 				_J.Linear1 = -ug;
 				_J.Angular1 = -crug;
 				K += b1._invMass + b1._invI * crug * crug;
@@ -241,9 +241,9 @@ namespace Box2DX.Dynamics
 			}
 			else
 			{
-				Vector2 ug = Common.Math.Mul(g2.GetXForm().R, _prismatic2._localXAxis1);
-				Vector2 r = Common.Math.Mul(b2.GetXForm().R, _localAnchor2 - b2.GetLocalCenter());
-				float crug = Vector2.Cross(r, ug);
+				Vec2 ug = Common.Math.Mul(g2.GetXForm().R, _prismatic2._localXAxis1);
+				Vec2 r = Common.Math.Mul(b2.GetXForm().R, _localAnchor2 - b2.GetLocalCenter());
+				float crug = Vec2.Cross(r, ug);
 				_J.Linear2 = -_ratio * ug;
 				_J.Angular2 = -_ratio * crug;
 				K += _ratio * _ratio * (b2._invMass + b2._invI * crug * crug);

@@ -37,14 +37,14 @@ namespace TestBed
 		{
 			{
 				PolygonDef sd = new PolygonDef();
-				sd.SetAsBox(50.0f, 10.0f, new Vector2(0.0f, -10.0f), 0.0f);
+				sd.SetAsBox(50.0f, 10.0f, new Vec2(0.0f, -10.0f), 0.0f);
 
 				BodyDef bd = new BodyDef();
 				bd.Position.Set(0.0f, 0.0f);
 				Body ground = _world.CreateBody(bd);
 				ground.CreateShape(sd);
 
-				sd.SetAsBox(0.1f, 10.0f, new Vector2(20.0f, 10.0f), 0.0f);
+				sd.SetAsBox(0.1f, 10.0f, new Vec2(20.0f, 10.0f), 0.0f);
 				ground.CreateShape(sd);
 			}
 
@@ -106,7 +106,7 @@ namespace TestBed
 						_bullet.CreateShape(sd);
 						_bullet.SetMassFromShapes();
 
-						_bullet.SetLinearVelocity(new Vector2(400.0f, 0.0f));
+						_bullet.SetLinearVelocity(new Vec2(400.0f, 0.0f));
 					}
 					break;
 			}

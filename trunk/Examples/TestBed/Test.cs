@@ -108,9 +108,9 @@ namespace TestBed
 	{
 		public Shape shape1;
 		public Shape shape2;
-		public Vector2 normal;
-		public Vector2 position;
-		public Vector2 velocity;
+		public Vec2 normal;
+		public Vec2 position;
+		public Vec2 velocity;
 		public ContactID id;
 		public ContactState state;
 	}
@@ -263,7 +263,7 @@ namespace TestBed
 			_worldAABB = new AABB();
 			_worldAABB.LowerBound.Set(-200.0f, -100.0f);
 			_worldAABB.UpperBound.Set(200.0f, 200.0f);
-			Vector2 gravity = new Vector2();
+			Vec2 gravity = new Vec2();
 			gravity.Set(0.0f, -10.0f);
 			bool doSleep = true;
 			_world = new World(_worldAABB, gravity, doSleep);
@@ -302,7 +302,7 @@ namespace TestBed
 		public virtual void JointDestroyed(Joint joint) { ; }
 		public virtual void BoundaryViolated(Body body) { ; }
 
-		public void MouseDown(Vector2 p)
+		public void MouseDown(Vec2 p)
 		{
 			if (_mouseJoint != null)
 			{
@@ -311,7 +311,7 @@ namespace TestBed
 
 			// Make a small box.
 			AABB aabb = new AABB();
-			Vector2 d = new Vector2();
+			Vec2 d = new Vec2();
 			d.Set(0.001f, 0.001f);
 			aabb.LowerBound = p - d;
 			aabb.UpperBound = p + d;
@@ -361,7 +361,7 @@ namespace TestBed
 			}
 		}
 
-		public void MouseMove(Vector2 p)
+		public void MouseMove(Vec2 p)
 		{
 			if (_mouseJoint != null)
 			{
@@ -453,8 +453,8 @@ namespace TestBed
 			if (_mouseJoint != null)
 			{
 				Body body = _mouseJoint.GetBody2();
-				Vector2 p1 = body.GetWorldPoint(_mouseJoint._localAnchor);
-				Vector2 p2 = _mouseJoint._target;
+				Vec2 p1 = body.GetWorldPoint(_mouseJoint._localAnchor);
+				Vec2 p2 = _mouseJoint._target;
 
 				Gl.glPointSize(4.0f);
 				Gl.glColor3f(0.0f, 1.0f, 0.0f);
@@ -498,8 +498,8 @@ namespace TestBed
 
 					if (settings.drawContactNormals == 1)
 					{
-						Vector2 p1 = point.position;
-						Vector2 p2 = p1 + k_axisScale * point.normal;
+						Vec2 p1 = point.position;
+						Vec2 p2 = p1 + k_axisScale * point.normal;
 						OpenGLDebugDraw.DrawSegment(p1, p2, new Color(0.4f, 0.9f, 0.4f));
 					}
 					else if (settings.drawContactForces == 1)
