@@ -35,7 +35,7 @@ namespace TestBed
 		const float k_scale = 3.0f;
 
 		public BodyDef LFootDef = new BodyDef(), RFootDef = new BodyDef(), LCalfDef = new BodyDef(), RCalfDef = new BodyDef(),
-			LThighDef = new BodyDef(), RThighDef = new BodyDef(), PelvisDef = new BodyDef(), StomachDef = new BodyDef(),
+			LThighDef = new BodyDef(), RThighDef = new BodyDef(), PelvisDef0 = new BodyDef(), PelvisDef = new BodyDef(), StomachDef = new BodyDef(),
 			ChestDef = new BodyDef(), NeckDef = new BodyDef(), HeadDef = new BodyDef(), LUpperArmDef = new BodyDef(),
 			RUpperArmDef = new BodyDef(), LForearmDef = new BodyDef(), RForearmDef = new BodyDef(), LHandDef = new BodyDef(),
 			RHandDef = new BodyDef();
@@ -105,6 +105,7 @@ namespace TestBed
 			RCalfDef.LinearDamping = f;
 			LThighDef.LinearDamping = f;
 			RThighDef.LinearDamping = f;
+			PelvisDef0.LinearDamping = f;
 			PelvisDef.LinearDamping = f;
 			StomachDef.LinearDamping = f;
 			ChestDef.LinearDamping = f;
@@ -126,6 +127,7 @@ namespace TestBed
 			RCalfDef.AngularDamping = f;
 			LThighDef.AngularDamping = f;
 			RThighDef.AngularDamping = f;
+			PelvisDef0.AngularDamping = f;
 			PelvisDef.AngularDamping = f;
 			StomachDef.AngularDamping = f;
 			ChestDef.AngularDamping = f;
@@ -463,6 +465,7 @@ namespace TestBed
 			LUpperArmDef.Position	= RUpperArmDef.Position		= k_scale * new Vector2(-.127f,.228f);
 			LForearmDef.Position	= RForearmDef.Position		= k_scale * new Vector2(-.117f,-.011f);
 			LHandDef.Position		= RHandDef.Position			= k_scale * new Vector2(-.112f,-.136f);
+			PelvisDef0.Position									= k_scale * new Vector2(-.177f, -.101f);
 			PelvisDef.Position									= k_scale * new Vector2(-.177f,-.101f);
 			StomachDef.Position									= k_scale * new Vector2(-.142f,.088f);
 			ChestDef.Position									= k_scale * new Vector2(-.132f,.282f);
