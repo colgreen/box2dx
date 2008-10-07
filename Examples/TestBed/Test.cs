@@ -239,7 +239,7 @@ namespace TestBed
 			new TestEntry("Shape Editing", ShapeEditing.Create),
 			new TestEntry("Time of Impact", TimeOfImpact.Create),
 			new TestEntry("Distance Test", DistanceTest.Create),
-			//new TestEntry("Broad Phase", BroadPhaseTest.Create),
+			new TestEntry("Broad Phase", BroadPhaseTest.Create),
 			new TestEntry("PolyCollision", PolyCollision.Create),
 			new TestEntry("Elastic Body", ElasticBody.Create)
 		};
