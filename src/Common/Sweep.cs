@@ -19,6 +19,8 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
+//r175
+
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -35,7 +37,6 @@ namespace Box2DX.Common
 		/// <summary>
 		/// Get the interpolated transform at a specific time.
 		/// </summary>
-		/// <param name="xf"></param>
 		/// <param name="t">The normalized time in [0,1].</param>
 		public void GetXForm(out XForm xf, float t)
 		{

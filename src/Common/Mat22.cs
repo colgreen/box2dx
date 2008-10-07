@@ -35,8 +35,6 @@ namespace Box2DX.Common
 		/// <summary>
 		/// Construct this matrix using columns.
 		/// </summary>
-		/// <param name="c1"></param>
-		/// <param name="c2"></param>
 		public Mat22(Vector2 c1, Vector2 c2)
 		{
 			Col1 = c1;
@@ -46,10 +44,6 @@ namespace Box2DX.Common
 		/// <summary>
 		/// Construct this matrix using scalars.
 		/// </summary>
-		/// <param name="a11"></param>
-		/// <param name="a12"></param>
-		/// <param name="a21"></param>
-		/// <param name="a22"></param>
 		public Mat22(float a11, float a12, float a21, float a22)
 		{
 			Col1.X = a11; Col1.Y = a21;
@@ -60,7 +54,6 @@ namespace Box2DX.Common
 		/// Construct this matrix using an angle. 
 		/// This matrix becomes an orthonormal rotation matrix.
 		/// </summary>
-		/// <param name="angle"></param>
 		public Mat22(float angle)
 		{
 			float c = (float)System.Math.Cos(angle), s = (float)System.Math.Sin(angle);
@@ -71,8 +64,6 @@ namespace Box2DX.Common
 		/// <summary>
 		/// Initialize this matrix using columns.
 		/// </summary>
-		/// <param name="c1"></param>
-		/// <param name="c2"></param>
 		public void Set(Vector2 c1, Vector2 c2)
 		{
 			Col1 = c1;
@@ -83,7 +74,6 @@ namespace Box2DX.Common
 		/// Initialize this matrix using an angle.
 		/// This matrix becomes an orthonormal rotation matrix.
 		/// </summary>
-		/// <param name="angle"></param>
 		public void Set(float angle)
 		{
 			float c = (float)System.Math.Cos(angle), s = (float)System.Math.Sin(angle);
@@ -112,7 +102,6 @@ namespace Box2DX.Common
 		/// <summary>
 		/// Extract the angle from this matrix (assumed to be a rotation matrix).
 		/// </summary>
-		/// <returns></returns>
 		public float GetAngle()
 		{
 			return (float)System.Math.Atan2(Col1.Y, Col1.X);
@@ -121,7 +110,6 @@ namespace Box2DX.Common
 		/// <summary>
 		/// Compute the inverse of this matrix, such that inv(A) * A = identity.
 		/// </summary>
-		/// <returns></returns>
 		public Mat22 Invert()
 		{
 			float a = Col1.X, b = Col2.X, c = Col1.Y, d = Col2.Y;
@@ -138,8 +126,6 @@ namespace Box2DX.Common
 		/// Solve A * x = b, where b is a column vector. This is more efficient
 		/// than computing the inverse in one-shot cases.
 		/// </summary>
-		/// <param name="b"></param>
-		/// <returns></returns>
 		public Vector2 Solve(Vector2 b)
 		{
 			float a11 = Col1.X, a12 = Col2.X, a21 = Col1.Y, a22 = Col2.Y;
