@@ -76,7 +76,7 @@ namespace TestBed
 			RThigh.CreateShape(def.RThighPoly);
 			RThigh.SetMassFromShapes();
 
-			bd = def.PelvisDef;
+			bd = def.PelvisDef0;
 			bd.Position += position;
 			Pelvis = w.CreateBody(bd);
 			Pelvis.CreateShape(def.PelvisPoly);

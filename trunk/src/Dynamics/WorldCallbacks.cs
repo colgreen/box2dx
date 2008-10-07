@@ -112,33 +112,29 @@ namespace Box2DX.Dynamics
 	/// @warning The contact separation is the last computed value.
 	/// @warning You cannot create/destroy Box2D entities inside these callbacks.
 	/// </summary>
-	public class ContactListener
+	public abstract class ContactListener
 	{
 		/// <summary>
 		/// Called when a contact point is added. This includes the geometry
 		/// and the forces.
 		/// </summary>
-		/// <param name="point"></param>
 		public virtual void Add(ContactPoint point) { return; }
 
 		/// <summary>
 		/// Called when a contact point persists. This includes the geometry
 		/// and the forces.
 		/// </summary>
-		/// <param name="point"></param>
 		public virtual void Persist(ContactPoint point) { return; }
 
 		/// <summary>
 		/// Called when a contact point is removed. This includes the last
 		/// computed geometry and forces.
 		/// </summary>
-		/// <param name="point"></param>
 		public virtual void Remove(ContactPoint point) { return; }
 
 		/// <summary>
 		/// Called after a contact point is solved.
 		/// </summary>
-		/// <param name="point"></param>
 		public virtual void Result(ContactResult point) { return; }
 	}
 
