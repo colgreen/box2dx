@@ -48,6 +48,8 @@ using Box2DX.Common;
 
 namespace Box2DX.Collision
 {
+	public delegate float SortKeyFunc(object shape);
+
 #warning "CAS"
 	public class BoundValues
 	{
@@ -109,6 +111,7 @@ namespace Box2DX.Collision
 		public Bound[][] _bounds = new Bound[2][/*(2 * Settings.MaxProxies)*/];
 
 		public ushort[] _queryResults = new ushort[Settings.MaxProxies];
+		public float[] _querySortKeys = new float[Settings.MaxProxies];
 		public int _queryResultCount;
 
 		public AABB _worldAABB;
@@ -151,7 +154,7 @@ namespace Box2DX.Collision
 
 			for (int i = 0; i < 2; i++)
 			{
-				_bounds[i] = new Bound[(2 * Settings.MaxProxies)];				
+				_bounds[i] = new Bound[(2 * Settings.MaxProxies)];
 			}
 
 			int bCount = 2 * Settings.MaxProxies;
@@ -625,6 +628,284 @@ namespace Box2DX.Collision
 			return count;
 		}
 
+		/// <summary>
+		/// Query a segment for overlapping proxies, returns the user data and
+		/// the count, up to the supplied maximum count.
+		/// If sortKey is provided, then it is a function mapping from proxy userDatas to distances along the segment (between 0 & 1)
+		/// Then the returned proxies are sorted on that, before being truncated to maxCount
+		/// The sortKey of a proxy is assumed to be larger than the closest point inside the proxy along the segment, this allows for early exits
+		/// Proxies with a negative sortKey are discarded
+		/// </summary>
+		public unsafe int QuerySegment(Segment segment, object[] userData, int maxCount, SortKeyFunc sortKey)
+		{
+			float maxLambda = 1;
+
+			float dx = (segment.P2.X - segment.P1.X) * _quantizationFactor.X;
+			float dy = (segment.P2.Y - segment.P1.Y) * _quantizationFactor.Y;
+
+			int sx = dx < -Settings.FLT_EPSILON ? -1 : (dx > Settings.FLT_EPSILON ? 1 : 0);
+			int sy = dy < -Settings.FLT_EPSILON ? -1 : (dy > Settings.FLT_EPSILON ? 1 : 0);
+
+			Box2DXDebug.Assert(sx != 0 || sy != 0);
+
+			float p1x = (segment.P1.X - _worldAABB.LowerBound.X) * _quantizationFactor.X;
+			float p1y = (segment.P1.Y - _worldAABB.LowerBound.Y) * _quantizationFactor.Y;
+
+			ushort* startValues = stackalloc ushort[2];
+			ushort* startValues2 = stackalloc ushort[2];
+
+			int xIndex;
+			int yIndex;
+
+			ushort proxyId;
+			Proxy proxy;
+
+			// TODO_ERIN implement fast float to ushort conversion.
+			startValues[0] = (ushort)((ushort)(p1x) & (BROADPHASE_MAX - 1));
+			startValues2[0] = (ushort)((ushort)(p1x) | 1);
+
+			startValues[1] = (ushort)((ushort)(p1y) & (BROADPHASE_MAX - 1));
+			startValues2[1] = (ushort)((ushort)(p1y) | 1);
+
+			//First deal with all the proxies that contain segment.p1
+			int lowerIndex;
+			int upperIndex;
+			Query(out lowerIndex, out upperIndex, startValues[0], startValues2[0], _bounds[0], 2 * _proxyCount, 0);
+			if (sx >= 0) xIndex = upperIndex - 1;
+			else xIndex = lowerIndex;
+			Query(out lowerIndex, out upperIndex, startValues[1], startValues2[1], _bounds[1], 2 * _proxyCount, 1);
+			if (sy >= 0) yIndex = upperIndex - 1;
+			else yIndex = lowerIndex;
+
+			//If we are using sortKey, then sort what we have so far, filtering negative keys
+			if (sortKey != null)
+			{
+				//Fill keys
+				for (int j = 0; j < _queryResultCount; j++)
+				{
+					_querySortKeys[j] = sortKey(_proxyPool[_queryResults[j]].UserData);
+				}
+				//Bubble sort keys
+				//Sorting negative values to the top, so we can easily remove them
+				int i = 0;
+				while (i < _queryResultCount - 1)
+				{
+					float a = _querySortKeys[i];
+					float b = _querySortKeys[i + 1];
+					if ((a < 0) ? (b >= 0) : (a > b && b >= 0))
+					{
+						_querySortKeys[i + 1] = a;
+						_querySortKeys[i] = b;
+						ushort tempValue = _queryResults[i + 1];
+						_queryResults[i + 1] = _queryResults[i];
+						_queryResults[i] = tempValue;
+						i--;
+						if (i == -1) i = 1;
+					}
+					else
+					{
+						i++;
+					}
+				}
+				//Skim off negative values
+				while (_queryResultCount > 0 && _querySortKeys[_queryResultCount - 1] < 0)
+					_queryResultCount--;
+			}
+
+			//Now work through the rest of the segment
+			for (; ; )
+			{
+				float xProgress = 0;
+				float yProgress = 0;
+				if (xIndex < 0 || xIndex >= _proxyCount * 2)
+					break;
+				if (yIndex < 0 || yIndex >= _proxyCount * 2)
+					break;
+				if (sx != 0)
+				{
+					//Move on to the next bound
+					if (sx > 0)
+					{
+						xIndex++;
+						if (xIndex == _proxyCount * 2)
+							break;
+					}
+					else
+					{
+						xIndex--;
+						if (xIndex < 0)
+							break;
+					}
+					xProgress = (_bounds[0][xIndex].Value - p1x) / dx;
+				}
+				if (sy != 0)
+				{
+					//Move on to the next bound
+					if (sy > 0)
+					{
+						yIndex++;
+						if (yIndex == _proxyCount * 2)
+							break;
+					}
+					else
+					{
+						yIndex--;
+						if (yIndex < 0)
+							break;
+					}
+					yProgress = (_bounds[1][yIndex].Value - p1y) / dy;
+				}
+				for (; ; )
+				{
+					if (sy == 0 || (sx != 0 && xProgress < yProgress))
+					{
+						if (xProgress > maxLambda)
+							break;
+
+						//Check that we are entering a proxy, not leaving
+						if (sx > 0 ? _bounds[0][xIndex].IsLower : _bounds[0][xIndex].IsUpper)
+						{
+							//Check the other axis of the proxy
+							proxyId = _bounds[0][xIndex].ProxyId;
+							proxy = _proxyPool[proxyId];
+							if (sy >= 0)
+							{
+								if (proxy.LowerBounds[1] <= yIndex - 1 && proxy.UpperBounds[1] >= yIndex)
+								{
+									//Add the proxy
+									if (sortKey != null)
+									{
+										AddProxyResult(proxyId, proxy, maxCount, sortKey);
+									}
+									else
+									{
+										_queryResults[_queryResultCount] = proxyId;
+										++_queryResultCount;
+									}
+								}
+							}
+							else
+							{
+								if (proxy.LowerBounds[1] <= yIndex && proxy.UpperBounds[1] >= yIndex + 1)
+								{
+									//Add the proxy
+									if (sortKey != null)
+									{
+										AddProxyResult(proxyId, proxy, maxCount, sortKey);
+									}
+									else
+									{
+										_queryResults[_queryResultCount] = proxyId;
+										++_queryResultCount;
+									}
+								}
+							}
+						}
+
+						//Early out
+						if (sortKey != null && _queryResultCount == maxCount && _queryResultCount > 0 && xProgress > _querySortKeys[_queryResultCount - 1])
+							break;
+
+						//Move on to the next bound
+						if (sx > 0)
+						{
+							xIndex++;
+							if (xIndex == _proxyCount * 2)
+								break;
+						}
+						else
+						{
+							xIndex--;
+							if (xIndex < 0)
+								break;
+						}
+						xProgress = (_bounds[0][xIndex].Value - p1x) / dx;
+					}
+					else
+					{
+						if (yProgress > maxLambda)
+							break;
+
+						//Check that we are entering a proxy, not leaving
+						if (sy > 0 ? _bounds[1][yIndex].IsLower : _bounds[1][yIndex].IsUpper)
+						{
+							//Check the other axis of the proxy
+							proxyId = _bounds[1][yIndex].ProxyId;
+							proxy = _proxyPool[proxyId];
+							if (sx >= 0)
+							{
+								if (proxy.LowerBounds[0] <= xIndex - 1 && proxy.UpperBounds[0] >= xIndex)
+								{
+									//Add the proxy
+									if (sortKey != null)
+									{
+										AddProxyResult(proxyId, proxy, maxCount, sortKey);
+									}
+									else
+									{
+										_queryResults[_queryResultCount] = proxyId;
+										++_queryResultCount;
+									}
+								}
+							}
+							else
+							{
+								if (proxy.LowerBounds[0] <= xIndex && proxy.UpperBounds[0] >= xIndex + 1)
+								{
+									//Add the proxy
+									if (sortKey != null)
+									{
+										AddProxyResult(proxyId, proxy, maxCount, sortKey);
+									}
+									else
+									{
+										_queryResults[_queryResultCount] = proxyId;
+										++_queryResultCount;
+									}
+								}
+							}
+						}
+
+						//Early out
+						if (sortKey != null && _queryResultCount == maxCount && _queryResultCount > 0 && yProgress > _querySortKeys[_queryResultCount - 1])
+							break;
+
+						//Move on to the next bound
+						if (sy > 0)
+						{
+							yIndex++;
+							if (yIndex == _proxyCount * 2)
+								break;
+						}
+						else
+						{
+							yIndex--;
+							if (yIndex < 0)
+								break;
+						}
+						yProgress = (_bounds[1][yIndex].Value - p1y) / dy;
+					}
+				}
+
+				break;
+			}
+
+			int count = 0;
+			for (int i = 0; i < _queryResultCount && count < maxCount; ++i, ++count)
+			{
+				Box2DXDebug.Assert(_queryResults[i] < Settings.MaxProxies);
+				Proxy proxy_ = _proxyPool[_queryResults[i]];
+				Box2DXDebug.Assert(proxy_.IsValid);
+				userData[i] = proxy_.UserData;
+			}
+
+			// Prepare for next query.
+			_queryResultCount = 0;
+			IncrementTimeStamp();
+
+			return count;
+		}
+
 		public void Validate()
 		{
 			for (int axis = 0; axis < 2; ++axis)
@@ -662,8 +943,8 @@ namespace Box2DX.Collision
 			lowerValues = new ushort[2];
 			upperValues = new ushort[2];
 
-			Box2DXDebug.Assert(aabb.UpperBound.X > aabb.LowerBound.X);
-			Box2DXDebug.Assert(aabb.UpperBound.Y > aabb.LowerBound.Y);
+			Box2DXDebug.Assert(aabb.UpperBound.X >= aabb.LowerBound.X);
+			Box2DXDebug.Assert(aabb.UpperBound.Y >= aabb.LowerBound.Y);
 
 			Vec2 minVertex = Common.Math.Clamp(aabb.LowerBound, _worldAABB.LowerBound, _worldAABB.UpperBound);
 			Vec2 maxVertex = Common.Math.Clamp(aabb.UpperBound, _worldAABB.LowerBound, _worldAABB.UpperBound);
@@ -798,6 +1079,36 @@ namespace Box2DX.Collision
 			else
 			{
 				++_timeStamp;
+			}
+		}
+
+		public unsafe void AddProxyResult(ushort proxyId, Proxy proxy, int maxCount, SortKeyFunc sortKey)
+		{
+			float key = sortKey(proxy.UserData);
+			//Filter proxies on positive keys
+			if (key < 0)
+				return;
+			//Merge the new key into the sorted list.
+			//float32* p = std::lower_bound(m_querySortKeys,m_querySortKeys+m_queryResultCount,key);
+			fixed (float* querySortKeysPtr = _querySortKeys)
+			{
+				float* p = querySortKeysPtr;
+				while (*p < key && p < &querySortKeysPtr[_queryResultCount])
+					p++;
+				int i = (int)(p - &querySortKeysPtr[0]);
+				if (maxCount == _queryResultCount && i == _queryResultCount)
+					return;
+				if (maxCount == _queryResultCount)
+					_queryResultCount--;
+				//std::copy_backward
+				for (int j = _queryResultCount + 1; j > i; --j)
+				{
+					_querySortKeys[j] = _querySortKeys[j - 1];
+					_queryResults[j] = _queryResults[j - 1];
+				}
+				_querySortKeys[i] = key;
+				_queryResults[i] = proxyId;
+				_queryResultCount++;
 			}
 		}
 
