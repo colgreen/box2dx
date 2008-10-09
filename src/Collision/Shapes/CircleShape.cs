@@ -83,7 +83,7 @@ namespace Box2DX.Collision
 		// From Section 3.1.2
 		// x = s + a * r
 		// norm(x) = radius
-		public override bool TestSegment(XForm transform, out float lambda, out Vec2 normal, Segment segment, float maxLambda)
+		public override SegmentCollide TestSegment(XForm transform, out float lambda, out Vec2 normal, Segment segment, float maxLambda)
 		{
 			lambda = 0f;
 			normal = Vec2.Zero;
@@ -95,7 +95,8 @@ namespace Box2DX.Collision
 			// Does the segment start inside the circle?
 			if (b < 0.0f)
 			{
-				return false;
+				lambda = 0f;
+				return SegmentCollide.StartInsideCollide;
 			}
 
 			// Solve quadratic equation.
@@ -107,7 +108,7 @@ namespace Box2DX.Collision
 			// Check for negative discriminant and short segment.
 			if (sigma < 0.0f || rr < Common.Settings.FLT_EPSILON)
 			{
-				return false;
+				return SegmentCollide.MissCollide;
 			}
 
 			// Find the point of intersection of the line with the circle.
@@ -120,10 +121,10 @@ namespace Box2DX.Collision
 				lambda = a;
 				normal = s + a * r;
 				normal.Normalize();
-				return true;
+				return SegmentCollide.HitCollide;
 			}
 
-			return false;
+			return SegmentCollide.MissCollide;
 		}
 
 		public override void ComputeAABB(out AABB aabb, XForm transform)

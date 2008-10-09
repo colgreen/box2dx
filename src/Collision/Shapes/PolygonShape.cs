@@ -139,8 +139,6 @@ namespace Box2DX.Collision
 		/// <summary>
 		/// Get the first vertex and apply the supplied transform.
 		/// </summary>
-		/// <param name="xf"></param>
-		/// <returns></returns>
 		public Vec2 GetFirstVertex(XForm xf)
 		{
 			return Common.Math.Mul(xf, _coreVertices[0]);
@@ -149,8 +147,6 @@ namespace Box2DX.Collision
 		/// <summary>
 		/// Get the centroid and apply the supplied transform.
 		/// </summary>
-		/// <param name="xf"></param>
-		/// <returns></returns>
 		public Vec2 Centroid(XForm xf)
 		{
 			return Common.Math.Mul(xf, _centroid);
@@ -160,9 +156,6 @@ namespace Box2DX.Collision
 		/// Get the support point in the given world direction.
 		/// Use the supplied transform.
 		/// </summary>
-		/// <param name="xf"></param>
-		/// <param name="d"></param>
-		/// <returns></returns>
 		public Vec2 Support(XForm xf, Vec2 d)
 		{
 			Vec2 dLocal = Common.Math.MulT(xf.R, d);
@@ -305,7 +298,7 @@ namespace Box2DX.Collision
 			return true;
 		}
 
-		public override bool TestSegment(XForm xf, out float lambda, out Vec2 normal, Segment segment, float maxLambda)
+		public override SegmentCollide TestSegment(XForm xf, out float lambda, out Vec2 normal, Segment segment, float maxLambda)
 		{
 			lambda = 0f;
 			normal = Vec2.Zero;
@@ -325,28 +318,37 @@ namespace Box2DX.Collision
 				float numerator = Vec2.Dot(_normals[i], _vertices[i] - p1);
 				float denominator = Vec2.Dot(_normals[i], d);
 
-				// Note: we want this predicate without division:
-				// lower < numerator / denominator, where denominator < 0
-				// Since denominator < 0, we have to flip the inequality:
-				// lower < numerator / denominator <==> denominator * lower > numerator.
-
-				if (denominator < 0.0f && numerator < lower * denominator)
+				if (denominator == 0.0f)
 				{
-					// Increase lower.
-					// The segment enters this half-space.
-					lower = numerator / denominator;
-					index = i;
+					if (numerator < 0.0f)
+					{
+						return SegmentCollide.MissCollide;
+					}
 				}
-				else if (denominator > 0.0f && numerator < upper * denominator)
+				else
 				{
-					// Decrease upper.
-					// The segment exits this half-space.
-					upper = numerator / denominator;
+					// Note: we want this predicate without division:
+					// lower < numerator / denominator, where denominator < 0
+					// Since denominator < 0, we have to flip the inequality:
+					// lower < numerator / denominator <==> denominator * lower > numerator.
+					if (denominator < 0.0f && numerator < lower * denominator)
+					{
+						// Increase lower.
+						// The segment enters this half-space.
+						lower = numerator / denominator;
+						index = i;
+					}
+					else if (denominator > 0.0f && numerator < upper * denominator)
+					{
+						// Decrease upper.
+						// The segment exits this half-space.
+						upper = numerator / denominator;
+					}
 				}
 
 				if (upper < lower)
 				{
-					return false;
+					return SegmentCollide.MissCollide;
 				}
 			}
 
@@ -356,10 +358,11 @@ namespace Box2DX.Collision
 			{
 				lambda = lower;
 				normal = Common.Math.Mul(xf.R, _normals[index]);
-				return true;
+				return SegmentCollide.HitCollide;
 			}
 
-			return false;
+			lambda = 0f;
+			return SegmentCollide.StartInsideCollide;
 		}
 
 		public override void ComputeAABB(out AABB aabb, XForm xf)
