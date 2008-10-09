@@ -84,6 +84,16 @@ namespace Box2DX.Collision
 		ShapeTypeCount,
 	}
 
+	/// <summary>
+	/// Returns code from TestSegment
+	/// </summary>
+	public enum SegmentCollide
+	{
+		StartInsideCollide = -1,
+		MissCollide = 0,
+		HitCollide = 1
+	}
+
 #warning "CAS"
 	/// <summary>
 	/// A shape definition is used to construct a shape. This class defines an
@@ -184,10 +194,10 @@ namespace Box2DX.Collision
 		protected float _density;
 
 		protected float _friction;
-		public float Friction { get { return _friction; } }
+		public float Friction { get { return _friction; } set { _friction = value; } }
 
 		protected float _restitution;
-		public float Restitution { get { return _restitution; } }
+		public float Restitution { get { return _restitution; } set { _restitution = value; } }
 
 		protected ushort _proxyId;
 
@@ -253,8 +263,7 @@ namespace Box2DX.Collision
 		/// the normal is not set.</param>
 		/// <param name="segment">Defines the begin and end point of the ray cast.</param>
 		/// <param name="maxLambda">A number typically in the range [0,1].</param>
-		/// <returns>True if there was an intersection.</returns>
-		public abstract bool TestSegment(XForm xf, out float lambda, out Vec2 normal, Segment segment, float maxLambda);
+		public abstract SegmentCollide TestSegment(XForm xf, out float lambda, out Vec2 normal, Segment segment, float maxLambda);
 
 		/// <summary>
 		/// Given a transform, compute the associated axis aligned bounding box for this shape.
