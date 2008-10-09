@@ -355,26 +355,27 @@ namespace Box2DX.Collision
 			if (np < 2)
 				return;
 
-			// We are guaranteed to have two contact points.
-
 			// Now clipPoints2 contains the clipped points.
 			manifold.Normal = flip!=0 ? -frontNormal : frontNormal;
 
-			ManifoldPoint cp1 = manifold.Points[0];
-			cp1.Separation = Vec2.Dot(frontNormal, clipPoints2[0].V) - frontOffset;
-			cp1.LocalPoint1 = Common.Math.MulT(xfA, clipPoints2[0].V);
-			cp1.LocalPoint2 = Common.Math.MulT(xfB, clipPoints2[0].V);
-			cp1.ID = clipPoints2[0].ID;
-			cp1.ID.Features.Flip = flip;
+			int pointCount = 0;
+			for (int i = 0; i < Settings.MaxManifoldPoints; ++i)
+			{
+				float separation = Vec2.Dot(frontNormal, clipPoints2[i].V) - frontOffset;
 
-			ManifoldPoint cp2 = manifold.Points[1];
-			cp2.LocalPoint1 = Common.Math.MulT(xfA, clipPoints2[1].V);
-			cp2.LocalPoint2 = Common.Math.MulT(xfB, clipPoints2[1].V);
-			cp2.Separation = Vec2.Dot(frontNormal, clipPoints2[1].V) - frontOffset;
-			cp2.ID = clipPoints2[1].ID;
-			cp2.ID.Features.Flip = flip;
+				if (separation <= 0.0f)
+				{
+					ManifoldPoint cp = manifold.Points[pointCount];
+					cp.Separation = separation;
+					cp.LocalPoint1 = Box2DX.Common.Math.MulT(xfA, clipPoints2[i].V);
+					cp.LocalPoint2 = Box2DX.Common.Math.MulT(xfB, clipPoints2[i].V);
+					cp.ID = clipPoints2[i].ID;
+					cp.ID.Features.Flip = flip;
+					++pointCount;
+				}
+			}
 
-			manifold.PointCount = 2;
+			manifold.PointCount = pointCount;
 		}
 	}
 }

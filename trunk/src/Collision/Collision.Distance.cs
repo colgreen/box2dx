@@ -261,7 +261,7 @@ namespace Box2DX.Collision
 #if TARGET_FLOAT32_IS_FIXED
 				if (pointCount == 3 || vSqr <= 5.0*Common.Settings.FLT_EPSILON * maxSqr)
 #else
-				if (pointCount == 3 || vSqr <= 100.0f * Common.Settings.FLT_EPSILON * maxSqr)
+				if (vSqr <= 100.0f * Common.Settings.FLT_EPSILON * maxSqr)
 #endif
 				{
 					Collision.GJKIterations = iter;

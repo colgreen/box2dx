@@ -151,7 +151,7 @@ namespace Box2DX.Collision
 			{
 				p = vertices[vertIndex1] + u * e;
 				manifold.Points[0].ID.Features.IncidentEdge = (byte)normalIndex;
-				manifold.Points[0].ID.Features.IncidentVertex = 0;
+				manifold.Points[0].ID.Features.IncidentVertex = Collision.NullFeature;
 			}
 
 			Vec2 d = cLocal - p;
