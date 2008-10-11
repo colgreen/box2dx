@@ -69,12 +69,6 @@ namespace TestBed
 			}
 
 			_world.Gravity = Vec2.Zero;
-			_world.SetPositionCorrection(false);
-		}
-
-		protected override void Dispose(bool state)
-		{
-			_world.SetPositionCorrection(true);
 		}
 
 		public override void Step(Settings settings)

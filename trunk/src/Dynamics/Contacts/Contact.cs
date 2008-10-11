@@ -180,10 +180,6 @@ namespace Box2DX.Dynamics
 		public Shape _shape1;
 		public Shape _shape2;
 
-		// Combined friction
-		public float _friction;
-		public float _restitution;
-
 		public float _toi;
 
 		public Contact()
@@ -205,8 +201,6 @@ namespace Box2DX.Dynamics
 
 			_manifoldCount = 0;
 
-			_friction = Settings.MixFriction(_shape1.Friction, _shape2.Friction);
-			_restitution = Settings.MixRestitution(_shape1.Restitution, _shape2.Restitution);
 			_prev = null;
 			_next = null;
 

@@ -98,6 +98,45 @@ probably default to the slower Full NGS and let the user select the faster
 Baumgarte method in performance critical scenarios.
 */
 
+/*
+Cache Performance
+
+The Box2D solvers are dominated by cache misses. Data structures are designed
+to increase the number of cache hits. Much of misses are due to random access
+to body data. The constraint structures are iterated over linearly, which leads
+to few cache misses.
+
+The bodies are not accessed during iteration. Instead read only data, such as
+the mass values are stored with the constraints. The mutable data are the constraint
+impulses and the bodies velocities/positions. The impulses are held inside the
+constraint structures. The body velocities/positions are held in compact, temporary
+arrays to increase the number of cache hits. Linear and angular velocity are
+stored in a single array since multiple arrays lead to multiple misses.
+*/
+
+/*
+2D Rotation
+
+R = [cos(theta) -sin(theta)]
+    [sin(theta) cos(theta) ]
+
+thetaDot = omega
+
+Let q1 = cos(theta), q2 = sin(theta).
+R = [q1 -q2]
+    [q2  q1]
+
+q1Dot = -thetaDot * q2
+q2Dot = thetaDot * q1
+
+q1_new = q1_old - dt * w * q2
+q2_new = q2_old + dt * w * q1
+then normalize.
+
+This might be faster than computing sin+cos.
+However, we can compute sin+cos of the same angle fast.
+*/
+
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -107,6 +146,18 @@ using Box2DX.Collision;
 
 namespace Box2DX.Dynamics
 {
+	public struct Position
+	{
+		public Vec2 x;
+		public float a;
+	}
+
+	public struct Velocity
+	{
+		public Vec2 v;
+		public float w;
+	}
+
 	public class Island : IDisposable
 	{
 		public ContactListener _listener;
@@ -114,6 +165,9 @@ namespace Box2DX.Dynamics
 		public Body[] _bodies;
 		public Contact[] _contacts;
 		public Joint[] _joints;
+
+		public Position[] _positions;
+		public Velocity[] _velocities;
 
 		public int _bodyCount;
 		public int _jointCount;
@@ -140,12 +194,15 @@ namespace Box2DX.Dynamics
 			_contacts = new Contact[contactCapacity];
 			_joints = new Joint[jointCapacity];
 
-			_positionIterationCount = 0;
+			_velocities = new Velocity[_bodyCapacity];
+			_positions = new Position[_bodyCapacity];
 		}
 
 		public void Dispose()
 		{
 			// Warning: the order should reverse the constructor order.
+			_positions = null;
+			_velocities = null;
 			_joints = null;
 			_contacts = null;
 			_bodies = null;
@@ -158,7 +215,7 @@ namespace Box2DX.Dynamics
 			_jointCount = 0;
 		}
 
-		public void Solve(TimeStep step, Vec2 gravity, bool correctPositions, bool allowSleep)
+		public void Solve(TimeStep step, Vec2 gravity, bool allowSleep)
 		{
 			// Integrate velocities and apply damping.
 			for (int i = 0; i < _bodyCount; ++i)
@@ -231,14 +288,13 @@ namespace Box2DX.Dynamics
 			}
 
 			// Solve velocity constraints.
-			for (int i = 0; i < step.MaxIterations; ++i)
+			for (int i = 0; i < step.VelocityIterations; ++i)
 			{
-				contactSolver.SolveVelocityConstraints();
-
 				for (int j = 0; j < _jointCount; ++j)
 				{
 					_joints[j].SolveVelocityConstraints(step);
 				}
+				contactSolver.SolveVelocityConstraints();
 			}
 
 			// Post-solve (store impulses for warm starting).
@@ -266,31 +322,21 @@ namespace Box2DX.Dynamics
 				// Note: shapes are synchronized later.
 			}
 
-			if (correctPositions)
+			// Iterate over constraints.
+			for (int ii = 0; ii < step.PositionIterations; ++ii)
 			{
-				// Initialize position constraints.
-				// Contacts don't need initialization.
+				bool contactsOkay = contactSolver.SolvePositionConstraints(Settings.ContactBaumgarte);
+				bool jointsOkay = true;
 				for (int i = 0; i < _jointCount; ++i)
 				{
-					_joints[i].InitPositionConstraints();
+					bool jointOkay = _joints[i].SolvePositionConstraints(/*Settings.ContactBaumgarte*/);
+					jointsOkay = jointsOkay && jointOkay;
 				}
 
-				// Iterate over constraints.
-				for (_positionIterationCount = 0; _positionIterationCount < step.MaxIterations; ++_positionIterationCount)
+				if (contactsOkay && jointsOkay)
 				{
-					bool contactsOkay = contactSolver.SolvePositionConstraints(Settings.ContactBaumgarte);
-
-					bool jointsOkay = true;
-					for (int i = 0; i < _jointCount; ++i)
-					{
-						bool jointOkay = _joints[i].SolvePositionConstraints();
-						jointsOkay = jointsOkay && jointOkay;
-					}
-
-					if (contactsOkay && jointsOkay)
-					{
-						break;
-					}
+					// Exit early if the position errors are small.
+					break;
 				}
 			}
 
@@ -371,7 +417,7 @@ namespace Box2DX.Dynamics
 #endif
 
 			// Solve velocity constraints.
-			for (int i = 0; i < subStep.MaxIterations; ++i)
+			for (int i = 0; i < subStep.VelocityIterations; ++i)
 			{
 				contactSolver.SolveVelocityConstraints();
 #if B2_TOI_JOINTS
@@ -409,7 +455,7 @@ namespace Box2DX.Dynamics
 
 			// Solve position constraints.
 			float k_toiBaumgarte = 0.75f;
-			for (int i = 0; i < subStep.MaxIterations; ++i)
+			for (int i = 0; i < subStep.PositionIterations; ++i)
 			{
 				bool contactsOkay = contactSolver.SolvePositionConstraints(k_toiBaumgarte);
 #if B2_TOI_JOINTS
@@ -438,6 +484,7 @@ namespace Box2DX.Dynamics
 		public void Add(Body body)
 		{
 			Box2DXDebug.Assert(_bodyCount < _bodyCapacity);
+			body._islandIndex = _bodyCount;
 			_bodies[_bodyCount++] = body;
 		}
 

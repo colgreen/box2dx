@@ -144,6 +144,8 @@ namespace Box2DX.Dynamics
 		internal BodyFlags _flags;
 		private BodyType _type;
 
+		internal int _islandIndex;
+
 		private XForm _xf;		// the body origin transform
 
 		internal Sweep _sweep;	// the swept motion for CCD
