@@ -37,7 +37,8 @@ namespace TestBed
 	public class Settings
 	{
 		public float hz;
-		public int iterationCount;
+		public int velocityIterations;
+		public int positionIterations;
 		public int drawShapes;
 		public int drawJoints;
 		public int drawCoreShapes;
@@ -51,7 +52,6 @@ namespace TestBed
 		public int drawCOMs;
 		public int drawStats;
 		public int enableWarmStarting;
-		public int enablePositionCorrection;
 		public int enableTOI;
 		public int pause;
 		public int singleStep;
@@ -59,7 +59,8 @@ namespace TestBed
 		public Settings()
 		{
 			hz = 60.0f;
-			iterationCount = 10;
+			velocityIterations = 10;
+			positionIterations = 8;
 			drawStats = 0;
 			drawShapes = 1;
 			drawJoints = 1;
@@ -73,7 +74,6 @@ namespace TestBed
 			drawFrictionForces = 0;
 			drawCOMs = 0;
 			enableWarmStarting = 1;
-			enablePositionCorrection = 1;
 			enableTOI = 1;
 			pause = 0;
 			singleStep = 0;
@@ -423,12 +423,11 @@ namespace TestBed
 			_debugDraw.Flags = (DebugDraw.DrawFlags)flags;
 
 			_world.SetWarmStarting(settings.enableWarmStarting > 0);
-			_world.SetPositionCorrection(settings.enablePositionCorrection > 0);
 			_world.SetContinuousPhysics(settings.enableTOI > 0);
 
 			_pointCount = 0;
 
-			_world.Step(timeStep, settings.iterationCount);
+			_world.Step(timeStep, settings.velocityIterations, settings.positionIterations);
 
 			_world.Validate();
 

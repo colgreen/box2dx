@@ -94,14 +94,15 @@ namespace HelloWorld
 			// second (60Hz) and 10 iterations. This provides a high quality simulation
 			// in most game scenarios.
 			float timeStep = 1.0f / 60.0f;
-			int iterations = 10;
+			int velocityIterations = 8;
+			int positionIterations = 1;
 
 			// This is our little game loop.
 			for (int i = 0; i < 100; ++i)
 			{
 				// Instruct the world to perform a single step of simulation. It is
 				// generally best to keep the time step and iterations fixed.
-				world.Step(timeStep, iterations);
+				world.Step(timeStep, velocityIterations, positionIterations);
 
 				// Now print the position and angle of the body.
 				Vec2 position = body.GetPosition();

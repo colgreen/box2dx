@@ -84,10 +84,10 @@ namespace TestBed
 			chkbStatistics.Checked = settings.drawStats == 1 ? true : false;
 
 			chkbToi.Checked = settings.enableTOI == 1 ? true : false;
-			chkbPosCor.Checked = settings.enablePositionCorrection == 1 ? true : false;
 			chkbWarmStart.Checked = settings.enableWarmStarting == 1 ? true : false;
 
-			nudIter.Value = settings.iterationCount;
+			nudVelIters.Value = settings.velocityIterations;
+			nudPosIters.Value = settings.positionIterations;
 			nudHz.Value = (decimal)settings.hz;
 
 			for (int i = 0; i < Test.g_testEntries.Length; i++)
@@ -268,11 +268,6 @@ namespace TestBed
 
 		#region Controls Events Handlers
 
-		private void nudIter_ValueChanged(object sender, EventArgs e)
-		{
-			settings.iterationCount = (int)nudIter.Value;
-		}
-
 		private void nudHz_ValueChanged(object sender, EventArgs e)
 		{
 			settings.hz = (float)nudHz.Value;
@@ -292,11 +287,6 @@ namespace TestBed
 		private void btnPause_Click(object sender, EventArgs e)
 		{
 			settings.pause = settings.pause == 0 ? 1 : 0;
-		}
-
-		private void chkbPosCor_CheckedChanged(object sender, EventArgs e)
-		{
-			settings.enablePositionCorrection = chkbPosCor.Checked ? 1 : 0;
 		}
 
 		private void chkbWarmStart_CheckedChanged(object sender, EventArgs e)
@@ -374,6 +364,16 @@ namespace TestBed
 			testEntry = cmbbTests.SelectedItem as TestEntry;
 			CurrentTest = testEntry.CreateFcn();
 			this.Text = "Box2DX " + Application.ProductVersion + " - " + testEntry.ToString();
+		}
+
+		private void nudVelIters_ValueChanged(object sender, EventArgs e)
+		{
+			settings.velocityIterations = (int)nudVelIters.Value;
+		}
+
+		private void nudPosIters_ValueChanged(object sender, EventArgs e)
+		{
+			settings.positionIterations = (int)nudPosIters.Value;
 		}
 
 		#endregion Controls Events Handlers
@@ -457,6 +457,6 @@ namespace TestBed
 #endif
 		}
 
-		#endregion Render
+		#endregion Render		
 	}
 }

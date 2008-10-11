@@ -63,7 +63,6 @@ namespace TestBed
 			_body2.SetMassFromShapes();
 
 			_world.Gravity = new Vec2(0.0f, 0.0f);
-			_world.SetPositionCorrection(false);
 		}
 
 		public override void Step(Settings settings)
@@ -123,11 +122,6 @@ namespace TestBed
 			}
 
 			_body2.SetXForm(p, a);
-		}
-
-		protected override void Dispose(bool state)
-		{
-			_world.SetPositionCorrection(true);
 		}
 
 		public static Test Create()

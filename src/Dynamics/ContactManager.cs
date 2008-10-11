@@ -157,20 +157,20 @@ namespace Box2DX.Dynamics
 		{
 			Shape shape1 = c.GetShape1();
 			Shape shape2 = c.GetShape2();
+			Body body1 = shape1.GetBody();
+			Body body2 = shape2.GetBody();
+
+			ContactPoint cp = new ContactPoint();
+			cp.Shape1 = shape1;
+			cp.Shape2 = shape2;
+			cp.Friction = Settings.MixFriction(shape1.Friction, shape2.Friction);
+			cp.Restitution = Settings.MixRestitution(shape1.Restitution, shape2.Restitution);
 
 			// Inform the user that this contact is ending.
 			int manifoldCount = c.GetManifoldCount();
 			if (manifoldCount > 0 && _world._contactListener!=null)
 			{
-				Body b1 = shape1.GetBody();
-				Body b2 = shape2.GetBody();
-
 				Manifold[] manifolds = c.GetManifolds();
-				ContactPoint cp = new ContactPoint();
-				cp.Shape1 = c.GetShape1();
-				cp.Shape2 = c.GetShape2();
-				cp.Friction = c._friction;
-				cp.Restitution = c._restitution;
 
 				for (int i = 0; i < manifoldCount; ++i)
 				{
@@ -180,9 +180,9 @@ namespace Box2DX.Dynamics
 					for (int j = 0; j < manifold.PointCount; ++j)
 					{
 						ManifoldPoint mp = manifold.Points[j];
-						cp.Position = b1.GetWorldPoint(mp.LocalPoint1);
-						Vec2 v1 = b1.GetLinearVelocityFromLocalPoint(mp.LocalPoint1);
-						Vec2 v2 = b2.GetLinearVelocityFromLocalPoint(mp.LocalPoint2);
+						cp.Position = body1.GetWorldPoint(mp.LocalPoint1);
+						Vec2 v1 = body1.GetLinearVelocityFromLocalPoint(mp.LocalPoint1);
+						Vec2 v2 = body2.GetLinearVelocityFromLocalPoint(mp.LocalPoint2);
 						cp.Velocity = v2 - v1;
 						cp.Separation = mp.Separation;
 						cp.ID = mp.ID;
@@ -206,9 +206,6 @@ namespace Box2DX.Dynamics
 			{
 				_world._contactList = c._next;
 			}
-
-			Body body1 = shape1.GetBody();
-			Body body2 = shape2.GetBody();
 
 			// Remove from body 1
 			if (c._node1.Prev != null)

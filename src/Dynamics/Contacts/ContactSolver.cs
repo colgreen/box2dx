@@ -20,6 +20,7 @@
 */
 
 //#define B2_DEBUG_SOLVER
+#define FIRST
 
 using System;
 using System.Collections.Generic;
@@ -93,12 +94,15 @@ namespace Box2DX.Dynamics
 			{
 				Contact contact = contacts[i];
 
-				Body b1 = contact._shape1.GetBody();
-				Body b2 = contact._shape2.GetBody();
+				Shape shape1 = contact._shape1;
+				Shape shape2 = contact._shape2;
+				Body b1 = shape1.GetBody();
+				Body b2 = shape2.GetBody();
 				int manifoldCount = contact.GetManifoldCount();
 				Manifold[] manifolds = contact.GetManifolds();
-				float friction = contact._friction;
-				float restitution = contact._restitution;
+
+				float friction = Settings.MixFriction(shape1.Friction, shape2.Friction);
+				float restitution = Settings.MixRestitution(shape1.Restitution, shape2.Restitution);
 
 				Vec2 v1 = b1._linearVelocity;
 				Vec2 v2 = b2._linearVelocity;
@@ -213,6 +217,7 @@ namespace Box2DX.Dynamics
 						else
 						{
 							// The constraints are redundant, just use one.
+							// TODO_ERIN use deepest?
 							cc.PointCount = 1;
 						}
 					}
@@ -585,6 +590,7 @@ namespace Box2DX.Dynamics
 			}
 		}
 
+#if FIRST
 		public bool SolvePositionConstraints(float baumgarte)
 		{
 			float minSeparation = 0.0f;
@@ -642,4 +648,6 @@ namespace Box2DX.Dynamics
 			return minSeparation >= -1.5f * Settings.LinearSlop;
 		}
 	}
+#else
+#endif
 }

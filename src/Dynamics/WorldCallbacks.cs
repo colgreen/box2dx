@@ -39,14 +39,12 @@ namespace Box2DX.Dynamics
 		/// Called when any joint is about to be destroyed due
 		/// to the destruction of one of its attached bodies.
 		/// </summary>
-		/// <param name="joint"></param>
 		public abstract void SayGoodbye(Joint joint);
 
 		/// <summary>
 		/// Called when any shape is about to be destroyed due
 		/// to the destruction of its parent body.
 		/// </summary>
-		/// <param name="shape"></param>
 		public abstract void SayGoodbye(Shape shape);
 	}
 
@@ -59,7 +57,6 @@ namespace Box2DX.Dynamics
 		/// This is called for each body that leaves the world boundary.
 		/// @warning you can't modify the world inside this callback.
 		/// </summary>
-		/// <param name="body"></param>
 		public abstract void Violation(Body body);
 	}
 
@@ -74,9 +71,6 @@ namespace Box2DX.Dynamics
 		/// If you implement your own collision filter you may want to build from this implementation.
 		/// @warning for performance reasons this is only called when the AABBs begin to overlap.
 		/// </summary>
-		/// <param name="shape1"></param>
-		/// <param name="shape2"></param>
-		/// <returns></returns>
 		public virtual bool ShouldCollide(Shape shape1, Shape shape2)
 		{
 			FilterData filter1 = shape1.FilterData;
@@ -89,6 +83,17 @@ namespace Box2DX.Dynamics
 
 			bool collide = (filter1.MaskBits & filter2.CategoryBits) != 0 && (filter1.CategoryBits & filter2.MaskBits) != 0;
 			return collide;
+		}
+
+		/// <summary>
+		/// Return true if the given shape should be considered for ray intersection.
+		/// </summary>
+		public bool RayCollide(object userData, Shape shape)
+		{
+			//By default, cast userData as a shape, and then collide if the shapes would collide
+			if (userData == null)
+				return true;
+			return ShouldCollide((Shape)userData, shape);
 		}
 	}
 
@@ -181,7 +186,6 @@ namespace Box2DX.Dynamics
 		/// <summary>
 		/// Append flags to the current flags.
 		/// </summary>
-		/// <param name="flags"></param>
 		public void AppendFlags(DrawFlags flags)
 		{
 			_drawFlags |= flags;
@@ -190,7 +194,6 @@ namespace Box2DX.Dynamics
 		/// <summary>
 		/// Clear flags from the current flags.
 		/// </summary>
-		/// <param name="flags"></param>
 		public void ClearFlags(DrawFlags flags)
 		{
 			_drawFlags &= ~flags;
@@ -199,42 +202,26 @@ namespace Box2DX.Dynamics
 		/// <summary>
 		/// Draw a closed polygon provided in CCW order.
 		/// </summary>
-		/// <param name="vertices"></param>
-		/// <param name="vertexCount"></param>
-		/// <param name="color"></param>
 		public abstract void DrawPolygon(Vec2[] vertices, int vertexCount, Color color);
 
 		/// <summary>
 		/// Draw a solid closed polygon provided in CCW order.
 		/// </summary>
-		/// <param name="vertices"></param>
-		/// <param name="vertexCount"></param>
-		/// <param name="color"></param>
 		public abstract void DrawSolidPolygon(Vec2[] vertices, int vertexCount, Color color);
 
 		/// <summary>
 		/// Draw a circle.
 		/// </summary>
-		/// <param name="center"></param>
-		/// <param name="radius"></param>
-		/// <param name="color"></param>
 		public abstract void DrawCircle(Vec2 center, float radius, Color color);
 
 		/// <summary>
 		/// Draw a solid circle.
 		/// </summary>
-		/// <param name="center"></param>
-		/// <param name="radius"></param>
-		/// <param name="axis"></param>
-		/// <param name="color"></param>
 		public abstract void DrawSolidCircle(Vec2 center, float radius, Vec2 axis, Color color);
 
 		/// <summary>
 		/// Draw a line segment.
 		/// </summary>
-		/// <param name="p1"></param>
-		/// <param name="p2"></param>
-		/// <param name="color"></param>
 		public abstract void DrawSegment(Vec2 p1, Vec2 p2, Color color);
 
 		/// <summary>

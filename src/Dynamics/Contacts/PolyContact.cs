@@ -61,8 +61,8 @@ namespace Box2DX.Dynamics
 			ContactPoint cp = new ContactPoint();
 			cp.Shape1 = _shape1;
 			cp.Shape2 = _shape2;
-			cp.Friction = _friction;
-			cp.Restitution = _restitution;
+			cp.Friction = Settings.MixFriction(_shape1.Friction, _shape2.Friction);
+			cp.Restitution = Settings.MixRestitution(_shape1.Restitution, _shape2.Restitution);
 
 			// Match contact ids to facilitate warm starting.
 			if (_manifold.PointCount > 0)

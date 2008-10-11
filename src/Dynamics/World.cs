@@ -33,9 +33,9 @@ namespace Box2DX.Dynamics
 		public float Dt; // time step
 		public float Inv_Dt; // inverse time step (0 if dt == 0).
 		public float DtRatio;	// dt * inv_dt0
-		public int MaxIterations;
-		public bool WarmStarting;
-		public bool PositionCorrection;
+		public int VelocityIterations;
+		public int PositionIterations;
+		public bool WarmStarting;		
 	}
 
 	/// <summary>
@@ -51,6 +51,11 @@ namespace Box2DX.Dynamics
 
 		private Body _bodyList;
 		private Joint _jointList;
+
+		private Vec2 _raycastNormal;
+		private object _raycastUserData;
+		private Segment _raycastSegment;
+		private bool _raycastSolidShape;
 
 		// Do not access
 		internal Contact _contactList;
@@ -75,12 +80,9 @@ namespace Box2DX.Dynamics
 		internal ContactListener _contactListener;
 		private DebugDraw _debugDraw;
 
+		// This is used to compute the time step ratio to
+		// support a variable time step.
 		private float _inv_dt0;
-
-		private int _positionIterationCount;
-
-		// This is for debugging the solver.
-		private bool _positionCorrection;
 
 		// This is for debugging the solver.
 		private bool _warmStarting;
@@ -110,7 +112,6 @@ namespace Box2DX.Dynamics
 			_contactCount = 0;
 			_jointCount = 0;
 
-			_positionCorrection = true;
 			_warmStarting = true;
 			_continuousPhysics = true;
 
@@ -466,16 +467,23 @@ namespace Box2DX.Dynamics
 			return _jointList;
 		}
 
+		/// <summary>
 		/// Re-filter a shape. This re-runs contact filtering on a shape.
-		public void Refilter(Shape shape) { shape.RefilterProxy(_broadPhase, shape.GetBody().GetXForm()); }
+		/// </summary>		
+		public void Refilter(Shape shape)
+		{
+			Box2DXDebug.Assert(_lock == false);
+			shape.RefilterProxy(_broadPhase, shape.GetBody().GetXForm());
+		}
 
+		/// <summary>
 		/// Enable/disable warm starting. For testing.
+		/// </summary>		
 		public void SetWarmStarting(bool flag) { _warmStarting = flag; }
 
-		/// Enable/disable position correction. For testing.
-		public void SetPositionCorrection(bool flag) { _positionCorrection = flag; }
-
+		/// <summary>
 		/// Enable/disable continuous physics. For testing.
+		/// </summary>		
 		public void SetContinuousPhysics(bool flag) { _continuousPhysics = flag; }
 
 		/// <summary>
@@ -486,7 +494,6 @@ namespace Box2DX.Dynamics
 		/// <summary>
 		/// Get the number of broad-phase proxies.
 		/// </summary>
-		/// <returns></returns>
 		public int GetProxyCount() { return _broadPhase._proxyCount; }
 
 		/// <summary>
@@ -518,14 +525,16 @@ namespace Box2DX.Dynamics
 		/// and constraint solution.
 		/// </summary>
 		/// <param name="dt">The amount of time to simulate, this should not vary.</param>
-		/// <param name="iterations">The number of iterations to be used by the constraint solver.</param>
-		public void Step(float dt, int iterations)
+		/// <param name="iterations">For the velocity constraint solver.</param>
+		/// <param name="iterations">For the positionconstraint solver.</param>
+		public void Step(float dt, int velocityIterations, int positionIteration)
 		{
 			_lock = true;
 
 			TimeStep step = new TimeStep();
 			step.Dt = dt;
-			step.MaxIterations = iterations;
+			step.VelocityIterations = velocityIterations;
+			step.PositionIterations = positionIteration;
 			if (dt > 0.0f)
 			{
 				step.Inv_Dt = 1.0f / dt;
@@ -537,7 +546,6 @@ namespace Box2DX.Dynamics
 
 			step.DtRatio = _inv_dt0 * dt;
 
-			step.PositionCorrection = _positionCorrection;
 			step.WarmStarting = _warmStarting;
 
 			// Update contacts.
@@ -587,11 +595,72 @@ namespace Box2DX.Dynamics
 			}
 		}
 
+		/// <summary>
+		/// Query the world for all shapes that intersect a given segment. You provide a shap
+		/// pointer buffer of specified size. The number of shapes found is returned, and the buffer
+		/// is filled in order of intersection.
+		/// </summary>
+		/// <param name="segment">Defines the begin and end point of the ray cast, from p1 to p2.
+		/// Use Segment.Extend to create (semi-)infinite rays.</param>
+		/// <param name="shapes">A user allocated shape pointer array of size maxCount (or greater).</param>
+		/// <param name="maxCount">The capacity of the shapes array.</param>
+		/// <param name="solidShapes">Determines if shapes that the ray starts in are counted as hits.</param>
+		/// <param name="userData">Passed through the worlds contact filter, with method RayCollide. This can be used to filter valid shapes.</param>
+		/// <returns>The number of shapes found</returns>
+		public int Raycast(Segment segment, Shape[] shapes, int maxCount, bool solidShapes, object userData)
+		{
+#warning "PTR"
+			_raycastSegment = segment;
+			_raycastUserData = userData;
+			_raycastSolidShape = solidShapes;
+
+			object[] results = new object[maxCount];
+			int count = _broadPhase.QuerySegment(segment, results, maxCount, RaycastSortKey);
+			for (int i = 0; i < count; ++i)
+			{
+				shapes[i] = (Shape)results[i];
+			}
+			results = null;
+			return count;
+		}
+
+		/// <summary>
+		/// Performs a raycast as with Raycast, finding the first intersecting shape.
+		/// </summary>
+		/// <param name="segment">Defines the begin and end point of the ray cast, from p1 to p2.
+		/// Use Segment.Extend to create (semi-)infinite rays.</param>
+		/// <param name="lambda">Returns the hit fraction. You can use this to compute the contact point
+		/// p = (1 - lambda) * segment.p1 + lambda * segment.p2.</param>
+		/// <param name="normal">Returns the normal at the contact point. If there is no intersection, the normal is not set.</param>
+		/// <param name="solidShapes">Determines if shapes that the ray starts in are counted as hits.</param>
+		/// <param name="userData"></param>
+		/// <returns>Returns the colliding shape shape, or null if not found.</returns>
+		public Shape RaycastOne(Segment segment, out float lambda, out Vec2 normal, bool solidShapes, object userData)
+		{
+			lambda = 0;
+			normal = new Vec2(0,0);
+
+			int maxCount = 1;
+			Shape[] shape = new Shape[maxCount];
+
+			int count = Raycast(segment, shape, maxCount, solidShapes, userData);
+
+			if (count == 0)
+				return null;
+
+			Box2DXDebug.Assert(count == 1);
+
+			//Redundantly do TestSegment a second time, as the previous one's results are inaccessible
+
+			XForm xf = shape[0].GetBody().GetXForm();
+			shape[0].TestSegment(xf, out lambda, out normal, segment, 1);
+			//We already know it returns true
+			return shape[0];
+		}
+
 		// Find islands, integrate and solve constraints, solve position constraints
 		private void Solve(TimeStep step)
 		{
-			_positionIterationCount = 0;
-
 			// Size the island for the worst case.
 			Island island = new Island(_bodyCount, _contactCount, _jointCount, _contactListener);
 
@@ -703,8 +772,7 @@ namespace Box2DX.Dynamics
 						}
 					}
 
-					island.Solve(step, _gravity, _positionCorrection, _allowSleep);
-					_positionIterationCount = Common.Math.Max(_positionIterationCount, island._positionIterationCount);
+					island.Solve(step, _gravity, _allowSleep);
 
 					// Post solve cleanup.
 					for (int i = 0; i < island._bodyCount; ++i)
@@ -1004,7 +1072,8 @@ namespace Box2DX.Dynamics
 				subStep.Dt = (1.0f - minTOI) * step.Dt;
 				Box2DXDebug.Assert(subStep.Dt > Common.Settings.FLT_EPSILON);
 				subStep.Inv_Dt = 1.0f / subStep.Dt;
-				subStep.MaxIterations = step.MaxIterations;
+				subStep.VelocityIterations = step.VelocityIterations;
+				subStep.PositionIterations = step.PositionIterations;
 
 				island.SolveTOI(ref subStep);
 
@@ -1325,6 +1394,29 @@ namespace Box2DX.Dynamics
 					_debugDraw.DrawXForm(xf);
 				}
 			}
+		}
+
+		//Is it safe to pass private static function pointers?
+		private static float RaycastSortKey(object data)
+		{
+			Shape shape = data as Shape;
+			Box2DXDebug.Assert(shape != null);
+			Body body = shape.GetBody();
+			World world = body.GetWorld();
+			XForm xf = body.GetXForm();
+
+			if (world._contactFilter!=null && !world._contactFilter.RayCollide(world._raycastUserData, shape))
+				return -1;
+
+			float lambda;
+			SegmentCollide collide = shape.TestSegment(xf, out lambda, out world._raycastNormal, world._raycastSegment, 1);
+
+			if (world._raycastSolidShape && collide == SegmentCollide.MissCollide)
+				return -1;
+			if (!world._raycastSolidShape && collide != SegmentCollide.HitCollide)
+				return -1;
+
+			return lambda;
 		}
 
 		public bool InRange(AABB aabb)
