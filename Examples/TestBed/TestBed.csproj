@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.21022</ProductVersion>
+    <ProductVersion>9.0.30729</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{5F8CEECC-CF73-4057-9DC8-8001BECE71E2}</ProjectGuid>
     <OutputType>WinExe</OutputType>
@@ -125,6 +125,7 @@
     <Compile Include="Tests\Pyramid.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Tests\RaycastTest.cs" />
     <Compile Include="Tests\SensorTest.cs" />
     <Compile Include="Tests\ShapeEditing.cs" />
     <Compile Include="Tests\SimpleTest.cs" />

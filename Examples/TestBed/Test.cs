@@ -241,7 +241,8 @@ namespace TestBed
 			new TestEntry("Distance Test", DistanceTest.Create),
 			new TestEntry("Broad Phase", BroadPhaseTest.Create),
 			new TestEntry("PolyCollision", PolyCollision.Create),
-			new TestEntry("Elastic Body", ElasticBody.Create)
+			new TestEntry("Elastic Body", ElasticBody.Create),
+			new TestEntry("Raycast Test", RaycastTest.Create)
 		};
 
 		public static int k_maxContactPoints = 2048;

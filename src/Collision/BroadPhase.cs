@@ -38,6 +38,7 @@ Bullet (http:/www.bulletphysics.com).
 // - no broadphase is perfect and neither is this one: it is not great for huge
 //   worlds (use a multi-SAP instead), it is not great for large objects.
 
+#define ALLOWUNSAFE
 //#define TARGET_FLOAT32_IS_FIXED
 
 using System;
@@ -636,7 +637,11 @@ namespace Box2DX.Collision
 		/// The sortKey of a proxy is assumed to be larger than the closest point inside the proxy along the segment, this allows for early exits
 		/// Proxies with a negative sortKey are discarded
 		/// </summary>
-		public unsafe int QuerySegment(Segment segment, object[] userData, int maxCount, SortKeyFunc sortKey)
+		public
+#if ALLOWUNSAFE
+		unsafe 
+#endif //#if ALLOWUNSAFE
+		int QuerySegment(Segment segment, object[] userData, int maxCount, SortKeyFunc sortKey)
 		{
 			float maxLambda = 1;
 
@@ -650,9 +655,13 @@ namespace Box2DX.Collision
 
 			float p1x = (segment.P1.X - _worldAABB.LowerBound.X) * _quantizationFactor.X;
 			float p1y = (segment.P1.Y - _worldAABB.LowerBound.Y) * _quantizationFactor.Y;
-
+#if ALLOWUNSAFE
 			ushort* startValues = stackalloc ushort[2];
 			ushort* startValues2 = stackalloc ushort[2];
+#else
+			ushort[] startValues = new ushort[2];
+			ushort[] startValues2 = new ushort[2];
+#endif
 
 			int xIndex;
 			int yIndex;
@@ -1082,6 +1091,7 @@ namespace Box2DX.Collision
 			}
 		}
 
+#if ALLOWUNSAFE
 		public unsafe void AddProxyResult(ushort proxyId, Proxy proxy, int maxCount, SortKeyFunc sortKey)
 		{
 			float key = sortKey(proxy.UserData);
@@ -1111,6 +1121,40 @@ namespace Box2DX.Collision
 				_queryResultCount++;
 			}
 		}
+#else
+		public void AddProxyResult(ushort proxyId, Proxy proxy, int maxCount, SortKeyFunc sortKey)
+		{
+			float key = sortKey(proxy.UserData);
+			//Filter proxies on positive keys
+			if (key < 0)
+				return;
+			//Merge the new key into the sorted list.
+			//float32* p = std::lower_bound(m_querySortKeys,m_querySortKeys+m_queryResultCount,key);
+			float[] querySortKeysPtr = _querySortKeys;
+
+			int ip = 0;
+			float p = querySortKeysPtr[ip];
+			while (p < key && ip < _queryResultCount)
+			{
+				p = querySortKeysPtr[ip];
+				ip++;
+			}
+			int i = ip;
+			if (maxCount == _queryResultCount && i == _queryResultCount)
+				return;
+			if (maxCount == _queryResultCount)
+				_queryResultCount--;
+			//std::copy_backward
+			for (int j = _queryResultCount + 1; j > i; --j)
+			{
+				_querySortKeys[j] = _querySortKeys[j - 1];
+				_queryResults[j] = _queryResults[j - 1];
+			}
+			_querySortKeys[i] = key;
+			_queryResults[i] = proxyId;
+			_queryResultCount++;
+		}
+#endif
 
 		private static int BinarySearch(Bound[] bounds, int count, ushort value)
 		{
