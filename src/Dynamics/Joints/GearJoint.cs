@@ -118,7 +118,7 @@ namespace Box2DX.Dynamics
 		public float _mass;
 
 		// Impulse for accumulation/warm starting.
-		public float _force;
+		public float _impulse;
 
 		public override Vec2 Anchor1 { get { return _body1.GetWorldPoint(_localAnchor1); } }
 		public override Vec2 Anchor2 { get { return _body2.GetWorldPoint(_localAnchor2); } }
@@ -126,17 +126,17 @@ namespace Box2DX.Dynamics
 		public override Vec2 GetReactionForce(float inv_dt)
 		{
 			// TODO_ERIN not tested
-			Vec2 F = Settings.FORCE_SCALE(_force) * _J.Linear2;
-			return F;
+			Vec2 P = _impulse * _J.Linear2;
+			return inv_dt * P;
 		}
 
 		public override float GetReactionTorque(float inv_dt)
 		{
 			// TODO_ERIN not tested
 			Vec2 r = Common.Math.Mul(_body2.GetXForm().R, _localAnchor2 - _body2.GetLocalCenter());
-			Vec2 F = _force * _J.Linear2;
-			float T = Settings.FORCE_SCALE(_force * _J.Angular2 - Vec2.Cross(r, F));
-			return T;
+			Vec2 P = _impulse * _J.Linear2;
+			float L = _impulse * _J.Angular2 - Vec2.Cross(r, P);
+			return inv_dt * L;
 		}
 
 		/// <summary>
@@ -200,7 +200,7 @@ namespace Box2DX.Dynamics
 
 			_constant = coordinate1 + _ratio * coordinate2;
 
-			_force = 0.0f;
+			_impulse = 0.0f;
 		}
 
 		internal override void InitVelocityConstraints(TimeStep step)
@@ -250,15 +250,14 @@ namespace Box2DX.Dynamics
 			if (step.WarmStarting)
 			{
 				// Warm starting.
-				float P = Settings.FORCE_SCALE(step.Dt) * _force;
-				b1._linearVelocity += b1._invMass * P * _J.Linear1;
-				b1._angularVelocity += b1._invI * P * _J.Angular1;
-				b2._linearVelocity += b2._invMass * P * _J.Linear2;
-				b2._angularVelocity += b2._invI * P * _J.Angular2;
+				b1._linearVelocity += b1._invMass * _impulse * _J.Linear1;
+				b1._angularVelocity += b1._invI * _impulse * _J.Angular1;
+				b2._linearVelocity += b2._invMass * _impulse * _J.Linear2;
+				b2._angularVelocity += b2._invI * _impulse * _J.Angular2;
 			}
 			else
 			{
-				_force = 0.0f;
+				_impulse = 0.0f;
 			}
 		}
 
@@ -267,20 +266,18 @@ namespace Box2DX.Dynamics
 			Body b1 = _body1;
 			Body b2 = _body2;
 
-			float Cdot = _J.Compute(b1._linearVelocity, b1._angularVelocity,
-										b2._linearVelocity, b2._angularVelocity);
+			float Cdot = _J.Compute(b1._linearVelocity, b1._angularVelocity, b2._linearVelocity, b2._angularVelocity);
 
-			float force = -Settings.FORCE_INV_SCALE(step.Inv_Dt) * _mass * Cdot;
-			_force += force;
+			float impulse = _mass * (-Cdot);
+			_impulse += impulse;
 
-			float P = Settings.FORCE_SCALE(step.Dt) * force;
-			b1._linearVelocity += b1._invMass * P * _J.Linear1;
-			b1._angularVelocity += b1._invI * P * _J.Angular1;
-			b2._linearVelocity += b2._invMass * P * _J.Linear2;
-			b2._angularVelocity += b2._invI * P * _J.Angular2;
+			b1._linearVelocity += b1._invMass * impulse * _J.Linear1;
+			b1._angularVelocity += b1._invI * impulse * _J.Angular1;
+			b2._linearVelocity += b2._invMass * impulse * _J.Linear2;
+			b2._angularVelocity += b2._invI * impulse * _J.Angular2;
 		}
 
-		internal override bool SolvePositionConstraints()
+		internal override bool SolvePositionConstraints(float baumgarte)
 		{
 			float linearError = 0.0f;
 
@@ -308,7 +305,7 @@ namespace Box2DX.Dynamics
 
 			float C = _constant - (coordinate1 + _ratio * coordinate2);
 
-			float impulse = -_mass * C;
+			float impulse = _mass * (-C);
 
 			b1._sweep.C += b1._invMass * impulse * _J.Linear1;
 			b1._sweep.A += b1._invI * impulse * _J.Angular1;
@@ -318,6 +315,7 @@ namespace Box2DX.Dynamics
 			b1.SynchronizeTransform();
 			b2.SynchronizeTransform();
 
+			//TODO_ERIN not implemented
 			return linearError < Settings.LinearSlop;
 		}
 	}
