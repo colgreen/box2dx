@@ -116,6 +116,7 @@
     <Compile Include="Tests\Gears.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Tests\LineJoint.cs" />
     <Compile Include="Tests\MotorsAndLimits.cs" />
     <Compile Include="Tests\PolyCollision.cs" />
     <Compile Include="Tests\PolyShapes.cs" />

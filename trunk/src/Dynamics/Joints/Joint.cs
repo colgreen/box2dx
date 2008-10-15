@@ -283,11 +283,11 @@ namespace Box2DX.Dynamics
 						joint = new GearJoint((GearJointDef)def);
 					}
 					break;
-				/*case JointType.LineJoint:
+				case JointType.LineJoint:
 					{
 						joint = new LineJoint((LineJointDef)def);
 					}
-					break;*/
+					break;
 				default:
 					Box2DXDebug.Assert(false);
 					break;
