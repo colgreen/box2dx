@@ -211,8 +211,9 @@ namespace TestBed
 	public class Test : IDisposable
 	{
 		public static TestEntry[] g_testEntries = new TestEntry[]
-		{
+		{			
 			new TestEntry("Simple Test", SimpleTest.Create),
+			new TestEntry("Line Joint Test", LineJoint.Create),
 			new TestEntry("Pyramid", Pyramid.Create),
 			new TestEntry("Theo Jansen's Walker", TheoJansen.Create),
 			//new TestEntry("Contact Callback Test", ContactCB.Create),
