@@ -35,7 +35,8 @@ namespace Box2DX.Dynamics
 		DistanceJoint,
 		PulleyJoint,
 		MouseJoint,
-		GearJoint
+		GearJoint,
+		LineJoint
 	}
 
 	public enum LimitState
@@ -157,17 +158,19 @@ namespace Box2DX.Dynamics
 		internal Body _body1;
 		internal Body _body2;
 
-		protected float _inv_dt;
-
 		internal bool _islandFlag;
 		internal bool _collideConnected;
 
 		protected object _userData;
 
+		// Cache here per time step to reduce cache misses.
+		protected Vec2 _localCenter1, _localCenter2;
+		protected float _invMass1, _invI1;
+		protected float _invMass2, _invI2;
+
 		/// <summary>
 		/// Get the type of the concrete joint.
 		/// </summary>
-		/// <returns></returns>
 		public new JointType GetType()
 		{
 			return _type;
@@ -205,15 +208,13 @@ namespace Box2DX.Dynamics
 
 		/// <summary>
 		/// Get the reaction force on body2 at the joint anchor.
-		/// </summary>
-		/// <returns></returns>
-		public abstract Vec2 ReactionForce { get; }
+		/// </summary>		
+		public abstract Vec2 GetReactionForce(float inv_dt);
 
 		/// <summary>
 		/// Get the reaction torque on body2.
-		/// </summary>
-		/// <returns></returns>
-		public abstract float ReactionTorque { get; }
+		/// </summary>		
+		public abstract float GetReactionTorque(float inv_dt);
 
 		/// <summary>
 		/// Get the next joint the world joint list.
@@ -257,37 +258,36 @@ namespace Box2DX.Dynamics
 						joint = new DistanceJoint((DistanceJointDef)def);
 					}
 					break;
-
 				case JointType.MouseJoint:
 					{
 						joint = new MouseJoint((MouseJointDef)def);
 					}
 					break;
-
 				case JointType.PrismaticJoint:
 					{
 						joint = new PrismaticJoint((PrismaticJointDef)def);
 					}
 					break;
-
 				case JointType.RevoluteJoint:
 					{
 						joint = new RevoluteJoint((RevoluteJointDef)def);
 					}
 					break;
-
 				case JointType.PulleyJoint:
 					{
 						joint = new PulleyJoint((PulleyJointDef)def);
 					}
 					break;
-
 				case JointType.GearJoint:
 					{
 						joint = new GearJoint((GearJointDef)def);
 					}
 					break;
-
+				case JointType.LineJoint:
+					{
+						joint = new LineJoint((LineJointDef)def);
+					}
+					break;
 				default:
 					Box2DXDebug.Assert(false);
 					break;
@@ -305,7 +305,12 @@ namespace Box2DX.Dynamics
 		internal abstract void SolveVelocityConstraints(TimeStep step);
 
 		// This returns true if the position errors are within tolerance.
-		internal virtual void InitPositionConstraints() { }
-		internal abstract bool SolvePositionConstraints();
+		internal abstract bool SolvePositionConstraints(float baumgarte);
+
+		internal void ComputeXForm(ref XForm xf, Vec2 center, Vec2 localCenter, float angle)
+		{
+			xf.R.Set(angle);
+			xf.Position = center - Box2DX.Common.Math.Mul(xf.R, localCenter);
+		}
 	}
 }

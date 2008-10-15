@@ -329,7 +329,7 @@ namespace Box2DX.Dynamics
 				bool jointsOkay = true;
 				for (int i = 0; i < _jointCount; ++i)
 				{
-					bool jointOkay = _joints[i].SolvePositionConstraints(/*Settings.ContactBaumgarte*/);
+					bool jointOkay = _joints[i].SolvePositionConstraints(Settings.ContactBaumgarte);
 					jointsOkay = jointsOkay && jointOkay;
 				}
 

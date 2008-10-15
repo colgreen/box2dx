@@ -123,26 +123,20 @@ namespace Box2DX.Dynamics
 		public override Vec2 Anchor1 { get { return _body1.GetWorldPoint(_localAnchor1); } }
 		public override Vec2 Anchor2 { get { return _body2.GetWorldPoint(_localAnchor2); } }
 
-		public override Vec2 ReactionForce
+		public override Vec2 GetReactionForce(float inv_dt)
 		{
-			get
-			{
-				// TODO_ERIN not tested
-				Vec2 F = Settings.FORCE_SCALE(_force) * _J.Linear2;
-				return F;
-			}
+			// TODO_ERIN not tested
+			Vec2 F = Settings.FORCE_SCALE(_force) * _J.Linear2;
+			return F;
 		}
 
-		public override float ReactionTorque
+		public override float GetReactionTorque(float inv_dt)
 		{
-			get
-			{
-				// TODO_ERIN not tested
-				Vec2 r = Common.Math.Mul(_body2.GetXForm().R, _localAnchor2 - _body2.GetLocalCenter());
-				Vec2 F = _force * _J.Linear2;
-				float T = Settings.FORCE_SCALE(_force * _J.Angular2 - Vec2.Cross(r, F));
-				return T;
-			}
+			// TODO_ERIN not tested
+			Vec2 r = Common.Math.Mul(_body2.GetXForm().R, _localAnchor2 - _body2.GetLocalCenter());
+			Vec2 F = _force * _J.Linear2;
+			float T = Settings.FORCE_SCALE(_force * _J.Angular2 - Vec2.Cross(r, F));
+			return T;
 		}
 
 		/// <summary>

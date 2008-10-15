@@ -187,20 +187,17 @@ namespace Box2DX.Dynamics
 			get { return _body2.GetWorldPoint(_localAnchor2); }
 		}
 
-		public override Vec2 ReactionForce
+		public override Vec2 GetReactionForce(float inv_dt)
 		{
-			get
-			{
-				Vec2 ax1 = Common.Math.Mul(_body1.GetXForm().R, _localXAxis1);
-				Vec2 ay1 = Common.Math.Mul(_body1.GetXForm().R, _localYAxis1);
+			Vec2 ax1 = Common.Math.Mul(_body1.GetXForm().R, _localXAxis1);
+			Vec2 ay1 = Common.Math.Mul(_body1.GetXForm().R, _localYAxis1);
 
-				return Settings.FORCE_SCALE(1.0f) * (_limitForce * ax1 + _force * ay1);
-			}
+			return Settings.FORCE_SCALE(1.0f) * (_limitForce * ax1 + _force * ay1);
 		}
 
-		public override float ReactionTorque
+		public override float GetReactionTorque(float inv_dt)
 		{
-			get { return Settings.FORCE_SCALE(_torque); }
+			return Settings.FORCE_SCALE(_torque);
 		}
 
 		/// <summary>
