@@ -88,7 +88,7 @@ namespace Box2DX.Dynamics
 			Vec2 d2 = anchor2 - groundAnchor2;
 			Length2 = d2.Length();
 			Ratio = ratio;
-			Box2DXDebug.Assert(ratio > Common.Settings.FLT_EPSILON);
+			Box2DXDebug.Assert(ratio > Settings.FLT_EPSILON);
 			float C = Length1 + ratio * Length2;
 			MaxLength1 = C - ratio * PulleyJoint.MinPulleyLength;
 			MaxLength2 = (C - PulleyJoint.MinPulleyLength) / ratio;
@@ -173,14 +173,9 @@ namespace Box2DX.Dynamics
 		public float _limitMass2;
 
 		// Impulses for accumulation/warm starting.
-		public float _force;
-		public float _limitForce1;
-		public float _limitForce2;
-
-		// Position impulses for accumulation.
-		public float _positionImpulse;
-		public float _limitPositionImpulse1;
-		public float _limitPositionImpulse2;
+		public float _impulse;
+		public float _limitImpulse1;
+		public float _limitImpulse2;
 
 		public LimitState _state;
 		public LimitState _limitState1;
@@ -198,8 +193,8 @@ namespace Box2DX.Dynamics
 
 		public override Vec2 GetReactionForce(float inv_dt)
 		{
-			Vec2 F = Settings.FORCE_SCALE(_force) * _u2;
-			return F;
+			Vec2 P = _impulse * _u2;
+			return inv_dt * P;
 		}
 
 		public override float GetReactionTorque(float inv_dt)
@@ -276,9 +271,9 @@ namespace Box2DX.Dynamics
 			_maxLength1 = Common.Math.Min(def.MaxLength1, _constant - _ratio * PulleyJoint.MinPulleyLength);
 			_maxLength2 = Common.Math.Min(def.MaxLength2, (_constant - PulleyJoint.MinPulleyLength) / _ratio);
 
-			_force = 0.0f;
-			_limitForce1 = 0.0f;
-			_limitForce2 = 0.0f;
+			_impulse = 0.0f;
+			_limitImpulse1 = 0.0f;
+			_limitImpulse2 = 0.0f;
 		}
 
 		internal override void InitVelocityConstraints(TimeStep step)
@@ -324,34 +319,31 @@ namespace Box2DX.Dynamics
 			if (C > 0.0f)
 			{
 				_state = LimitState.InactiveLimit;
-				_force = 0.0f;
+				_impulse = 0.0f;
 			}
 			else
 			{
 				_state = LimitState.AtUpperLimit;
-				_positionImpulse = 0.0f;
 			}
 
 			if (length1 < _maxLength1)
 			{
 				_limitState1 = LimitState.InactiveLimit;
-				_limitForce1 = 0.0f;
+				_limitImpulse1 = 0.0f;
 			}
 			else
 			{
 				_limitState1 = LimitState.AtUpperLimit;
-				_limitPositionImpulse1 = 0.0f;
 			}
 
 			if (length2 < _maxLength2)
 			{
 				_limitState2 = LimitState.InactiveLimit;
-				_limitForce2 = 0.0f;
+				_limitImpulse2 = 0.0f;
 			}
 			else
 			{
 				_limitState2 = LimitState.AtUpperLimit;
-				_limitPositionImpulse2 = 0.0f;
 			}
 
 			// Compute effective mass.
@@ -370,9 +362,14 @@ namespace Box2DX.Dynamics
 
 			if (step.WarmStarting)
 			{
+				// Scale impulses to support variable time steps.
+				_impulse *= step.DtRatio;
+				_limitImpulse1 *= step.DtRatio;
+				_limitImpulse2 *= step.DtRatio;
+
 				// Warm starting.
-				Vec2 P1 = Settings.FORCE_SCALE(step.Dt) * (-_force - _limitForce1) * _u1;
-				Vec2 P2 = Settings.FORCE_SCALE(step.Dt) * (-_ratio * _force - _limitForce2) * _u2;
+				Vec2 P1 = -(_impulse + _limitImpulse1) * _u1;
+				Vec2 P2 = (-_ratio * _impulse - _limitImpulse2) * _u2;
 				b1._linearVelocity += b1._invMass * P1;
 				b1._angularVelocity += b1._invI * Vec2.Cross(r1, P1);
 				b2._linearVelocity += b2._invMass * P2;
@@ -380,9 +377,9 @@ namespace Box2DX.Dynamics
 			}
 			else
 			{
-				_force = 0.0f;
-				_limitForce1 = 0.0f;
-				_limitForce2 = 0.0f;
+				_impulse = 0.0f;
+				_limitImpulse1 = 0.0f;
+				_limitImpulse2 = 0.0f;
 			}
 		}
 
@@ -400,13 +397,13 @@ namespace Box2DX.Dynamics
 				Vec2 v2 = b2._linearVelocity + Vec2.Cross(b2._angularVelocity, r2);
 
 				float Cdot = -Vec2.Dot(_u1, v1) - _ratio * Vec2.Dot(_u2, v2);
-				float force = -Settings.FORCE_INV_SCALE(step.Inv_Dt) * _pulleyMass * Cdot;
-				float oldForce = _force;
-				_force = Box2DXMath.Max(0.0f, _force + force);
-				force = _force - oldForce;
+				float impulse = _pulleyMass * (-Cdot);
+				float oldImpulse = _impulse;
+				_impulse = Box2DX.Common.Math.Max(0.0f, _impulse + impulse);
+				impulse = _impulse - oldImpulse;
 
-				Vec2 P1 = -Settings.FORCE_SCALE(step.Dt) * force * _u1;
-				Vec2 P2 = -Settings.FORCE_SCALE(step.Dt) * _ratio * force * _u2;
+				Vec2 P1 = -impulse * _u1;
+				Vec2 P2 = -_ratio * impulse * _u2;
 				b1._linearVelocity += b1._invMass * P1;
 				b1._angularVelocity += b1._invI * Vec2.Cross(r1, P1);
 				b2._linearVelocity += b2._invMass * P2;
@@ -418,12 +415,12 @@ namespace Box2DX.Dynamics
 				Vec2 v1 = b1._linearVelocity + Vec2.Cross(b1._angularVelocity, r1);
 
 				float Cdot = -Vec2.Dot(_u1, v1);
-				float force = -Settings.FORCE_INV_SCALE(step.Inv_Dt) * _limitMass1 * Cdot;
-				float oldForce = _limitForce1;
-				_limitForce1 = Box2DXMath.Max(0.0f, _limitForce1 + force);
-				force = _limitForce1 - oldForce;
+				float impulse = -_limitMass1 * Cdot;
+				float oldImpulse = _limitImpulse1;
+				_limitImpulse1 = Box2DX.Common.Math.Max(0.0f, _limitImpulse1 + impulse);
+				impulse = _limitImpulse1 - oldImpulse;
 
-				Vec2 P1 = -Settings.FORCE_SCALE(step.Dt) * force * _u1;
+				Vec2 P1 = -impulse * _u1;
 				b1._linearVelocity += b1._invMass * P1;
 				b1._angularVelocity += b1._invI * Vec2.Cross(r1, P1);
 			}
@@ -433,18 +430,18 @@ namespace Box2DX.Dynamics
 				Vec2 v2 = b2._linearVelocity + Vec2.Cross(b2._angularVelocity, r2);
 
 				float Cdot = -Vec2.Dot(_u2, v2);
-				float force = -Settings.FORCE_INV_SCALE(step.Inv_Dt) * _limitMass2 * Cdot;
-				float oldForce = _limitForce2;
-				_limitForce2 = Box2DXMath.Max(0.0f, _limitForce2 + force);
-				force = _limitForce2 - oldForce;
+				float impulse = -_limitMass2 * Cdot;
+				float oldImpulse = _limitImpulse2;
+				_limitImpulse2 = Box2DX.Common.Math.Max(0.0f, _limitImpulse2 + impulse);
+				impulse = _limitImpulse2 - oldImpulse;
 
-				Vec2 P2 = -Settings.FORCE_SCALE(step.Dt) * force * _u2;
+				Vec2 P2 = -impulse * _u2;
 				b2._linearVelocity += b2._invMass * P2;
 				b2._angularVelocity += b2._invI * Vec2.Cross(r2, P2);
 			}
 		}
 
-		internal override bool SolvePositionConstraints()
+		internal override bool SolvePositionConstraints(float baumgarte)
 		{
 			Body b1 = _body1;
 			Body b2 = _body2;
@@ -492,9 +489,6 @@ namespace Box2DX.Dynamics
 
 				C = Box2DXMath.Clamp(C + Settings.LinearSlop, -Settings.MaxLinearCorrection, 0.0f);
 				float impulse = -_pulleyMass * C;
-				float oldImpulse = _positionImpulse;
-				_positionImpulse = Box2DXMath.Max(0.0f, _positionImpulse + impulse);
-				impulse = _positionImpulse - oldImpulse;
 
 				Vec2 P1 = -impulse * _u1;
 				Vec2 P2 = -_ratio * impulse * _u2;
@@ -529,9 +523,6 @@ namespace Box2DX.Dynamics
 				linearError = Box2DXMath.Max(linearError, -C);
 				C = Box2DXMath.Clamp(C + Settings.LinearSlop, -Settings.MaxLinearCorrection, 0.0f);
 				float impulse = -_limitMass1 * C;
-				float oldLimitPositionImpulse = _limitPositionImpulse1;
-				_limitPositionImpulse1 = Box2DXMath.Max(0.0f, _limitPositionImpulse1 + impulse);
-				impulse = _limitPositionImpulse1 - oldLimitPositionImpulse;
 
 				Vec2 P1 = -impulse * _u1;
 				b1._sweep.C += b1._invMass * P1;
@@ -561,9 +552,6 @@ namespace Box2DX.Dynamics
 				linearError = Box2DXMath.Max(linearError, -C);
 				C = Box2DXMath.Clamp(C + Settings.LinearSlop, -Settings.MaxLinearCorrection, 0.0f);
 				float impulse = -_limitMass2 * C;
-				float oldLimitPositionImpulse = _limitPositionImpulse2;
-				_limitPositionImpulse2 = Box2DXMath.Max(0.0f, _limitPositionImpulse2 + impulse);
-				impulse = _limitPositionImpulse2 - oldLimitPositionImpulse;
 
 				Vec2 P2 = -impulse * _u2;
 				b2._sweep.C += b2._invMass * P2;
