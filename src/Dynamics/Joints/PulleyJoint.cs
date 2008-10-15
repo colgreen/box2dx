@@ -196,18 +196,15 @@ namespace Box2DX.Dynamics
 			get { return _body2.GetWorldPoint(_localAnchor2); }
 		}
 
-		public override Vec2 ReactionForce
+		public override Vec2 GetReactionForce(float inv_dt)
 		{
-			get
-			{
-				Vec2 F = Settings.FORCE_SCALE(_force) * _u2;
-				return F;
-			}
+			Vec2 F = Settings.FORCE_SCALE(_force) * _u2;
+			return F;
 		}
 
-		public override float ReactionTorque
+		public override float GetReactionTorque(float inv_dt)
 		{
-			get { return 0.0f; }
+			return 0.0f;
 		}
 
 		/// <summary>

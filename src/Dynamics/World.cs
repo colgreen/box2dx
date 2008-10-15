@@ -1155,15 +1155,15 @@ namespace Box2DX.Dynamics
 					break;
 
 				case JointType.PulleyJoint:
-					{
-						PulleyJoint pulley = (PulleyJoint)joint;
-						Vec2 s1 = pulley.GroundAnchor1;
-						Vec2 s2 = pulley.GroundAnchor2;
-						_debugDraw.DrawSegment(s1, p1, color);
-						_debugDraw.DrawSegment(s2, p2, color);
-						_debugDraw.DrawSegment(s1, s2, color);
-					}
-					break;
+				{
+					PulleyJoint pulley = (PulleyJoint)joint;
+					Vec2 s1 = pulley.GroundAnchor1;
+					Vec2 s2 = pulley.GroundAnchor2;
+					_debugDraw.DrawSegment(s1, p1, color);
+					_debugDraw.DrawSegment(s2, p2, color);
+					_debugDraw.DrawSegment(s1, s2, color);
+				}
+				break;
 
 				case JointType.MouseJoint:
 					// don't draw this

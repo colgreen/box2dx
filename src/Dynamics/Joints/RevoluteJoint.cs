@@ -179,14 +179,14 @@ namespace Box2DX.Dynamics
 			get { return _body2.GetWorldPoint(_localAnchor2); }
 		}
 
-		public override Vec2 ReactionForce
+		public override Vec2 GetReactionForce(float inv_dt)
 		{
-			get { return Settings.FORCE_SCALE(1.0f) * _pivotForce; }
+			return Settings.FORCE_SCALE(1.0f) * _pivotForce;
 		}
 
-		public override float ReactionTorque
+		public override float GetReactionTorque(float inv_dt)
 		{
-			get { return _limitForce; }
+			return _limitForce;
 		}
 
 		/// <summary>

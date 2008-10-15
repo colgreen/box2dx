@@ -65,10 +65,6 @@ namespace Box2DX.Dynamics
 		/// <summary>
 		/// Initialize the bodies, anchors, and length using the world anchors.
 		/// </summary>
-		/// <param name="body1"></param>
-		/// <param name="body2"></param>
-		/// <param name="anchor1"></param>
-		/// <param name="anchor2"></param>
 		public void Initialize(Body body1, Body body2, Vec2 anchor1, Vec2 anchor2)
 		{
 			Body1 = body1;
@@ -133,14 +129,14 @@ namespace Box2DX.Dynamics
 			get { return _body2.GetWorldPoint(_localAnchor2);}
 		}
 
-		public override Vec2 ReactionForce
+		public override Vec2 GetReactionForce(float inv_dt)
 		{
-			get { return (_inv_dt * _impulse) * _u; }
+			return (inv_dt * _impulse) * _u;
 		}
 
-		public override float ReactionTorque
+		public override float GetReactionTorque(float inv_dt)
 		{
-			get { return 0.0f; }
+			return 0.0f;
 		}
 
 		public DistanceJoint(DistanceJointDef def)
@@ -154,13 +150,10 @@ namespace Box2DX.Dynamics
 			_impulse = 0.0f;
 			_gamma = 0.0f;
 			_bias = 0.0f;
-			_inv_dt = 0.0f;
 		}
 
 		internal override void InitVelocityConstraints(TimeStep step)
 		{
-			_inv_dt = step.Inv_Dt;
-
 			Body b1 = _body1;
 			Body b2 = _body2;
 
@@ -208,6 +201,7 @@ namespace Box2DX.Dynamics
 
 			if (step.WarmStarting)
 			{
+				//Scale the inpulse to support a variable timestep.
 				_impulse *= step.DtRatio;
 				Vec2 P = _impulse * _u;
 				b1._linearVelocity -= b1._invMass * P;
@@ -221,10 +215,11 @@ namespace Box2DX.Dynamics
 			}
 		}
 
-		internal override bool SolvePositionConstraints()
+		internal override bool SolvePositionConstraints(float baumgarte)
 		{
 			if (_frequencyHz > 0.0f)
 			{
+				//There is no possition correction for soft distace constraint.
 				return true;
 			}
 
