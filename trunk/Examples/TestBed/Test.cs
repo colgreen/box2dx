@@ -215,6 +215,7 @@ namespace TestBed
 			new TestEntry("Simple Test", SimpleTest.Create),
 			new TestEntry("Line Joint Test", LineJoint.Create),
 			new TestEntry("Pyramid", Pyramid.Create),
+			new TestEntry("Prismatic", Prismatic.Create),
 			new TestEntry("Theo Jansen's Walker", TheoJansen.Create),
 			//new TestEntry("Contact Callback Test", ContactCB.Create),
 			new TestEntry("Polygon Shapes", PolyShapes.Create),
