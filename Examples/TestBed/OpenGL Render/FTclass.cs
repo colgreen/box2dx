@@ -164,7 +164,7 @@ namespace ISE
 		{
 			// We begin by creating a library pointer            
 			if (libptr == IntPtr.Zero)
-			{
+			{	
 				int ret = FT.FT_Init_FreeType(out libptr);
 
 				if (ret != 0)
