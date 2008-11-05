@@ -402,6 +402,7 @@ namespace Box2DX.Dynamics
 			_motorSpeed = def.MotorSpeed;
 			_enableLimit = def.EnableLimit;
 			_enableMotor = def.EnableMotor;
+			_limitState = LimitState.InactiveLimit;
 
 			_axis.SetZero();
 			_perp.SetZero();
@@ -411,6 +412,10 @@ namespace Box2DX.Dynamics
 		{
 			Body b1 = _body1;
 			Body b2 = _body2;
+
+			// You cannot create a prismatic joint between bodies that
+			// both have fixed rotation.
+			Box2DXDebug.Assert(b1._invI > 0.0f || b2._invI > 0.0f);
 
 			_localCenter1 = b1.GetLocalCenter();
 			_localCenter2 = b2.GetLocalCenter();
@@ -490,6 +495,10 @@ namespace Box2DX.Dynamics
 					_limitState = LimitState.InactiveLimit;
 					_impulse.Z = 0.0f;
 				}
+			}
+			else
+			{
+				_limitState = LimitState.InactiveLimit;
 			}
 
 			if (_enableMotor == false)
