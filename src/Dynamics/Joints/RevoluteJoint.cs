@@ -159,10 +159,6 @@ namespace Box2DX.Dynamics
 		public float _upperAngle;
 		public LimitState _limitState;
 
-#if B2_TOI_JOINTS
-		publiv Vector2 _lastWarmStartingPivotForce;
-#endif
-
 		public override Vec2 Anchor1
 		{
 			get { return _body1.GetWorldPoint(_localAnchor1); }
@@ -323,12 +319,20 @@ namespace Box2DX.Dynamics
 			_motorSpeed = def.MotorSpeed;
 			_enableLimit = def.EnableLimit;
 			_enableMotor = def.EnableMotor;
+			_limitState = LimitState.InactiveLimit;
 		}
 
 		internal override void InitVelocityConstraints(TimeStep step)
 		{
 			Body b1 = _body1;
 			Body b2 = _body2;
+
+			if (_enableMotor || _enableLimit)
+			{
+				// You cannot create a rotation limit between bodies that
+				// both have fixed rotation.
+				Box2DXDebug.Assert(b1._invI > 0.0f || b2._invI > 0.0f);
+			}
 
 			// Compute the effective mass matrix.
 			Vec2 r1 = Box2DXMath.Mul(b1.GetXForm().R, _localAnchor1 - b1.GetLocalCenter());
@@ -362,7 +366,7 @@ namespace Box2DX.Dynamics
 			{
 				_motorImpulse = 0.0f;
 			}
-			
+
 			if (_enableLimit)
 			{
 				float jointAngle = b2._sweep.A - b1._sweep.A - _referenceAngle;
@@ -391,6 +395,10 @@ namespace Box2DX.Dynamics
 					_limitState = LimitState.InactiveLimit;
 					_impulse.Z = 0.0f;
 				}
+			}
+			else
+			{
+				_limitState = LimitState.InactiveLimit;
 			}
 
 			if (step.WarmStarting)
@@ -427,6 +435,7 @@ namespace Box2DX.Dynamics
 			float m1 = b1._invMass, m2 = b2._invMass;
 			float i1 = b1._invI, i2 = b2._invI;
 
+			//Solve motor constraint.
 			if (_enableMotor && _limitState != LimitState.EqualLimits)
 			{
 				float Cdot = w2 - w1 - _motorSpeed;
@@ -440,6 +449,7 @@ namespace Box2DX.Dynamics
 				w2 += i2 * impulse;
 			}
 
+			//Solve limit constraint.
 			if (_enableLimit && _limitState != LimitState.InactiveLimit)
 			{
 				Vec2 r1 = Box2DXMath.Mul(b1.GetXForm().R, _localAnchor1 - b1.GetLocalCenter());

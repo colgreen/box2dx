@@ -220,6 +220,7 @@ namespace Box2DX.Dynamics
 			_motorSpeed = def.motorSpeed;
 			_enableLimit = def.enableLimit;
 			_enableMotor = def.enableMotor;
+			_limitState = LimitState.InactiveLimit;
 
 			_axis.SetZero();
 			_perp.SetZero();
@@ -465,6 +466,10 @@ namespace Box2DX.Dynamics
 					_limitState = LimitState.InactiveLimit;
 					_impulse.Y = 0.0f;
 				}
+			}
+			else
+			{
+				_limitState = LimitState.InactiveLimit;
 			}
 
 			if (_enableMotor == false)
