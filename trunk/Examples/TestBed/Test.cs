@@ -49,12 +49,13 @@ namespace TestBed
 		public int drawContactNormals;
 		public int drawContactForces;
 		public int drawFrictionForces;
+		public int drawController;
 		public int drawCOMs;
 		public int drawStats;
 		public int enableWarmStarting;
 		public int enableTOI;
 		public int pause;
-		public int singleStep;
+		public int singleStep;		
 
 		public Settings()
 		{
@@ -77,6 +78,7 @@ namespace TestBed
 			enableTOI = 1;
 			pause = 0;
 			singleStep = 0;
+			drawController = 1;
 		}
 	}
 
@@ -245,7 +247,8 @@ namespace TestBed
 			new TestEntry("Broad Phase", BroadPhaseTest.Create),
 			new TestEntry("PolyCollision", PolyCollision.Create),
 			new TestEntry("Elastic Body", ElasticBody.Create),
-			new TestEntry("Raycast Test", RaycastTest.Create)
+			new TestEntry("Raycast Test", RaycastTest.Create),
+			new TestEntry("Buoyancy", Buoyancy.Create)
 		};
 
 		public static int k_maxContactPoints = 2048;
@@ -424,6 +427,7 @@ namespace TestBed
 			flags += (uint)settings.drawOBBs * (uint)DebugDraw.DrawFlags.Obb;
 			flags += (uint)settings.drawPairs * (uint)DebugDraw.DrawFlags.Pair;
 			flags += (uint)settings.drawCOMs * (uint)DebugDraw.DrawFlags.CenterOfMass;
+			flags += (uint)settings.drawController * (uint)DebugDraw.DrawFlags.Controller;
 			_debugDraw.Flags = (DebugDraw.DrawFlags)flags;
 
 			_world.SetWarmStarting(settings.enableWarmStarting > 0);

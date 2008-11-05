@@ -150,7 +150,7 @@ namespace Box2DX.Collision
 		public Vec2 Centroid(XForm xf)
 		{
 			return Common.Math.Mul(xf, _centroid);
-		}		
+		}
 
 		/// <summary>
 		/// Get the support point in the given world direction.
@@ -280,7 +280,7 @@ namespace Box2DX.Collision
 				Vec2 d = _coreVertices[i] - center;
 				_sweepRadius = Common.Math.Max(_sweepRadius, d.Length());
 			}
-		}						
+		}
 
 		public override bool TestPoint(XForm xf, Vec2 p)
 		{
@@ -470,6 +470,128 @@ namespace Box2DX.Collision
 
 			// Inertia tensor relative to the local origin.
 			massData.I = _density * I;
+		}
+
+		public override float ComputeSubmergedArea(Vec2 normal, float offset, XForm xf, out Vec2 c)
+		{
+			//Transform plane into shape co-ordinates
+			Vec2 normalL = Box2DX.Common.Math.MulT(xf.R, normal);
+			float offsetL = offset - Vec2.Dot(normal, xf.Position);
+
+			float[] depths = new float[Box2DX.Common.Settings.MaxPolygonVertices];
+			int diveCount = 0;
+			int intoIndex = -1;
+			int outoIndex = -1;
+
+			bool lastSubmerged = false;
+			int i;
+			for (i = 0; i < _vertexCount; i++)
+			{
+				depths[i] = Vec2.Dot(normalL, _vertices[i]) - offsetL;
+				bool isSubmerged = depths[i] < -Box2DX.Common.Settings.FLT_EPSILON;
+				if (i > 0)
+				{
+					if (isSubmerged)
+					{
+						if (!lastSubmerged)
+						{
+							intoIndex = i - 1;
+							diveCount++;
+						}
+					}
+					else
+					{
+						if (lastSubmerged)
+						{
+							outoIndex = i - 1;
+							diveCount++;
+						}
+					}
+				}
+				lastSubmerged = isSubmerged;
+			}
+			switch (diveCount)
+			{
+				case 0:
+					if (lastSubmerged)
+					{
+						//Completely submerged
+						MassData md;
+						ComputeMass(out md);
+						c = Box2DX.Common.Math.Mul(xf, md.Center);
+						return md.Mass / _density;
+					}
+					else
+					{
+						//Completely dry
+						c = new Vec2();
+						return 0;
+					}
+					break;
+				case 1:
+					if (intoIndex == -1)
+					{
+						intoIndex = _vertexCount - 1;
+					}
+					else
+					{
+						outoIndex = _vertexCount - 1;
+					}
+					break;
+			}
+			int intoIndex2 = (intoIndex + 1) % _vertexCount;
+			int outoIndex2 = (outoIndex + 1) % _vertexCount;
+
+			float intoLambda = (0 - depths[intoIndex]) / (depths[intoIndex2] - depths[intoIndex]);
+			float outoLambda = (0 - depths[outoIndex]) / (depths[outoIndex2] - depths[outoIndex]);
+
+			Vec2 intoVec = new Vec2(_vertices[intoIndex].X * (1 - intoLambda) + _vertices[intoIndex2].X * intoLambda,
+							_vertices[intoIndex].Y * (1 - intoLambda) + _vertices[intoIndex2].Y * intoLambda);
+			Vec2 outoVec = new Vec2(_vertices[outoIndex].X * (1 - outoLambda) + _vertices[outoIndex2].X * outoLambda,
+							_vertices[outoIndex].Y * (1 - outoLambda) + _vertices[outoIndex2].Y * outoLambda);
+
+			//Initialize accumulator
+			float area = 0;
+			Vec2 center = new Vec2(0, 0);
+			Vec2 p2 = _vertices[intoIndex2];
+			Vec2 p3;
+
+			float k_inv3 = 1.0f / 3.0f;
+
+			//An awkward loop from intoIndex2+1 to outIndex2
+			i = intoIndex2;
+			while (i != outoIndex2)
+			{
+				i = (i + 1) % _vertexCount;
+				if (i == outoIndex2)
+					p3 = outoVec;
+				else
+					p3 = _vertices[i];
+				//Add the triangle formed by intoVec,p2,p3
+				{
+					Vec2 e1 = p2 - intoVec;
+					Vec2 e2 = p3 - intoVec;
+
+					float D = Vec2.Cross(e1, e2);
+
+					float triangleArea = 0.5f * D;
+
+					area += triangleArea;
+
+					// Area weighted centroid
+					center += triangleArea * k_inv3 * (intoVec + p2 + p3);
+
+				}
+				//
+				p2 = p3;
+			}
+
+			//Normalize and transform centroid
+			center *= 1.0f / area;
+
+			c = Box2DX.Common.Math.Mul(xf, center);
+
+			return area;
 		}
 
 		public static Vec2 ComputeCentroid(Vec2[] vs, int count)

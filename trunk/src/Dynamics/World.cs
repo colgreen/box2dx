@@ -35,7 +35,7 @@ namespace Box2DX.Dynamics
 		public float DtRatio;	// dt * inv_dt0
 		public int VelocityIterations;
 		public int PositionIterations;
-		public bool WarmStarting;		
+		public bool WarmStarting;
 	}
 
 	/// <summary>
@@ -63,6 +63,9 @@ namespace Box2DX.Dynamics
 		private int _bodyCount;
 		internal int _contactCount;
 		private int _jointCount;
+
+		private Controllers.Controller _controllerList;
+		private int _controllerCount;
 
 		private Vec2 _gravity;
 		/// <summary>
@@ -437,6 +440,32 @@ namespace Box2DX.Dynamics
 			}
 		}
 
+		public Controllers.Controller AddController(Controllers.Controller def)
+		{
+			def._next = _controllerList;
+			def._prev = null;
+			if (_controllerList != null)
+				_controllerList._prev = def;
+			_controllerList = def;
+			++_controllerCount;
+
+			def._world = this;
+
+			return def;
+		}
+
+		public void RemoveController(Controllers.Controller controller)
+		{
+			Box2DXDebug.Assert(_controllerCount > 0);
+			if (controller._next != null)
+				controller._next._prev = controller._prev;
+			if (controller._prev != null)
+				controller._prev._next = controller._next;
+			if (controller == _controllerList)
+				_controllerList = controller._next;
+			--_controllerCount;
+		}
+
 		/// <summary>
 		/// The world provides a single static ground body with no collision shapes.
 		/// You can use this to simplify the creation of joints and static shapes.
@@ -638,7 +667,7 @@ namespace Box2DX.Dynamics
 		public Shape RaycastOne(Segment segment, out float lambda, out Vec2 normal, bool solidShapes, object userData)
 		{
 			lambda = 0;
-			normal = new Vec2(0,0);
+			normal = new Vec2(0, 0);
 
 			int maxCount = 1;
 			Shape[] shape = new Shape[maxCount];
@@ -661,6 +690,12 @@ namespace Box2DX.Dynamics
 		// Find islands, integrate and solve constraints, solve position constraints
 		private void Solve(TimeStep step)
 		{
+			// Step all controlls
+			for (Controllers.Controller controller = _controllerList; controller != null; controller = controller._next)
+			{
+				controller.Step(step);
+			}
+
 			// Size the island for the worst case.
 			Island island = new Island(_bodyCount, _contactCount, _jointCount, _contactListener);
 
@@ -1155,15 +1190,15 @@ namespace Box2DX.Dynamics
 					break;
 
 				case JointType.PulleyJoint:
-				{
-					PulleyJoint pulley = (PulleyJoint)joint;
-					Vec2 s1 = pulley.GroundAnchor1;
-					Vec2 s2 = pulley.GroundAnchor2;
-					_debugDraw.DrawSegment(s1, p1, color);
-					_debugDraw.DrawSegment(s2, p2, color);
-					_debugDraw.DrawSegment(s1, s2, color);
-				}
-				break;
+					{
+						PulleyJoint pulley = (PulleyJoint)joint;
+						Vec2 s1 = pulley.GroundAnchor1;
+						Vec2 s2 = pulley.GroundAnchor2;
+						_debugDraw.DrawSegment(s1, p1, color);
+						_debugDraw.DrawSegment(s2, p2, color);
+						_debugDraw.DrawSegment(s1, s2, color);
+					}
+					break;
 
 				case JointType.MouseJoint:
 					// don't draw this
@@ -1272,6 +1307,14 @@ namespace Box2DX.Dynamics
 					{
 						DrawJoint(j);
 					}
+				}
+			}
+
+			if ((flags & DebugDraw.DrawFlags.Controller) != 0)
+			{
+				for (Controllers.Controller c = _controllerList; c != null; c = c.GetNext())
+				{
+					c.Draw(_debugDraw);
 				}
 			}
 
@@ -1405,7 +1448,7 @@ namespace Box2DX.Dynamics
 			World world = body.GetWorld();
 			XForm xf = body.GetXForm();
 
-			if (world._contactFilter!=null && !world._contactFilter.RayCollide(world._raycastUserData, shape))
+			if (world._contactFilter != null && !world._contactFilter.RayCollide(world._raycastUserData, shape))
 				return -1;
 
 			float lambda;

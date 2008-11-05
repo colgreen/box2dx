@@ -171,7 +171,8 @@ namespace Box2DX.Dynamics
 			Aabb = 0x0008, // draw axis aligned bounding boxes
 			Obb = 0x0010, // draw oriented bounding boxes
 			Pair = 0x0020, // draw broad-phase pairs
-			CenterOfMass = 0x0040 // draw center of mass frame
+			CenterOfMass = 0x0040, // draw center of mass frame
+			Controller = 0x0080 // draw center of mass frame
 		}
 
 		protected DrawFlags _drawFlags;

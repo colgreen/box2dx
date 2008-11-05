@@ -192,6 +192,7 @@ namespace Box2DX.Collision
 		public float GetSweepRadius() { return _sweepRadius; }
 
 		protected float _density;
+		public float Density { get { return _density; } set { _density = value; } }
 
 		protected float _friction;
 		public float Friction { get { return _friction; } set { _friction = value; } }
@@ -286,6 +287,16 @@ namespace Box2DX.Collision
 		/// </summary>
 		/// <param name="massData">Returns the mass data for this shape</param>
 		public abstract void ComputeMass(out MassData massData);
+
+		/// <summary>
+		/// Compute the volume and centroid of this shape intersected with a half plane.
+		/// </summary>
+		/// <param name="normal">Normal the surface normal.</param>
+		/// <param name="offset">Offset the surface offset along normal.</param>
+		/// <param name="xf">The shape transform.</param>
+		/// <param name="c">Returns the centroid.</param>
+		/// <returns>The total volume less than offset along normal.</returns>
+		public abstract float ComputeSubmergedArea(Vec2 normal, float offset, XForm xf, out Vec2 c);
 
 		internal abstract void UpdateSweepRadius(Vec2 center);
 
