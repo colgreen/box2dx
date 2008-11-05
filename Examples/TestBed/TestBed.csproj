@@ -98,6 +98,7 @@
     <Compile Include="Tests\BroadPhaseTest.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Tests\Buoyancy.cs" />
     <Compile Include="Tests\Car.cs" />
     <Compile Include="Tests\CCDTest.cs" />
     <Compile Include="Tests\Chain.cs" />

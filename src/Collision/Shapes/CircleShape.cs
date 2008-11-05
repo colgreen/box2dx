@@ -160,6 +160,36 @@ namespace Box2DX.Collision
 			massData.I = massData.Mass * (0.5f * _radius * _radius + Vec2.Dot(_localPosition, _localPosition));
 		}
 
+		public override float ComputeSubmergedArea(Vec2 normal, float offset, XForm xf, out Vec2 c)
+		{
+			Vec2 p = Box2DX.Common.Math.Mul(xf, _localPosition);
+			float l = -(Vec2.Dot(normal, p) - offset);
+			if (l < -_radius + Box2DX.Common.Settings.FLT_EPSILON)
+			{
+				//Completely dry
+				c = new Vec2();
+				return 0;
+			}
+			if (l > _radius)
+			{
+				//Completely wet
+				c = p;
+				return Box2DX.Common.Settings.Pi * _radius * _radius;
+			}
+
+			//Magic
+			float r2 = _radius * _radius;
+			float l2 = l * l;
+			float area = r2 * ((float)System.Math.Asin(l / _radius) + Box2DX.Common.Settings.Pi / 2) +
+				l * Box2DX.Common.Math.Sqrt(r2 - l2);
+			float com = -2.0f / 3.0f * (float)System.Math.Pow(r2 - l2, 1.5f) / area;
+
+			c.X = p.X + normal.X * com;
+			c.Y = p.Y + normal.Y * com;
+
+			return area;
+		}
+
 		/// <summary>
 		/// Get the local position of this circle in its parent body.
 		/// </summary>

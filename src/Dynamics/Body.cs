@@ -166,6 +166,8 @@ namespace Box2DX.Dynamics
 		internal JointEdge _jointList;
 		internal ContactEdge _contactList;
 
+		internal Box2DX.Dynamics.Controllers.ControllerEdge _controllerList;
+
 		internal float _mass;
 		internal float _invMass;
 		private float _I;
