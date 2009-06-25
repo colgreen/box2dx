@@ -74,7 +74,7 @@ namespace Box2DX.Common
 		public float Normalize()
 		{
 			float length = Length();
-			if (length < Math.FLOAT32_EPSILON)
+			if (length < Settings.FLT_EPSILON)
 			{
 				return 0.0f;
 			}
@@ -138,7 +138,7 @@ namespace Box2DX.Common
 
 		public static bool operator !=(Vec2 a, Vec2 b)
 		{
-			return a.X != b.X && a.Y != b.Y;
+			return a.X != b.X || a.Y != b.Y;
 		}
 
 		public static Vec2 Zero { get { return new Vec2(0, 0); } }
