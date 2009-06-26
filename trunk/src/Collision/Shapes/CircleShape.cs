@@ -1,6 +1,6 @@
 ﻿/*
-  Box2DX Copyright (c) 2008 Ihar Kalasouski http://code.google.com/p/box2dx
-  Box2D original C++ version Copyright (c) 2006-2007 Erin Catto http://www.gphysics.com
+  Box2DX Copyright (c) 2009 Ihar Kalasouski http://code.google.com/p/box2dx
+  Box2D original C++ version Copyright (c) 2006-2009 Erin Catto http://www.gphysics.com
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -28,53 +28,21 @@ using Box2DX.Common;
 namespace Box2DX.Collision
 {
 	/// <summary>
-	/// This structure is used to build circle shapes.
-	/// </summary>
-	public class CircleDef : ShapeDef
-	{
-		public Vec2 LocalPosition;
-		public float Radius;
-
-		public CircleDef()
-		{
-			Type = ShapeType.CircleShape;
-			LocalPosition = Vec2.Zero;
-			Radius = 1.0f;
-		}
-	}
-
-	/// <summary>
 	/// A circle shape.
 	/// </summary>
 	public class CircleShape : Shape
 	{
-		// Local position in parent body
-		private Vec2 _localPosition;
-		// Radius of this circle.
-		private float _radius;
+		// Position
+		private Vec2 _position;
 
-		internal CircleShape(ShapeDef def)
-			: base(def)
+		public CircleShape()			
 		{
-			Box2DXDebug.Assert(def.Type == ShapeType.CircleShape);
-			CircleDef circleDef = (CircleDef)def;
-
 			_type = ShapeType.CircleShape;
-			_localPosition = circleDef.LocalPosition;
-			_radius = circleDef.Radius;
-		}
-
-		internal override void UpdateSweepRadius(Vec2 center)
-		{
-			// Update the sweep radius (maximum radius) as measured from
-			// a local center point.
-			Vec2 d = _localPosition - center;
-			_sweepRadius = d.Length() + _radius - Settings.ToiSlop;
 		}
 
 		public override bool TestPoint(XForm transform, Vec2 p)
 		{
-			Vec2 center = transform.Position + Common.Math.Mul(transform.R, _localPosition);
+			Vec2 center = transform.Position + Common.Math.Mul(transform.R, _position);
 			Vec2 d = p - center;
 			return Vec2.Dot(d, d) <= _radius * _radius;
 		}
@@ -88,7 +56,7 @@ namespace Box2DX.Collision
 			lambda = 0f;
 			normal = Vec2.Zero;
 
-			Vec2 position = transform.Position + Common.Math.Mul(transform.R, _localPosition);
+			Vec2 position = transform.Position + Common.Math.Mul(transform.R, _position);
 			Vec2 s = segment.P1 - position;
 			float b = Vec2.Dot(s, s) - _radius * _radius;
 
@@ -131,38 +99,30 @@ namespace Box2DX.Collision
 		{
 			aabb = new AABB();
 
-			Vec2 p = transform.Position + Common.Math.Mul(transform.R, _localPosition);
+			Vec2 p = transform.Position + Common.Math.Mul(transform.R, _position);
 			aabb.LowerBound.Set(p.X - _radius, p.Y - _radius);
 			aabb.UpperBound.Set(p.X + _radius, p.Y + _radius);
 		}
 
-		public override void ComputeSweptAABB(out AABB aabb, XForm transform1, XForm transform2)
-		{
-			aabb = new AABB();
-
-			Vec2 p1 = transform1.Position + Common.Math.Mul(transform1.R, _localPosition);
-			Vec2 p2 = transform2.Position + Common.Math.Mul(transform2.R, _localPosition);
-			Vec2 lower = Common.Math.Min(p1, p2);
-			Vec2 upper = Common.Math.Max(p1, p2);
-
-			aabb.LowerBound.Set(lower.X - _radius, lower.Y - _radius);
-			aabb.UpperBound.Set(upper.X + _radius, upper.Y + _radius);
-		}
-
-		public override void ComputeMass(out MassData massData)
+		public override void ComputeMass(out MassData massData, float density)
 		{
 			massData = new MassData();
 
-			massData.Mass = _density * Settings.Pi * _radius * _radius;
-			massData.Center = _localPosition;
+			massData.Mass = density * Settings.Pi * _radius * _radius;
+			massData.Center = _position;
 
 			// inertia about the local origin
-			massData.I = massData.Mass * (0.5f * _radius * _radius + Vec2.Dot(_localPosition, _localPosition));
+			massData.I = massData.Mass * (0.5f * _radius * _radius + Vec2.Dot(_position, _position));
+		}
+
+		public override float ComputeSweepRadius(Vec2 pivot)
+		{
+			return Vec2.Distance(_position, pivot);
 		}
 
 		public override float ComputeSubmergedArea(Vec2 normal, float offset, XForm xf, out Vec2 c)
 		{
-			Vec2 p = Box2DX.Common.Math.Mul(xf, _localPosition);
+			Vec2 p = Box2DX.Common.Math.Mul(xf, _position);
 			float l = -(Vec2.Dot(normal, p) - offset);
 			if (l < -_radius + Box2DX.Common.Settings.FLT_EPSILON)
 			{
@@ -191,21 +151,33 @@ namespace Box2DX.Collision
 		}
 
 		/// <summary>
-		/// Get the local position of this circle in its parent body.
+		/// Get the supporting vertex index in the given direction.
 		/// </summary>
-		/// <returns></returns>
-		public Vec2 GetLocalPosition()
+		public int GetSupport(Vec2 d)
 		{
-			return _localPosition;
+			return 0;
 		}
 
 		/// <summary>
-		/// Get the radius of this circle.
+		/// Get the supporting vertex in the given direction.
 		/// </summary>
-		/// <returns></returns>
-		public float GetRadius()
+		public Vec2 GetSupportVertex(Vec2 d)
 		{
-			return _radius;
+			return _position;
 		}
+
+		/// <summary>
+		/// Get a vertex by index. Used by Distance.
+		/// </summary>
+		public Vec2 GetVertex(int index)
+		{
+			Box2DXDebug.Assert(index == 0);
+			return _position;
+		}
+
+		/// <summary>
+		/// Get the vertex count.
+		/// </summary>
+		public int VertexCount { get { return 1; } }
 	}
 }

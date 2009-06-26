@@ -271,7 +271,7 @@ namespace Box2DX.Dynamics
 				}
 
 				s0.DestroyProxy(_broadPhase);
-				Shape.Destroy(s0);
+				Shape.Destroy(ref s0);
 			}
 
 			// Remove world body list.

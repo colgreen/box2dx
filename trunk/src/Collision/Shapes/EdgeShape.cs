@@ -53,7 +53,7 @@ namespace Box2DX.Collision
 		public EdgeShape()
 		{
 			_type = ShapeType.EdgeShape;
-			_radius = b2_polygonRadius;
+			_radius = Settings.PolygonRadius;
 		}
 
 		public override void Dispose()
@@ -87,7 +87,7 @@ namespace Box2DX.Collision
 			return false;
 		}
 
-		public SegmentCollide TestSegment(XForm transform, out float lambda, out Vec2 normal, Segment segment, float maxLambda)
+		public override SegmentCollide TestSegment(XForm transform, out float lambda, out Vec2 normal, Segment segment, float maxLambda)
 		{
 			Vec2 r = segment.P2 - segment.P1;
 			Vec2 v1 = Common.Math.Mul(transform, _v1);
@@ -125,7 +125,7 @@ namespace Box2DX.Collision
 			return SegmentCollide.MissCollide;
 		}
 
-		public void ComputeAABB(ref AABB aabb, XForm transform)
+		public override void ComputeAABB(ref AABB aabb, XForm transform)
 		{
 			Vec2 v1 = Common.Math.Mul(transform, _v1);
 			Vec2 v2 = Common.Math.Mul(transform, _v2);
@@ -135,7 +135,7 @@ namespace Box2DX.Collision
 			aabb.UpperBound = Common.Math.Max(v1, v2) + r;
 		}
 
-		public void ComputeMass(ref MassData massData, float density)
+		public override void ComputeMass(ref MassData massData, float density)
 		{
 			massData.Mass = 0.0f;
 			massData.Center = _v1;
@@ -156,7 +156,7 @@ namespace Box2DX.Collision
 			_cornerConvex2 = convex;
 		}
 
-		public float ComputeSubmergedArea(Vec2 normal, float offset, XForm xf, out Vec2 c)
+		public override float ComputeSubmergedArea(Vec2 normal, float offset, XForm xf, out Vec2 c)
 		{
 			//Note that v0 is independent of any details of the specific edge
 			//We are relying on v0 being consistent between multiple edges of the same body
@@ -269,8 +269,8 @@ namespace Box2DX.Collision
 
 		public float ComputeSweepRadius(Vec2 pivot)
 		{
-			float ds1 = Collision.DistanceSquared(_v1, pivot);
-			float ds2 = Collision.DistanceSquared(_v2, pivot);
+			float ds1 = Vec2.DistanceSquared(_v1, pivot);
+			float ds2 = Vec2.DistanceSquared(_v2, pivot);
 			return Common.Math.Sqrt(Common.Math.Max(ds1, ds2));
 		}
 	}

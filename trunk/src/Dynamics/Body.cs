@@ -343,7 +343,7 @@ namespace Box2DX.Dynamics
 
 			--_shapeCount;
 
-			Shape.Destroy(shape);
+			Shape.Destroy(ref shape);
 		}
 
 		// TODO_ERIN adjust linear velocity and torque to account for movement of center.
