@@ -34,6 +34,7 @@ namespace Box2DX.Common
 		public static float FORCE_INV_SCALE2(x)	{return x>>7;}
 #else
 		public static readonly float FLT_EPSILON = 1.192092896e-07F;//smallest such that 1.0f+FLT_EPSILON != 1.0f
+		public static readonly float FLT_EPSILON_SQUARED = FLT_EPSILON * FLT_EPSILON;//smallest such that 1.0f+FLT_EPSILON != 1.0f
 		public static readonly float FLT_MAX = 3.402823466e+38F;
 		public static float FORCE_SCALE(float x) { return x; }
 		public static float FORCE_INV_SCALE(float x) { return x; }

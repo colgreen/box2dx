@@ -35,6 +35,15 @@ namespace Box2DX.Common
 		/// <summary>
 		/// Construct using coordinates.
 		/// </summary>
+		public Vec2(float x)
+		{
+			X = x;
+			Y = x;
+		}
+
+		/// <summary>
+		/// Construct using coordinates.
+		/// </summary>
 		public Vec2(float x, float y)
 		{
 			X = x;
