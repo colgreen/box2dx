@@ -43,7 +43,7 @@ namespace Box2DX.Common
 			xf = new XForm();
 
 			// center = p + R * LocalCenter
-			if (1.0f - T0 > Math.FLOAT32_EPSILON)
+			if (1.0f - T0 > Settings.FLT_EPSILON)
 			{
 				float alpha = (t - T0) / (1.0f - T0);
 				xf.Position = (1.0f - alpha) * C0 + alpha * C;
@@ -66,7 +66,7 @@ namespace Box2DX.Common
 		/// <param name="t">The new initial time.</param>
 		public void Advance(float t)
 		{
-			if (T0 < t && 1.0f - T0 > Math.FLOAT32_EPSILON)
+			if (T0 < t && 1.0f - T0 > Settings.FLT_EPSILON)
 			{
 				float alpha = (t - T0) / (1.0f - T0);
 				C0 = (1.0f - alpha) * C0 + alpha * C;

@@ -33,7 +33,7 @@ namespace Box2DX.Common
 		public static float	FORCE_SCALE2(x){ return x<<7;}
 		public static float FORCE_INV_SCALE2(x)	{return x>>7;}
 #else
-		public static readonly float FLT_EPSILON = 1.192092896e-07F;
+		public static readonly float FLT_EPSILON = 1.192092896e-07F;//smallest such that 1.0f+FLT_EPSILON != 1.0f
 		public static readonly float FLT_MAX = 3.402823466e+38F;
 		public static float FORCE_SCALE(float x) { return x; }
 		public static float FORCE_INV_SCALE(float x) { return x; }
@@ -62,6 +62,13 @@ namespace Box2DX.Common
 		/// chosen to be numerically significant, but visually insignificant.
 		/// </summary>
 		public static readonly float AngularSlop = 2.0f / 180.0f * Pi; // 2 degrees
+
+		/// <summary>
+		/// The radius of the polygon/edge shape skin. This should not be modified. Making
+		/// this smaller means polygons will have and insufficient for continuous collision.
+		/// Making it larger may create artifacts for vertex collision.
+		/// </summary>
+		public static readonly float PolygonRadius = 2.0f * LinearSlop;
 
 		/// <summary>
 		/// Continuous collision detection (CCD) works with core, shrunken shapes. This is amount

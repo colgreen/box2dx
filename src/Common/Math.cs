@@ -27,10 +27,6 @@ namespace Box2DX.Common
 {
 	public class Math
 	{
-		//public static float FLT_EPSILON = 1.192092896e-07f; //smallest such that 1.0f+FLT_EPSILON != 1.0f
-		public static readonly float FLOAT32_EPSILON = 1.192092896e-07f;
-		//public static float FLT_MAX = 3.402823466e+38F;
-		public static readonly float FLOAT32_MAX = 3.402823466e+38F;
 		public static readonly ushort USHRT_MAX = 0xffff;
 		public static readonly byte UCHAR_MAX = 0xff;
 		public static readonly int RAND_LIMIT = 32767;
