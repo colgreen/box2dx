@@ -136,5 +136,9 @@ namespace Box2DX.Collision
 		/// <param name="pivot">Pivot is the pivot point for rotation.</param>
 		/// <returns>The distance of the furthest point from the pivot.</returns>
 		public abstract float ComputeSweepRadius(Vec2 pivot);
+
+		public abstract Vec2 GetVertex(int index);
+
+		public abstract int GetSupport(Vec2 d);
 	}
 }

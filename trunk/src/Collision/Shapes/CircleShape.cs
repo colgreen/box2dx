@@ -153,7 +153,7 @@ namespace Box2DX.Collision
 		/// <summary>
 		/// Get the supporting vertex index in the given direction.
 		/// </summary>
-		public int GetSupport(Vec2 d)
+		public override int GetSupport(Vec2 d)
 		{
 			return 0;
 		}
@@ -169,7 +169,7 @@ namespace Box2DX.Collision
 		/// <summary>
 		/// Get a vertex by index. Used by Distance.
 		/// </summary>
-		public Vec2 GetVertex(int index)
+		public override Vec2 GetVertex(int index)
 		{
 			Box2DXDebug.Assert(index == 0);
 			return _position;
