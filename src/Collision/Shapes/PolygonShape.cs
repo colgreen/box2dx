@@ -487,12 +487,7 @@ namespace Box2DX.Collision
 			return bestIndex;
 		}
 
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="d"></param>
-		/// <returns></returns>
-		public Vec2 GetSupportVertex(Vec2 d)
+		public override Vec2 GetSupportVertex(Vec2 d)
 		{
 			int vCount = VertexCount;
 			int bestIndex = 0;
@@ -515,7 +510,7 @@ namespace Box2DX.Collision
 		/// </summary>
 		public int VertexCount { get { return _vertices.Length; } }
 
-		public Vec2 GetVertex(int index)
+		public override Vec2 GetVertex(int index)
 		{
 			Box2DXDebug.Assert(0 <= index && index < VertexCount);
 			return _vertices[index];
