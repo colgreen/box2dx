@@ -80,7 +80,7 @@ namespace Box2DX.Collision
 		#region Fields
 
 		protected ShapeType _type = ShapeType.UnknownShape;
-		protected float _radius;
+		internal float _radius;
 
 		#endregion Fields
 
