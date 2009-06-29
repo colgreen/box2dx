@@ -20,9 +20,6 @@
 */
 
 using System;
-using System.Collections.Generic;
-using System.Text;
-
 using Box2DX.Common;
 
 namespace Box2DX.Collision
@@ -48,6 +45,88 @@ namespace Box2DX.Collision
 
 			return true;
 		}
+
+		/// <summary>
+		/// Compute the point states given two manifolds. The states pertain to the transition from manifold1
+		/// to manifold2. So state1 is either persist or remove while state2 is either add or persist.
+		/// </summary>
+		public static void GetPointStates(PointState[/*b2_maxManifoldPoints*/] state1, PointState[/*b2_maxManifoldPoints*/] state2,
+					  Manifold manifold1, Manifold manifold2)
+		{
+			for (int i = 0; i < Common.Settings.MaxManifoldPoints; ++i)
+			{
+				state1[i] = PointState.NullState;
+				state2[i] = PointState.NullState;
+			}
+
+			// Detect persists and removes.
+			for (int i = 0; i < manifold1.PointCount; ++i)
+			{
+				ContactID id = manifold1.Points[i].ID;
+
+				state1[i] = PointState.RemoveState;
+
+				for (int j = 0; j < manifold2.PointCount; ++j)
+				{
+					if (manifold2.Points[j].ID.Key == id.Key)
+					{
+						state1[i] = PointState.PersistState;
+						break;
+					}
+				}
+			}
+
+			// Detect persists and adds.
+			for (int i = 0; i < manifold2.PointCount; ++i)
+			{
+				ContactID id = manifold2.Points[i].ID;
+
+				state2[i] = PointState.AddState;
+
+				for (int j = 0; j < manifold1.PointCount; ++j)
+				{
+					if (manifold1.Points[j].ID.Key == id.Key)
+					{
+						state2[i] = PointState.PersistState;
+						break;
+					}
+				}
+			}
+		}
+
+		// Sutherland-Hodgman clipping.
+		public static int ClipSegmentToLine(ClipVertex[/*2*/] vOut, ClipVertex[/*2*/] vIn, Vec2 normal, float offset)
+		{
+			// Start with no output points
+			int numOut = 0;
+
+			// Calculate the distance of end points to the line
+			float distance0 = Vec2.Dot(normal, vIn[0].V) - offset;
+			float distance1 = Vec2.Dot(normal, vIn[1].V) - offset;
+
+			// If the points are behind the plane
+			if (distance0 <= 0.0f) vOut[numOut++] = vIn[0];
+			if (distance1 <= 0.0f) vOut[numOut++] = vIn[1];
+
+			// If the points are on different sides of the plane
+			if (distance0 * distance1 < 0.0f)
+			{
+				// Find intersection point of edge and plane
+				float interp = distance0 / (distance0 - distance1);
+				vOut[numOut].V = vIn[0].V + interp * (vIn[1].V - vIn[0].V);
+				if (distance0 > 0.0f)
+				{
+					vOut[numOut].ID = vIn[0].ID;
+				}
+				else
+				{
+					vOut[numOut].ID = vIn[1].ID;
+				}
+				++numOut;
+			}
+
+			return numOut;
+		}
 	}
 
 	/// <summary>
@@ -58,22 +137,22 @@ namespace Box2DX.Collision
 		/// <summary>
 		/// The edge that defines the outward contact normal.
 		/// </summary>
-		public byte ReferenceEdge;
+		public Byte ReferenceEdge;
 
 		/// <summary>
 		/// The edge most anti-parallel to the reference edge.
 		/// </summary>
-		public byte IncidentEdge;
+		public Byte IncidentEdge;
 
 		/// <summary>
 		/// The vertex (0 or 1) on the incident edge that was clipped.
 		/// </summary>
-		public byte IncidentVertex;
+		public Byte IncidentVertex;
 
 		/// <summary>
 		/// A value of 1 indicates that the reference edge is on shape2.
 		/// </summary>
-		public byte Flip;
+		public Byte Flip;
 	}
 
 	/// <summary>
@@ -92,30 +171,24 @@ namespace Box2DX.Collision
 		public uint Key;
 	}
 
-#warning "CAS"
 	/// <summary>
 	/// A manifold point is a contact point belonging to a contact
 	/// manifold. It holds details related to the geometry and dynamics
 	/// of the contact points.
-	/// The point is stored in local coordinates because CCD
-	/// requires sub-stepping in which the separation is stale.
+	/// The local point usage depends on the manifold type:
+	/// -Circles: the local center of circleB
+	/// -FaceA: the local center of cirlceB or the clip point of polygonB
+	/// -FaceB: the clip point of polygonA
+	/// This structure is stored across time steps, so we keep it small.
+	/// Note: the impulses are used for internal caching and may not
+	/// provide reliable contact forces, especially for high speed collisions.
 	/// </summary>
 	public class ManifoldPoint
 	{
 		/// <summary>
-		/// Local position of the contact point in body1.
+		/// Usage depends on manifold type.
 		/// </summary>
-		public Vec2 LocalPoint1;
-
-		/// <summary>
-		/// Local position of the contact point in body2.
-		/// </summary>
-		public Vec2 LocalPoint2;
-
-		/// <summary>
-		/// The separation of the shapes along the normal vector.
-		/// </summary>
-		public float Separation;
+		public Vec2 LocalPoint;
 
 		/// <summary>
 		/// The non-penetration impulse.
@@ -135,9 +208,6 @@ namespace Box2DX.Collision
 		public ManifoldPoint Clone()
 		{
 			ManifoldPoint newPoint = new ManifoldPoint();
-			newPoint.LocalPoint1 = this.LocalPoint1;
-			newPoint.LocalPoint2 = this.LocalPoint2;
-			newPoint.Separation = this.Separation;
 			newPoint.NormalImpulse = this.NormalImpulse;
 			newPoint.TangentImpulse = this.TangentImpulse;
 			newPoint.ID = this.ID;
@@ -145,7 +215,13 @@ namespace Box2DX.Collision
 		}
 	}
 
-#warning "CAS"
+	public enum ManifoldType
+	{
+		Circles,
+		FaceA,
+		FaceB
+	}
+
 	/// <summary>
 	/// A manifold for two touching convex shapes.
 	/// </summary>
@@ -156,10 +232,14 @@ namespace Box2DX.Collision
 		/// </summary>
 		public ManifoldPoint[/*Settings.MaxManifoldPoints*/] Points = new ManifoldPoint[Settings.MaxManifoldPoints];
 
+		public Vec2 LocalPlaneNormal;
+
 		/// <summary>
-		/// The shared unit normal vector.
+		/// Usage depends on manifold type.
 		/// </summary>
-		public Vec2 Normal;
+		public Vec2 LocalPoint;
+
+		public ManifoldType Type;
 
 		/// <summary>
 		/// The number of manifold points.
@@ -175,7 +255,9 @@ namespace Box2DX.Collision
 		public Manifold Clone()
 		{
 			Manifold newManifold = new Manifold();
-			newManifold.Normal = this.Normal;
+			newManifold.LocalPlaneNormal = this.LocalPlaneNormal;
+			newManifold.LocalPoint = this.LocalPoint;
+			newManifold.Type = this.Type;
 			newManifold.PointCount = this.PointCount;
 			int pointCount = this.Points.Length;
 			ManifoldPoint[] tmp = new ManifoldPoint[pointCount];
@@ -211,11 +293,6 @@ namespace Box2DX.Collision
 		/// <summary>
 		/// Ray cast against this segment with another segment.        
 		/// </summary>
-		/// <param name="lambda"></param>
-		/// <param name="normal"></param>
-		/// <param name="segment"></param>
-		/// <param name="maxLambda"></param>
-		/// <returns></returns>
 		public bool TestSegment(out float lambda, out Vec2 normal, Segment segment, float maxLambda)
 		{
 			lambda = 0f;
@@ -271,6 +348,16 @@ namespace Box2DX.Collision
 	/// </summary>
 	public struct AABB
 	{
+		/// <summary>
+		/// The lower vertex.
+		/// </summary>
+		public Vec2 LowerBound;
+
+		/// <summary>
+		/// The upper vertex.
+		/// </summary>
+		public Vec2 UpperBound;
+
 		/// Verify that the bounds are sorted.
 		public bool IsValid
 		{
@@ -283,36 +370,251 @@ namespace Box2DX.Collision
 			}
 		}
 
+		/// Get the center of the AABB.
+		public Vec2 Center
+		{
+			get { return 0.5f * (LowerBound + UpperBound); }
+		}
+
+		/// Get the extents of the AABB (half-widths).
+		public Vec2 Extents
+		{
+			get { return 0.5f * (UpperBound - LowerBound); }
+		}
+
+		/// Combine two AABBs into this one.
+		public void Combine(AABB aabb1, AABB aabb2)
+		{
+			LowerBound = Common.Math.Min(aabb1.LowerBound, aabb2.LowerBound);
+			UpperBound = Common.Math.Max(aabb1.UpperBound, aabb2.UpperBound);
+		}
+
+		/// Does this aabb contain the provided AABB.
+		public bool Contains(AABB aabb)
+		{
+			bool result = LowerBound.X <= aabb.LowerBound.X;
+			result = result && LowerBound.Y <= aabb.LowerBound.Y;
+			result = result && aabb.UpperBound.X <= UpperBound.X;
+			result = result && aabb.UpperBound.Y <= UpperBound.Y;
+			return result;
+		}
 
 		/// <summary>
-		/// The lower vertex.
+		// From Real-time Collision Detection, p179.
 		/// </summary>
-		public Vec2 LowerBound;
+		public void RayCast(out RayCastOutput output, RayCastInput input)
+		{
+			float tmin = -Common.Settings.FLT_MAX;
+			float tmax = Common.Settings.FLT_MAX;
 
-		/// <summary>
-		/// The upper vertex.
-		/// </summary>
-		public Vec2 UpperBound;
+			output = new RayCastOutput();
+
+			output.Hit = false;
+
+			Vec2 p = input.P1;
+			Vec2 d = input.P2 - input.P1;
+			Vec2 absD = Common.Math.Abs(d);
+
+			Vec2 normal = new Vec2(0);
+
+			for (int i = 0; i < 2; ++i)
+			{
+				if (absD[i] < Common.Settings.FLT_EPSILON)
+				{
+					// Parallel.
+					if (p[i] < LowerBound[i] || UpperBound[i] < p[i])
+					{
+						return;
+					}
+				}
+				else
+				{
+					float inv_d = 1.0f / d[i];
+					float t1 = (LowerBound[i] - p[i]) * inv_d;
+					float t2 = (UpperBound[i] - p[i]) * inv_d;
+
+					// Sign of the normal vector.
+					float s = -1.0f;
+
+					if (t1 > t2)
+					{
+						Common.Math.Swap(ref t1, ref t2);
+						s = 1.0f;
+					}
+
+					// Push the min up
+					if (t1 > tmin)
+					{
+						normal.SetZero();
+						normal[i] = s;
+						tmin = t1;
+					}
+
+					// Pull the max down
+					tmax = Common.Math.Min(tmax, t2);
+
+					if (tmin > tmax)
+					{
+						return;
+					}
+				}
+			}
+
+			// Does the ray start inside the box?
+			// Does the ray intersect beyond the max fraction?
+			if (tmin < 0.0f || input.MaxFraction < tmin)
+			{
+				return;
+			}
+
+			// Intersection.
+			output.Fraction = tmin;
+			output.Normal = normal;
+			output.Hit = true;
+		}
 	}
 
 	/// <summary>
-	/// An oriented bounding box.
+	/// This is used for determining the state of contact points.
 	/// </summary>
-	public struct OBB
+	public enum PointState
 	{
 		/// <summary>
-		/// The rotation matrix.
+		/// Point does not exist.
 		/// </summary>
-		public Mat22 R;
-
+		NullState,
 		/// <summary>
-		/// The local centroid.
+		/// Point was added in the update.
 		/// </summary>
-		public Vec2 Center;
-
+		AddState,
 		/// <summary>
-		/// The half-widths.
+		/// Point persisted across the update.
 		/// </summary>
-		public Vec2 Extents;
+		PersistState,
+		/// <summary>
+		///Point was removed in the update.
+		/// </summary>
+		RemoveState
+	}
+
+	/// <summary>
+	/// This is used to compute the current state of a contact manifold.
+	/// </summary>
+	public class WorldManifold
+	{
+		/// <summary>
+		/// World vector pointing from A to B.
+		/// </summary>
+		public Vec2 Normal;
+		/// <summary>
+		/// World contact point (point of intersection).
+		/// </summary>
+		public Vec2[] Points = new Vec2[Common.Settings.MaxManifoldPoints];
+
+		public WorldManifold Clone()
+		{
+			WorldManifold newManifold = new WorldManifold();
+			newManifold.Normal = this.Normal;
+			this.Points.CopyTo(newManifold.Points, 0);
+			return newManifold;
+		}
+
+		/// Evaluate the manifold with supplied transforms. This assumes
+		/// modest motion from the original state. This does not change the
+		/// point count, impulses, etc. The radii must come from the shapes
+		/// that generated the manifold.
+		public void Initialize(Manifold manifold, XForm xfA, float radiusA, XForm xfB, float radiusB)
+		{
+			if (manifold.PointCount == 0)
+			{
+				return;
+			}
+
+			switch (manifold.Type)
+			{
+				case ManifoldType.Circles:
+					{
+						Vec2 pointA = Common.Math.Mul(xfA, manifold.LocalPoint);
+						Vec2 pointB = Common.Math.Mul(xfB, manifold.Points[0].LocalPoint);
+						Vec2 normal = new Vec2(1.0f, 0.0f);
+						if (Vec2.DistanceSquared(pointA, pointB) > Common.Settings.FLT_EPSILON_SQUARED)
+						{
+							normal = pointB - pointA;
+							normal.Normalize();
+						}
+
+						Normal = normal;
+
+						Vec2 cA = pointA + radiusA * normal;
+						Vec2 cB = pointB - radiusB * normal;
+						Points[0] = 0.5f * (cA + cB);
+					}
+					break;
+
+				case ManifoldType.FaceA:
+					{
+						Vec2 normal = Common.Math.Mul(xfA.R, manifold.LocalPlaneNormal);
+						Vec2 planePoint = Common.Math.Mul(xfA, manifold.LocalPoint);
+
+						// Ensure normal points from A to B.
+						Normal = normal;
+
+						for (int i = 0; i < manifold.PointCount; ++i)
+						{
+							Vec2 clipPoint = Common.Math.Mul(xfB, manifold.Points[i].LocalPoint);
+							Vec2 cA = clipPoint + (radiusA - Vec2.Dot(clipPoint - planePoint, normal)) * normal;
+							Vec2 cB = clipPoint - radiusB * normal;
+							Points[i] = 0.5f * (cA + cB);
+						}
+					}
+					break;
+
+				case ManifoldType.FaceB:
+					{
+						Vec2 normal = Common.Math.Mul(xfB.R, manifold.LocalPlaneNormal);
+						Vec2 planePoint = Common.Math.Mul(xfB, manifold.LocalPoint);
+
+						// Ensure normal points from A to B.
+						Normal = -normal;
+
+						for (int i = 0; i < manifold.PointCount; ++i)
+						{
+							Vec2 clipPoint = Common.Math.Mul(xfA, manifold.Points[i].LocalPoint);
+							Vec2 cA = clipPoint - radiusA * normal;
+							Vec2 cB = clipPoint + (radiusB - Vec2.Dot(clipPoint - planePoint, normal)) * normal;
+							Points[i] = 0.5f * (cA + cB);
+						}
+					}
+					break;
+			}
+		}
+	}
+
+	/// <summary>
+	/// Used for computing contact manifolds.
+	/// </summary>
+	public struct ClipVertex
+	{
+		public Vec2 V;
+		public ContactID ID;
+	}
+
+	/// <summary>
+	/// Ray-cast input data.
+	/// </summary>
+	struct RayCastInput
+	{
+		public Vec2 P1, P2;
+		public float MaxFraction;
+	}
+
+	/// <summary>
+	/// Ray-cast output data.
+	/// </summary>
+	struct RayCastOutput
+	{
+		public Vec2 Normal;
+		public float Fraction;
+		public bool Hit;
 	}
 }

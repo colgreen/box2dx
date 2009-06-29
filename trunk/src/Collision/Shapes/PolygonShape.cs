@@ -35,8 +35,8 @@ namespace Box2DX.Collision
 	public class PolygonShape : Shape, Collision.IGenericShape
 	{
 		private Vec2 _centroid;
-		private Vec2[] _vertices = new Vec2[Settings.MaxPolygonVertices];
-		private Vec2[] _normals = new Vec2[Settings.MaxPolygonVertices];		
+		internal Vec2[] _vertices = new Vec2[Settings.MaxPolygonVertices];
+		internal Vec2[] _normals = new Vec2[Settings.MaxPolygonVertices];		
 
 		/// <summary>
 		/// Copy vertices. This assumes the vertices define a convex polygon.

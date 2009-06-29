@@ -33,7 +33,7 @@ namespace Box2DX.Collision
 	public class CircleShape : Shape
 	{
 		// Position
-		private Vec2 _position;
+		internal Vec2 _position;
 
 		public CircleShape()			
 		{
