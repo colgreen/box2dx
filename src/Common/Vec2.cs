@@ -32,6 +32,29 @@ namespace Box2DX.Common
 	{
 		public float X, Y;
 
+		public float this[int i]
+		{
+			get
+			{
+				if (i == 0) return X;
+				else if (i == 1) return Y;
+				else
+				{
+					Box2DXDebug.Assert(false, "Incorrect Vec2 element!");
+					return 0;
+				}
+			}
+			set
+			{
+				if (i == 0) X = value;
+				else if (i == 1) Y = value;
+				else
+				{
+					Box2DXDebug.Assert(false, "Incorrect Vec2 element!");					
+				}
+			}
+		}
+
 		/// <summary>
 		/// Construct using coordinates.
 		/// </summary>
