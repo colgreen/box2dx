@@ -32,7 +32,7 @@ namespace Box2DX.Collision
 	/// <summary>
 	/// A convex polygon. It is assumed that the interior of the polygon is to the left of each edge.
 	/// </summary>
-	public class PolygonShape : Shape, Collision.IGenericShape
+	public class PolygonShape : Shape
 	{
 		internal Vec2 _centroid;
 		internal Vec2[] _vertices = new Vec2[Settings.MaxPolygonVertices];
@@ -469,7 +469,7 @@ namespace Box2DX.Collision
 		/// <summary>
 		/// Get the supporting vertex index in the given direction.
 		/// </summary>
-		public int Support(Vec2 d)
+		public override int GetSupport(Vec2 d)
 		{
 			int vCount = VertexCount;
 			int bestIndex = 0;
@@ -487,7 +487,7 @@ namespace Box2DX.Collision
 			return bestIndex;
 		}
 
-		public override Vec2 GetSupportVertex(Vec2 d)
+		public Vec2 GetSupportVertex(Vec2 d)
 		{
 			int vCount = VertexCount;
 			int bestIndex = 0;
