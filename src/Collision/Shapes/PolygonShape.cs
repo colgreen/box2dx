@@ -34,7 +34,7 @@ namespace Box2DX.Collision
 	/// </summary>
 	public class PolygonShape : Shape, Collision.IGenericShape
 	{
-		private Vec2 _centroid;
+		internal Vec2 _centroid;
 		internal Vec2[] _vertices = new Vec2[Settings.MaxPolygonVertices];
 		internal Vec2[] _normals = new Vec2[Settings.MaxPolygonVertices];		
 

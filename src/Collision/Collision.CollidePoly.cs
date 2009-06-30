@@ -1,6 +1,6 @@
 ﻿/*
-  Box2DX Copyright (c) 2008 Ihar Kalasouski http://code.google.com/p/box2dx
-  Box2D original C++ version Copyright (c) 2006-2007 Erin Catto http://www.gphysics.com
+  Box2DX Copyright (c) 2009 Ihar Kalasouski http://code.google.com/p/box2dx
+  Box2D original C++ version Copyright (c) 2006-2009 Erin Catto http://www.gphysics.com
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -25,68 +25,17 @@ namespace Box2DX.Collision
 {
 	public partial class Collision
 	{
-		public struct ClipVertex
-		{
-			public Vec2 V;
-			public ContactID ID;
-		}
-
-		public static int ClipSegmentToLine(out ClipVertex[] vOut, ClipVertex[] vIn,
-			Vec2 normal, float offset)
-		{
-			if (vIn.Length != 2)
-				Box2DXDebug.ThrowBox2DXException("vIn should contain 2 element, but contains " + vIn.Length.ToString());
-			vOut = new ClipVertex[2];
-
-			// Start with no output points
-			int numOut = 0;
-
-			// Calculate the distance of end points to the line
-			float distance0 = Vec2.Dot(normal, vIn[0].V) - offset;
-			float distance1 = Vec2.Dot(normal, vIn[1].V) - offset;
-
-			// If the points are behind the plane
-			if (distance0 <= 0.0f) vOut[numOut++] = vIn[0];
-			if (distance1 <= 0.0f) vOut[numOut++] = vIn[1];
-
-			// If the points are on different sides of the plane
-			if (distance0 * distance1 < 0.0f)
-			{
-				// Find intersection point of edge and plane
-				float interp = distance0 / (distance0 - distance1);
-				vOut[numOut].V = vIn[0].V + interp * (vIn[1].V - vIn[0].V);
-				if (distance0 > 0.0f)
-				{
-					vOut[numOut].ID = vIn[0].ID;
-				}
-				else
-				{
-					vOut[numOut].ID = vIn[1].ID;
-				}
-				++numOut;
-			}
-
-			return numOut;
-		}
-
 		/// <summary>
 		/// Find the separation between poly1 and poly2 for a give edge normal on poly1.
 		/// </summary>
-		/// <param name="poly1"></param>
-		/// <param name="xf1"></param>
-		/// <param name="edge1"></param>
-		/// <param name="poly2"></param>
-		/// <param name="xf2"></param>
-		/// <returns></returns>
-		public static float EdgeSeparation(PolygonShape poly1, XForm xf1, int edge1,
-			PolygonShape poly2, XForm xf2)
+		public static float EdgeSeparation(PolygonShape poly1, XForm xf1, int edge1, PolygonShape poly2, XForm xf2)
 		{
 			int count1 = poly1.VertexCount;
-			Vec2[] vertices1 = poly1.GetVertices();
-			Vec2[] normals1 = poly1.Normals;
+			Vec2[] vertices1 = poly1._vertices;
+			Vec2[] normals1 = poly1._normals;
 
 			int count2 = poly2.VertexCount;
-			Vec2[] vertices2 = poly2.GetVertices();
+			Vec2[] vertices2 = poly2._vertices;
 
 			Box2DXDebug.Assert(0 <= edge1 && edge1 < count1);
 
@@ -116,20 +65,13 @@ namespace Box2DX.Collision
 		/// <summary>
 		/// Find the max separation between poly1 and poly2 using edge normals from poly1.
 		/// </summary>
-		/// <param name="edgeIndex"></param>
-		/// <param name="poly1"></param>
-		/// <param name="xf1"></param>
-		/// <param name="poly2"></param>
-		/// <param name="xf2"></param>
-		/// <returns></returns>
-		public static float FindMaxSeparation(ref int edgeIndex,
-			PolygonShape poly1, XForm xf1, PolygonShape poly2, XForm xf2)
+		public static float FindMaxSeparation(ref int edgeIndex, PolygonShape poly1, XForm xf1, PolygonShape poly2, XForm xf2)
 		{
 			int count1 = poly1.VertexCount;
-			Vec2[] normals1 = poly1.Normals;
+			Vec2[] normals1 = poly1._normals;
 
 			// Vector pointing from the centroid of poly1 to the centroid of poly2.
-			Vec2 d = Common.Math.Mul(xf2, poly2.GetCentroid()) - Common.Math.Mul(xf1, poly1.GetCentroid());
+			Vec2 d = Common.Math.Mul(xf2, poly2._centroid) - Common.Math.Mul(xf1, poly1._centroid);
 			Vec2 dLocal1 = Common.Math.MulT(xf1.R, d);
 
 			// Find edge normal on poly1 that has the largest projection onto d.
@@ -147,26 +89,14 @@ namespace Box2DX.Collision
 
 			// Get the separation for the edge normal.
 			float s = Collision.EdgeSeparation(poly1, xf1, edge, poly2, xf2);
-			if (s > 0.0f)
-			{
-				return s;
-			}
 
 			// Check the separation for the previous edge normal.
 			int prevEdge = edge - 1 >= 0 ? edge - 1 : count1 - 1;
 			float sPrev = Collision.EdgeSeparation(poly1, xf1, prevEdge, poly2, xf2);
-			if (sPrev > 0.0f)
-			{
-				return sPrev;
-			}
 
 			// Check the separation for the next edge normal.
 			int nextEdge = edge + 1 < count1 ? edge + 1 : 0;
 			float sNext = Collision.EdgeSeparation(poly1, xf1, nextEdge, poly2, xf2);
-			if (sNext > 0.0f)
-			{
-				return sNext;
-			}
 
 			// Find the best edge and the search direction.
 			int bestEdge;
@@ -199,10 +129,6 @@ namespace Box2DX.Collision
 					edge = bestEdge + 1 < count1 ? bestEdge + 1 : 0;
 
 				s = Collision.EdgeSeparation(poly1, xf1, edge, poly2, xf2);
-				if (s > 0.0f)
-				{
-					return s;
-				}
 
 				if (s > bestSeparation)
 				{
@@ -223,11 +149,11 @@ namespace Box2DX.Collision
 			PolygonShape poly1, XForm xf1, int edge1, PolygonShape poly2, XForm xf2)
 		{
 			int count1 = poly1.VertexCount;
-			Vec2[] normals1 = poly1.Normals;
+			Vec2[] normals1 = poly1._normals;
 
 			int count2 = poly2.VertexCount;
-			Vec2[] vertices2 = poly2.GetVertices();
-			Vec2[] normals2 = poly2.Normals;
+			Vec2[] vertices2 = poly2._vertices;
+			Vec2[] normals2 = poly2._normals;
 
 			Box2DXDebug.Assert(0 <= edge1 && edge1 < count1);
 
@@ -274,15 +200,16 @@ namespace Box2DX.Collision
 			PolygonShape polyA, XForm xfA, PolygonShape polyB, XForm xfB)
 		{
 			manifold.PointCount = 0;
+			float totalRadius = polyA._radius + polyB._radius;
 
 			int edgeA = 0;
 			float separationA = Collision.FindMaxSeparation(ref edgeA, polyA, xfA, polyB, xfB);
-			if (separationA > 0.0f)
+			if (separationA > totalRadius)
 				return;
 
 			int edgeB = 0;
 			float separationB = Collision.FindMaxSeparation(ref edgeB, polyB, xfB, polyA, xfA);
-			if (separationB > 0.0f)
+			if (separationB > totalRadius)
 				return;
 
 			PolygonShape poly1;	// reference poly
@@ -290,10 +217,9 @@ namespace Box2DX.Collision
 			XForm xf1, xf2;
 			int edge1;		// reference edge
 			byte flip;
-			float k_relativeTol = 0.98f;
-			float k_absoluteTol = 0.001f;
+			const float k_relativeTol = 0.98f;
+			const float k_absoluteTol = 0.001f;
 
-			// TODO_ERIN use "radius" of poly for absolute tolerance.
 			if (separationB > k_relativeTol * separationA + k_absoluteTol)
 			{
 				poly1 = polyB;
@@ -301,6 +227,7 @@ namespace Box2DX.Collision
 				xf1 = xfB;
 				xf2 = xfA;
 				edge1 = edgeB;
+				manifold.Type = ManifoldType.FaceB;
 				flip = 1;
 			}
 			else
@@ -310,6 +237,7 @@ namespace Box2DX.Collision
 				xf1 = xfA;
 				xf2 = xfB;
 				edge1 = edgeA;
+				manifold.Type = ManifoldType.FaceA;
 				flip = 0;
 			}
 
@@ -317,12 +245,17 @@ namespace Box2DX.Collision
 			Collision.FindIncidentEdge(out incidentEdge, poly1, xf1, edge1, poly2, xf2);
 
 			int count1 = poly1.VertexCount;
-			Vec2[] vertices1 = poly1.GetVertices();
+			Vec2[] vertices1 = poly1._vertices;
 
 			Vec2 v11 = vertices1[edge1];
 			Vec2 v12 = edge1 + 1 < count1 ? vertices1[edge1 + 1] : vertices1[0];
 
 			Vec2 dv = v12 - v11;
+
+			Vec2 localNormal = Vec2.Cross(dv, 1.0f);
+			localNormal.Normalize();
+			Vec2 planePoint = 0.5f * (v11 + v12);
+
 			Vec2 sideNormal = Common.Math.Mul(xf1.R, v12 - v11);
 			sideNormal.Normalize();
 			Vec2 frontNormal = Vec2.Cross(sideNormal, 1.0f);
@@ -352,19 +285,18 @@ namespace Box2DX.Collision
 				return;
 
 			// Now clipPoints2 contains the clipped points.
-			manifold.Normal = flip!=0 ? -frontNormal : frontNormal;
+			manifold.LocalPlaneNormal = localNormal;
+			manifold.LocalPoint = planePoint;
 
 			int pointCount = 0;
 			for (int i = 0; i < Settings.MaxManifoldPoints; ++i)
 			{
 				float separation = Vec2.Dot(frontNormal, clipPoints2[i].V) - frontOffset;
 
-				if (separation <= 0.0f)
+				if (separation <= totalRadius)
 				{
 					ManifoldPoint cp = manifold.Points[pointCount];
-					cp.Separation = separation;
-					cp.LocalPoint1 = Box2DX.Common.Math.MulT(xfA, clipPoints2[i].V);
-					cp.LocalPoint2 = Box2DX.Common.Math.MulT(xfB, clipPoints2[i].V);
+					cp.LocalPoint = Common.Math.MulT(xf2, clipPoints2[i].V);
 					cp.ID = clipPoints2[i].ID;
 					cp.ID.Features.Flip = flip;
 					++pointCount;
