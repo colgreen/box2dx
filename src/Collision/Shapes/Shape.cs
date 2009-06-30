@@ -140,5 +140,7 @@ namespace Box2DX.Collision
 		public abstract Vec2 GetVertex(int index);
 
 		public abstract int GetSupport(Vec2 d);
-	}
+
+		public virtual void Dispose(){}
+ 	}
 }

@@ -604,7 +604,7 @@ namespace Box2DX.Collision
 	/// <summary>
 	/// Ray-cast input data.
 	/// </summary>
-	struct RayCastInput
+	public struct RayCastInput
 	{
 		public Vec2 P1, P2;
 		public float MaxFraction;
@@ -613,7 +613,7 @@ namespace Box2DX.Collision
 	/// <summary>
 	/// Ray-cast output data.
 	/// </summary>
-	struct RayCastOutput
+	public struct RayCastOutput
 	{
 		public Vec2 Normal;
 		public float Fraction;
