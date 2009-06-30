@@ -47,6 +47,7 @@
     <Compile Include="Box2DXDebug.cs" />
     <Compile Include="Collision\BroadPhase.cs" />
     <Compile Include="Collision\Collision.CollideCircle.cs" />
+    <Compile Include="Collision\Collision.CollideEdge.cs" />
     <Compile Include="Collision\Collision.CollidePoly.cs" />
     <Compile Include="Collision\Collision.cs" />
     <Compile Include="Collision\Collision.Distance.cs" />

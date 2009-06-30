@@ -95,8 +95,10 @@ namespace Box2DX.Collision
 		}
 
 		// Sutherland-Hodgman clipping.
-		public static int ClipSegmentToLine(ClipVertex[/*2*/] vOut, ClipVertex[/*2*/] vIn, Vec2 normal, float offset)
+		public static int ClipSegmentToLine(out ClipVertex[/*2*/] vOut, ClipVertex[/*2*/] vIn, Vec2 normal, float offset)
 		{
+			vOut = new ClipVertex[2];
+
 			// Start with no output points
 			int numOut = 0;
 
