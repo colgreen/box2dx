@@ -1,6 +1,6 @@
 ﻿/*
-  Box2DX Copyright (c) 2008 Ihar Kalasouski http://code.google.com/p/box2dx
-  Box2D original C++ version Copyright (c) 2006-2007 Erin Catto http://www.gphysics.com
+  Box2DX Copyright (c) 2009 Ihar Kalasouski http://code.google.com/p/box2dx
+  Box2D original C++ version Copyright (c) 2006-2009 Erin Catto http://www.gphysics.com
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -34,7 +34,6 @@ using Box2DX.Common;
 
 namespace Box2DX.Collision
 {
-#warning "CAS"
 	public class Pair
 	{
 		[Flags]
@@ -109,12 +108,12 @@ namespace Box2DX.Collision
 			_freePair = 0;
 			for (int i = 0; i < Settings.MaxPairs; ++i)
 			{
-				_pairs[i] = new Pair();
+				_pairs[i] = new Pair();//todo: need some pool here
 				_pairs[i].ProxyId1 = PairManager.NullProxy;
 				_pairs[i].ProxyId2 = PairManager.NullProxy;
 				_pairs[i].UserData = null;
 				_pairs[i].Status = 0;
-				_pairs[i].Next = (ushort)(i + (ushort)1);
+				_pairs[i].Next = (ushort)(i + 1U);
 			}
 			_pairs[Settings.MaxPairs - 1].Next = PairManager.NullPair;
 			_pairCount = 0;
@@ -480,15 +479,15 @@ namespace Box2DX.Collision
 
 		public static int BufferedPairSortPredicate(BufferedPair pair1, BufferedPair pair2)
 		{
-			if (pair1.ProxyId1 > pair2.ProxyId1)
+			if (pair1.ProxyId1 < pair2.ProxyId1)
 				return 1;
-			else if (pair1.ProxyId1 < pair2.ProxyId1)
+			else if (pair1.ProxyId1 > pair2.ProxyId1)
 				return -1;
 			else
 			{
-				if (pair1.ProxyId2 > pair2.ProxyId2)
+				if (pair1.ProxyId2 < pair2.ProxyId2)
 					return 1;
-				else if (pair1.ProxyId2 < pair2.ProxyId2)
+				else if (pair1.ProxyId2 > pair2.ProxyId2)
 					return -1;
 			}
 

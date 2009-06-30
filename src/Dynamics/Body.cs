@@ -276,7 +276,6 @@ namespace Box2DX.Dynamics
 		/// @warning This function is locked during callbacks.
 		/// </summary>
 		/// <param name="shapeDef">The shape definition.</param>
-		/// <returns></returns>
 		public Shape CreateShape(ShapeDef shapeDef)
 		{
 			Box2DXDebug.Assert(_world._lock == false);
