@@ -70,8 +70,10 @@
     <Compile Include="Dynamics\Contacts\CircleContact.cs" />
     <Compile Include="Dynamics\Contacts\Contact.cs" />
     <Compile Include="Dynamics\Contacts\ContactSolver.cs" />
+    <Compile Include="Dynamics\Contacts\EdgeAndCircleContact.cs" />
     <Compile Include="Dynamics\Contacts\NullContact.cs" />
     <Compile Include="Dynamics\Contacts\PolyAndCircleContact.cs" />
+    <Compile Include="Dynamics\Contacts\PolyAndEdgeContact.cs" />
     <Compile Include="Dynamics\Contacts\PolyContact.cs" />
     <Compile Include="Dynamics\Controllers\BuoyancyController.cs" />
     <Compile Include="Dynamics\Controllers\Controller.cs" />
