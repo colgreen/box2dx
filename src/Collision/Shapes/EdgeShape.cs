@@ -82,7 +82,7 @@ namespace Box2DX.Collision
 			_cornerDir2 = -1.0f * _normal;
 		}
 
-		public bool TestPoint(XForm transform, Vec2 p)
+		public override bool TestPoint(XForm transform, Vec2 p)
 		{
 			return false;
 		}
@@ -125,7 +125,7 @@ namespace Box2DX.Collision
 			return SegmentCollide.MissCollide;
 		}
 
-		public override void ComputeAABB(ref AABB aabb, XForm transform)
+		public override void ComputeAABB(out AABB aabb, XForm transform)
 		{
 			Vec2 v1 = Common.Math.Mul(transform, _v1);
 			Vec2 v2 = Common.Math.Mul(transform, _v2);
@@ -135,7 +135,7 @@ namespace Box2DX.Collision
 			aabb.UpperBound = Common.Math.Max(v1, v2) + r;
 		}
 
-		public override void ComputeMass(ref MassData massData, float density)
+		public override void ComputeMass(out MassData massData, float density)
 		{
 			massData.Mass = 0.0f;
 			massData.Center = _v1;
@@ -267,7 +267,7 @@ namespace Box2DX.Collision
 			get { return _cornerConvex2; }
 		}
 
-		public float ComputeSweepRadius(Vec2 pivot)
+		public override float ComputeSweepRadius(Vec2 pivot)
 		{
 			float ds1 = Vec2.DistanceSquared(_v1, pivot);
 			float ds2 = Vec2.DistanceSquared(_v2, pivot);
