@@ -219,9 +219,9 @@ namespace Box2DX.Dynamics
 		protected bool _isSensor;
 		protected UInt16 _proxyId;
 
-		protected Body _body;
+		internal Body _body;
 		protected Shape _shape;
-		protected Fixture _next;
+		internal Fixture _next;
 
 		/// <summary>
 		/// Contact filtering data. You must call b2World::Refilter to correct
@@ -283,15 +283,15 @@ namespace Box2DX.Dynamics
 
 		public void Create(BroadPhase broadPhase, Body body, XForm xf, FixtureDef def)
 		{
-			_userData = def.UserData;
-			_friction = def.Friction;
-			_restitution = def.Restitution;
-			_density = def.Density;
+			UserData = def.UserData;
+			Friction = def.Friction;
+			Restitution = def.Restitution;
+			Density = def.Density;
 
 			_body = body;
 			_next = null;
 
-			_filter = def.Filter;
+			Filter = def.Filter;
 
 			_isSensor = def.IsSensor;
 

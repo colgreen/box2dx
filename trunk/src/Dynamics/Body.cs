@@ -39,20 +39,21 @@ namespace Box2DX.Dynamics
 		/// </summary>
 		public BodyDef()
 		{
-			MassData = new MassData();
-			MassData.Center.SetZero();
-			MassData.Mass = 0.0f;
-			MassData.I = 0.0f;
-			UserData = null;
-			Position = new Vec2();
-			Position.Set(0.0f, 0.0f);
-			Angle = 0.0f;
-			LinearDamping = 0.0f;
-			AngularDamping = 0.0f;
+			//MassData = new MassData();
+			//MassData.Center.SetZero();
+			//MassData.Mass = 0.0f;
+			//MassData.I = 0.0f;
+			//UserData = null;
+			//Position = new Vec2(0);
+			//Angle = 0.0f;
+			//LinearVelocity = new Vec2(0);
+			//AngularVelocity = 0.0f;
+			//LinearDamping = 0.0f;
+			//AngularDamping = 0.0f;
 			AllowSleep = true;
-			IsSleeping = false;
-			FixedRotation = false;
-			IsBullet = false;
+			//IsSleeping = false;
+			//FixedRotation = false;
+			//IsBullet = false;
 		}
 
 		/// <summary>
@@ -77,6 +78,16 @@ namespace Box2DX.Dynamics
 		/// The world angle of the body in radians.
 		/// </summary>
 		public float Angle;
+
+		/// <summary>
+		/// The linear velocity of the body in world co-ordinates.
+		/// </summary>
+		public Vec2 LinearVelocity;
+
+		/// <summary>
+		/// The angular velocity of the body.
+		/// </summary>
+		public float AngularVelocity;
 
 		/// <summary>
 		/// Linear damping is use to reduce the linear velocity. The damping parameter
@@ -122,7 +133,6 @@ namespace Box2DX.Dynamics
 	/// </summary>
 	public class Body : IDisposable
 	{
-
 		[Flags]
 		public enum BodyFlags
 		{
@@ -146,8 +156,7 @@ namespace Box2DX.Dynamics
 
 		internal int _islandIndex;
 
-		private XForm _xf;		// the body origin transform
-
+		internal XForm _xf;		// the body origin transform
 		internal Sweep _sweep;	// the swept motion for CCD
 
 		internal Vec2 _linearVelocity;
@@ -160,13 +169,13 @@ namespace Box2DX.Dynamics
 		internal Body _prev;
 		internal Body _next;
 
-		internal Shape _shapeList;
-		internal int _shapeCount;
+		internal Fixture _fixtureList;
+		internal int _fixtureCount;
 
 		internal JointEdge _jointList;
 		internal ContactEdge _contactList;
 
-		internal Box2DX.Dynamics.Controllers.ControllerEdge _controllerList;
+		internal Controllers.ControllerEdge _controllerList;
 
 		internal float _mass;
 		internal float _invMass;
@@ -213,25 +222,25 @@ namespace Box2DX.Dynamics
 			_sweep.A0 = _sweep.A = bd.Angle;
 			_sweep.C0 = _sweep.C = Common.Math.Mul(_xf, _sweep.LocalCenter);
 
-			_jointList = null;
-			_contactList = null;
-			_prev = null;
-			_next = null;
+			//_jointList = null;
+			//_contactList = null;
+			//_prev = null;
+			//_next = null;
 
 			_linearDamping = bd.LinearDamping;
 			_angularDamping = bd.AngularDamping;
 
-			_force.Set(0.0f, 0.0f);
-			_torque = 0.0f;
+			//_force.Set(0.0f, 0.0f);
+			//_torque = 0.0f;
 
-			_linearVelocity.SetZero();
-			_angularVelocity = 0.0f;
+			//_linearVelocity.SetZero();
+			//_angularVelocity = 0.0f;
 
-			_sleepTime = 0.0f;
+			//_sleepTime = 0.0f;
 
-			_invMass = 0.0f;
-			_I = 0.0f;
-			_invI = 0.0f;
+			//_invMass = 0.0f;
+			//_I = 0.0f;
+			//_invI = 0.0f;
 
 			_mass = bd.MassData.Mass;
 
@@ -240,12 +249,9 @@ namespace Box2DX.Dynamics
 				_invMass = 1.0f / _mass;
 			}
 
-			if ((_flags & BodyFlags.FixedRotation) == 0)
-			{
-				_I = bd.MassData.I;
-			}
+			_I = bd.MassData.I;
 
-			if (_I > 0.0f)
+			if (_I > 0.0f && (_flags & BodyFlags.FixedRotation) == 0)
 			{
 				_invI = 1.0f / _I;
 			}
@@ -261,8 +267,8 @@ namespace Box2DX.Dynamics
 
 			_userData = bd.UserData;
 
-			_shapeList = null;
-			_shapeCount = 0;
+			//_fixtureList = null;
+			//_fixtureCount = 0;
 		}
 
 		public void Dispose()
@@ -272,11 +278,11 @@ namespace Box2DX.Dynamics
 		}
 
 		/// <summary>
-		/// Creates a shape and attach it to this body.
+		/// Creates a fixture and attach it to this body.
 		/// @warning This function is locked during callbacks.
 		/// </summary>
-		/// <param name="shapeDef">The shape definition.</param>
-		public Shape CreateShape(ShapeDef shapeDef)
+		/// <param name="def">The fixture definition.</param>
+		public Fixture CreateFixture(FixtureDef def)
 		{
 			Box2DXDebug.Assert(_world._lock == false);
 			if (_world._lock == true)
@@ -284,31 +290,26 @@ namespace Box2DX.Dynamics
 				return null;
 			}
 
-			Shape s = Shape.Create(shapeDef);
+			Fixture fixture =new Fixture();
+			fixture.Create(_world._broadPhase, this, _xf, def);
 
-			s._next = _shapeList;
-			_shapeList = s;
-			++_shapeCount;
+			fixture._next = _fixtureList;
+			_fixtureList = fixture;
+			++_fixtureCount;
 
-			s._body = this;
+			fixture._body = this;
 
-			// Add the shape to the world's broad-phase.
-			s.CreateProxy(_world._broadPhase, _xf);
-
-			// Compute the sweep radius for CCD.
-			s.UpdateSweepRadius(_sweep.LocalCenter);
-
-			return s;
+			return fixture;
 		}
 
 		/// <summary>
-		/// Destroy a shape. This removes the shape from the broad-phase and
-		/// therefore destroys any contacts associated with this shape. All shapes
+		/// Destroy a fixture. This removes the fixture from the broad-phase and
+		/// therefore destroys any contacts associated with this fixture. All fixtures
 		/// attached to a body are implicitly destroyed when the body is destroyed.
 		/// @warning This function is locked during callbacks.
 		/// </summary>
-		/// <param name="shape">The shape to be removed.</param>
-		public void DestroyShape(Shape shape)
+		/// <param name="fixture">The fixture to be removed.</param>
+		public void DestroyShape(Fixture fixture)
 		{
 			Box2DXDebug.Assert(_world._lock == false);
 			if (_world._lock == true)
@@ -316,17 +317,17 @@ namespace Box2DX.Dynamics
 				return;
 			}
 
-			Box2DXDebug.Assert(shape.GetBody() == this);
-			shape.DestroyProxy(_world._broadPhase);
+			Box2DXDebug.Assert(fixture._body == this);
 
-			Box2DXDebug.Assert(_shapeCount > 0);
-			Shape node = _shapeList;
+			// Remove the fixture from this body's singly linked list.
+			Box2DXDebug.Assert(_fixtureCount > 0);
+			Fixture node = _fixtureList;
 			bool found = false;
 			while (node != null)
 			{
-				if (node == shape)
+				if (node == fixture)
 				{
-					_shapeList = shape._next;
+					_fixtureList = fixture._next;
 					found = true;
 					break;
 				}
@@ -337,12 +338,12 @@ namespace Box2DX.Dynamics
 			// You tried to remove a shape that is not attached to this body.
 			Box2DXDebug.Assert(found);
 
-			shape._body = null;
-			shape._next = null;
+			fixture.Destroy(_world._broadPhase);
+			fixture._body = null;
+			fixture._next = null;
+			fixture.Dispose();
 
-			--_shapeCount;
-
-			Shape.Destroy(ref shape);
+			--_fixtureCount;
 		}
 
 		// TODO_ERIN adjust linear velocity and torque to account for movement of center.
