@@ -1,5 +1,5 @@
 ﻿/*
-  Box2DX Copyright (c) 2008 Ihar Kalasouski http://code.google.com/p/box2dx
+  Box2DX Copyright (c) 2009 Ihar Kalasouski http://code.google.com/p/box2dx
   Box2D original C++ version Copyright (c) 2006-2009 Erin Catto http://www.gphysics.com
 
   This software is provided 'as-is', without any express or implied
@@ -19,10 +19,9 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using System;
-using System.Collections.Generic;
-using System.Text;
+#define DEBUG
 
+using System;
 using Box2DX.Common;
 
 namespace Box2DX.Collision
@@ -31,21 +30,58 @@ namespace Box2DX.Collision
 	/// Used to warm start Distance.
 	/// Set count to zero on first call.
 	/// </summary>
-	public unsafe struct SimplexCache
+	public struct SimplexCache
 	{
 		/// <summary>
 		/// Length or area.
 		/// </summary>
-		public float Metric;
+		public Single Metric;
 		public UInt16 Count;
 		/// <summary>
 		/// Vertices on shape A.
 		/// </summary>
-		public fixed Byte IndexA[3];
+		//public Byte[/*3*/] IndexA;
+		public IndexArray IndexA;
 		/// <summary>
 		/// Vertices on shape B.
 		/// </summary>
-		public fixed Byte IndexB[3];
+		//public Byte[/*3*/] IndexB;
+		public IndexArray IndexB;
+
+		//public SimplexCache(byte init)
+		//{
+		//	Metric = 0;
+		//	Count = 0;
+		//	IndexA = new Byte[3];
+		//	IndexB = new Byte[3];
+		//}
+	}
+
+	public struct IndexArray
+	{
+		private Byte I0, I1, I2;
+
+		public Byte this[int index]
+		{
+			get
+			{
+#if DEBUG
+				Box2DXDebug.Assert(index >= 0 && index < 3);
+#endif
+				if (index == 0) return I0;
+				else if (index == 1) return I1;
+				else return I2;
+			}
+			set
+			{
+#if DEBUG
+				Box2DXDebug.Assert(index >= 0 && index < 3);
+#endif
+				if (index == 0) I0 = value;
+				else if (index == 1) I1 = value;
+				else I2 = value;
+			}
+		}
 	}
 
 	/// <summary>
@@ -72,7 +108,6 @@ namespace Box2DX.Collision
 		/// <summary>
 		/// Closest point on shapeB.
 		/// </summary>
-
 		public Vec2 PointB;
 		public float Distance;
 		/// <summary>
@@ -83,120 +118,136 @@ namespace Box2DX.Collision
 
 	// GJK using Voronoi regions (Christer Ericson) and Barycentric coordinates.
 
-	public struct SimplexVertex
+	internal struct SimplexVertex
 	{
-		public Vec2 wA;		// support point in shapeA
-		public Vec2 wB;		// support point in shapeB
-		public Vec2 w;		// wB - wA
-		public float a;		// barycentric coordinate for closest point
-		public int indexA;	// wA index
-		public int indexB;	// wB index
+		internal Vec2 wA;		// support point in shapeA
+		internal Vec2 wB;		// support point in shapeB
+		internal Vec2 w;		// wB - wA
+		internal float a;		// barycentric coordinate for closest point
+		internal int indexA;	// wA index
+		internal int indexB;	// wB index
 	}
 
-	public struct Simplex
+	internal struct Simplex
 	{
-		public SimplexVertex V1, V2, V3;
-		public int Count;
+		internal SimplexVertex _v1, _v2, _v3;
+		internal int _count;
 
-		public unsafe void ReadCache(SimplexCache* cache, Shape shapeA, XForm transformA, Shape shapeB, XForm transformB)
+		internal unsafe void ReadCache(SimplexCache* cache, Shape shapeA, XForm transformA, Shape shapeB, XForm transformB)
 		{
 			Box2DXDebug.Assert(0 <= cache->Count && cache->Count <= 3);
 
 			// Copy data from cache.
-			Count = cache->Count;
-			SimplexVertex* vertices = &V1;
-			for (int i = 0; i < Count; ++i)
+			_count = cache->Count;
+			SimplexVertex** vertices = stackalloc SimplexVertex*[3];
+			fixed (SimplexVertex* v1Ptr = &_v1, v2Ptr = &_v2, v3Ptr = &_v3)
 			{
-				SimplexVertex* v = vertices + i;
-				v->indexA = cache->IndexA[i];
-				v->indexB = cache->IndexB[i];
-				Vec2 wALocal = shapeA.GetVertex(v->indexA);
-				Vec2 wBLocal = shapeB.GetVertex(v->indexB);
-				v->wA = Common.Math.Mul(transformA, wALocal);
-				v->wB = Common.Math.Mul(transformB, wBLocal);
-				v->w = v->wB - v->wA;
-				v->a = 0.0f;
-			}
-
-			// Compute the new simplex metric, if it is substantially different than
-			// old metric then flush the simplex.
-			if (Count > 1)
-			{
-				float metric1 = cache->Metric;
-				float metric2 = GetMetric();
-				if (metric2 < 0.5f * metric1 || 2.0f * metric1 < metric2 || metric2 < Common.Settings.FLT_EPSILON)
+				vertices[0] = v1Ptr;
+				vertices[1] = v2Ptr;
+				vertices[2] = v3Ptr;
+				for (int i = 0; i < _count; ++i)
 				{
-					// Reset the simplex.
-					Count = 0;
+					SimplexVertex* v = vertices[i];
+					v->indexA = cache->IndexA[i];
+					v->indexB = cache->IndexB[i];
+					Vec2 wALocal = shapeA.GetVertex(v->indexA);
+					Vec2 wBLocal = shapeB.GetVertex(v->indexB);
+					v->wA = Common.Math.Mul(transformA, wALocal);
+					v->wB = Common.Math.Mul(transformB, wBLocal);
+					v->w = v->wB - v->wA;
+					v->a = 0.0f;
+				}
+
+				// Compute the new simplex metric, if it is substantially different than
+				// old metric then flush the simplex.
+				if (_count > 1)
+				{
+					float metric1 = cache->Metric;
+					float metric2 = GetMetric();
+					if (metric2 < 0.5f * metric1 || 2.0f * metric1 < metric2 || metric2 < Common.Settings.FLT_EPSILON)
+					{
+						// Reset the simplex.
+						_count = 0;
+					}
+				}
+
+				// If the cache is empty or invalid ...
+				if (_count == 0)
+				{
+					SimplexVertex* v = vertices[0];
+					v->indexA = 0;
+					v->indexB = 0;
+					Vec2 wALocal = shapeA.GetVertex(0);
+					Vec2 wBLocal = shapeB.GetVertex(0);
+					v->wA = Common.Math.Mul(transformA, wALocal);
+					v->wB = Common.Math.Mul(transformB, wBLocal);
+					v->w = v->wB - v->wA;
+					_count = 1;
 				}
 			}
-
-			// If the cache is empty or invalid ...
-			if (Count == 0)
-			{
-				SimplexVertex* v = vertices + 0;
-				v->indexA = 0;
-				v->indexB = 0;
-				Vec2 wALocal = shapeA.GetVertex(0);
-				Vec2 wBLocal = shapeB.GetVertex(0);
-				v->wA = Common.Math.Mul(transformA, wALocal);
-				v->wB = Common.Math.Mul(transformB, wBLocal);
-				v->w = v->wB - v->wA;
-				Count = 1;
-			}
 		}
 
-		public unsafe void WriteCache(SimplexCache* cache)
+		internal unsafe void WriteCache(SimplexCache* cache)
 		{
 			cache->Metric = GetMetric();
-			cache->Count = (UInt16)Count;
-			SimplexVertex* vertices = &V1;
-			for (int i = 0; i < Count; ++i)
+			cache->Count = (UInt16)_count;
+			SimplexVertex** vertices = stackalloc SimplexVertex*[3];
+			fixed (SimplexVertex* v1Ptr = &_v1, v2Ptr = &_v2, v3Ptr = &_v3)
 			{
-				cache->IndexA[i] = (Byte)(vertices[i].indexA);
-				cache->IndexB[i] = (Byte)(vertices[i].indexB);
+				vertices[0] = v1Ptr;
+				vertices[1] = v2Ptr;
+				vertices[2] = v3Ptr;
+				for (int i = 0; i < _count; ++i)
+				{
+					cache->IndexA[i] = (Byte)(vertices[i]->indexA);
+					cache->IndexB[i] = (Byte)(vertices[i]->indexB);
+				}
 			}
 		}
 
-		public Vec2 GetClosestPoint()
+		internal Vec2 GetClosestPoint()
 		{
-			switch (Count)
+			switch (_count)
 			{
 				case 0:
+#if DEBUG
 					Box2DXDebug.Assert(false);
+#endif
 					return Vec2.Zero;
 				case 1:
-					return V1.w;
+					return _v1.w;
 				case 2:
-					return V1.a * V1.w + V2.a * V2.w;
+					return _v1.a * _v1.w + _v2.a * _v2.w;
 				case 3:
 					return Vec2.Zero;
 				default:
+#if DEBUG
 					Box2DXDebug.Assert(false);
+#endif
 					return Vec2.Zero;
 			}
 		}
 
-		public unsafe void GetWitnessPoints(Vec2* pA, Vec2* pB)
+		internal unsafe void GetWitnessPoints(Vec2* pA, Vec2* pB)
 		{
-			switch (Count)
+			switch (_count)
 			{
 				case 0:
 					Box2DXDebug.Assert(false);
 					break;
 
 				case 1:
-					*pA = V1.wA;
-					*pB = V1.wB;
+					*pA = _v1.wA;
+					*pB = _v1.wB;
 					break;
 
 				case 2:
-					*pA = V1.a * V1.wA + V2.a * V2.wA;
-					*pB = V1.a * V1.wB + V2.a * V2.wB;
+					*pA = _v1.a * _v1.wA + _v2.a * _v2.wA;
+					*pB = _v1.a * _v1.wB + _v2.a * _v2.wB;
 					break;
 
 				case 3:
-					*pA = V1.a * V1.wA + V2.a * V2.wA + V2.a * V2.wA;
+					*pA = _v1.a * _v1.wA + _v2.a * _v2.wA + _v3.a * _v3.wA;
 					*pB = *pA;
 					break;
 
@@ -206,25 +257,29 @@ namespace Box2DX.Collision
 			}
 		}
 
-		public float GetMetric()
+		internal float GetMetric()
 		{
-			switch (Count)
+			switch (_count)
 			{
 				case 0:
+#if DEBUG
 					Box2DXDebug.Assert(false);
+#endif
 					return 0.0f;
 
 				case 1:
 					return 0.0f;
 
 				case 2:
-					return Vec2.Distance(V1.w, V2.w);
+					return Vec2.Distance(_v1.w, _v2.w);
 
 				case 3:
-					return Vec2.Cross(V2.w - V1.w, V3.w - V1.w);
+					return Vec2.Cross(_v2.w - _v1.w, _v3.w - _v1.w);
 
 				default:
+#if DEBUG
 					Box2DXDebug.Assert(false);
+#endif
 					return 0.0f;
 			}
 		}
@@ -252,10 +307,10 @@ namespace Box2DX.Collision
 		// Solution
 		// a1 = d12_1 / d12
 		// a2 = d12_2 / d12
-		public void Solve2()
+		internal void Solve2()
 		{
-			Vec2 w1 = V1.w;
-			Vec2 w2 = V2.w;
+			Vec2 w1 = _v1.w;
+			Vec2 w2 = _v2.w;
 			Vec2 e12 = w2 - w1;
 
 			// w1 region
@@ -263,8 +318,8 @@ namespace Box2DX.Collision
 			if (d12_2 <= 0.0f)
 			{
 				// a2 <= 0, so we clamp it to 0
-				V1.a = 1.0f;
-				Count = 1;
+				_v1.a = 1.0f;
+				_count = 1;
 				return;
 			}
 
@@ -273,28 +328,29 @@ namespace Box2DX.Collision
 			if (d12_1 <= 0.0f)
 			{
 				// a1 <= 0, so we clamp it to 0
-				V2.a = 1.0f;
-				Count = 1;
-				V1 = V2;
+				_v2.a = 1.0f;
+				_count = 1;
+				_v1 = _v2;
 				return;
 			}
 
 			// Must be in e12 region.
 			float inv_d12 = 1.0f / (d12_1 + d12_2);
-			V1.a = d12_1 * inv_d12;
-			V2.a = d12_2 * inv_d12;
-			Count = 2;
+			_v1.a = d12_1 * inv_d12;
+			_v2.a = d12_2 * inv_d12;
+			_count = 2;
 		}
+
 		// Possible regions:
 		// - points[2]
 		// - edge points[0]-points[2]
 		// - edge points[1]-points[2]
 		// - inside the triangle
-		public void Solve3()
+		internal void Solve3()
 		{
-			Vec2 w1 = V1.w;
-			Vec2 w2 = V2.w;
-			Vec2 w3 = V3.w;
+			Vec2 w1 = _v1.w;
+			Vec2 w2 = _v2.w;
+			Vec2 w3 = _v3.w;
 
 			// Edge12
 			// [1      1     ][a1] = [1]
@@ -336,8 +392,8 @@ namespace Box2DX.Collision
 			// w1 region
 			if (d12_2 <= 0.0f && d13_2 <= 0.0f)
 			{
-				V1.a = 1.0f;
-				Count = 1;
+				_v1.a = 1.0f;
+				_count = 1;
 				return;
 			}
 
@@ -345,9 +401,9 @@ namespace Box2DX.Collision
 			if (d12_1 > 0.0f && d12_2 > 0.0f && d123_3 <= 0.0f)
 			{
 				float inv_d12 = 1.0f / (d12_1 + d12_2);
-				V1.a = d12_1 * inv_d12;
-				V2.a = d12_1 * inv_d12;
-				Count = 2;
+				_v1.a = d12_1 * inv_d12;
+				_v2.a = d12_1 * inv_d12;
+				_count = 2;
 				return;
 			}
 
@@ -355,28 +411,28 @@ namespace Box2DX.Collision
 			if (d13_1 > 0.0f && d13_2 > 0.0f && d123_2 <= 0.0f)
 			{
 				float inv_d13 = 1.0f / (d13_1 + d13_2);
-				V1.a = d13_1 * inv_d13;
-				V3.a = d13_2 * inv_d13;
-				Count = 2;
-				V2 = V3;
+				_v1.a = d13_1 * inv_d13;
+				_v3.a = d13_2 * inv_d13;
+				_count = 2;
+				_v2 = _v3;
 				return;
 			}
 
 			// w2 region
 			if (d12_1 <= 0.0f && d23_2 <= 0.0f)
 			{
-				V2.a = 1.0f;
-				Count = 1;
-				V1 = V2;
+				_v2.a = 1.0f;
+				_count = 1;
+				_v1 = _v2;
 				return;
 			}
 
 			// w3 region
 			if (d13_1 <= 0.0f && d23_1 <= 0.0f)
 			{
-				V3.a = 1.0f;
-				Count = 1;
-				V1 = V3;
+				_v3.a = 1.0f;
+				_count = 1;
+				_v1 = _v3;
 				return;
 			}
 
@@ -384,22 +440,20 @@ namespace Box2DX.Collision
 			if (d23_1 > 0.0f && d23_2 > 0.0f && d123_1 <= 0.0f)
 			{
 				float inv_d23 = 1.0f / (d23_1 + d23_2);
-				V2.a = d23_1 * inv_d23;
-				V3.a = d23_2 * inv_d23;
-				Count = 2;
-				V1 = V3;
+				_v2.a = d23_1 * inv_d23;
+				_v3.a = d23_2 * inv_d23;
+				_count = 2;
+				_v1 = _v3;
 				return;
 			}
 
 			// Must be in triangle123
 			float inv_d123 = 1.0f / (d123_1 + d123_2 + d123_3);
-			V1.a = d123_1 * inv_d123;
-			V2.a = d123_2 * inv_d123;
-			V3.a = d123_3 * inv_d123;
-			Count = 3;
+			_v1.a = d123_1 * inv_d123;
+			_v2.a = d123_2 * inv_d123;
+			_v3.a = d123_3 * inv_d123;
+			_count = 3;
 		}
-
-
 	}
 
 	public partial class Collision
@@ -409,22 +463,27 @@ namespace Box2DX.Collision
 		/// CircleShape, PolygonShape, EdgeShape. The simplex cache is input/output.
 		/// On the first call set SimplexCache.Count to zero.
 		/// </summary>		
-		public unsafe static void Distance(DistanceOutput* output, SimplexCache* cache, DistanceInput* input, Shape shapeA, Shape shapeB)
+		public unsafe static void Distance(out DistanceOutput output, ref SimplexCache cache, ref DistanceInput input, Shape shapeA, Shape shapeB)
 		{
-			XForm transformA = input->TransformA;
-			XForm transformB = input->TransformB;
+			output = new DistanceOutput();
+
+			XForm transformA = input.TransformA;
+			XForm transformB = input.TransformB;
 
 			// Initialize the simplex.
 			Simplex simplex = new Simplex();
-			simplex.ReadCache(cache, shapeA, transformA, shapeB, transformB);
+			fixed (SimplexCache* sPtr = &cache)
+			{
+				simplex.ReadCache(sPtr, shapeA, transformA, shapeB, transformB);
+			}	
 
 			// Get simplex vertices as an array.
-			SimplexVertex* vertices = &simplex.V1;
+			SimplexVertex* vertices = &simplex._v1;
 
 			// These store the vertices of the last simplex so that we
 			// can check for duplicates and prevent cycling.
 			int* lastA = stackalloc int[4], lastB = stackalloc int[4];
-			int lastCount = 0;
+			int lastCount;
 
 			// Main iteration loop.
 			int iter = 0;
@@ -432,14 +491,15 @@ namespace Box2DX.Collision
 			while (iter < k_maxIterationCount)
 			{
 				// Copy simplex so we can identify duplicates.
-				lastCount = simplex.Count;
-				for (int i = 0; i < lastCount; ++i)
+				lastCount = simplex._count;
+				int i;
+				for (i = 0; i < lastCount; ++i)
 				{
 					lastA[i] = vertices[i].indexA;
 					lastB[i] = vertices[i].indexB;
 				}
 
-				switch (simplex.Count)
+				switch (simplex._count)
 				{
 					case 1:
 						break;
@@ -453,12 +513,14 @@ namespace Box2DX.Collision
 						break;
 
 					default:
+#if DEBUG
 						Box2DXDebug.Assert(false);
+#endif
 						break;
 				}
 
 				// If we have 3 points, then the origin is in the corresponding triangle.
-				if (simplex.Count == 3)
+				if (simplex._count == 3)
 				{
 					break;
 				}
@@ -468,7 +530,7 @@ namespace Box2DX.Collision
 				float distanceSqr = p.LengthSquared();
 
 				// Ensure the search direction is numerically fit.
-				if (distanceSqr < Common.Settings.FLT_EPSILON * Common.Settings.FLT_EPSILON)
+				if (distanceSqr < Common.Settings.FLT_EPSILON_SQUARED)
 				{
 					// The origin is probably contained by a line segment
 					// or triangle. Thus the shapes are overlapped.
@@ -480,10 +542,10 @@ namespace Box2DX.Collision
 				}
 
 				// Compute a tentative new simplex vertex using support points.
-				SimplexVertex* vertex = vertices + simplex.Count;
+				SimplexVertex* vertex = vertices + simplex._count;
 				vertex->indexA = shapeA.GetSupport(Common.Math.MulT(transformA.R, p));
 				vertex->wA = Common.Math.Mul(transformA, shapeA.GetVertex(vertex->indexA));
-				Vec2 wBLocal;
+				//Vec2 wBLocal;
 				vertex->indexB = shapeB.GetSupport(Common.Math.MulT(transformB.R, -p));
 				vertex->wB = Common.Math.Mul(transformB, shapeB.GetVertex(vertex->indexB));
 				vertex->w = vertex->wB - vertex->wA;
@@ -503,7 +565,7 @@ namespace Box2DX.Collision
 
 				// Check for duplicate support points.
 				bool duplicate = false;
-				for (int i = 0; i < lastCount; ++i)
+				for (i = 0; i < lastCount; ++i)
 				{
 					if (vertex->indexA == lastA[i] && vertex->indexB == lastB[i])
 					{
@@ -519,41 +581,48 @@ namespace Box2DX.Collision
 				}
 
 				// New vertex is ok and needed.
-				++simplex.Count;
+				++simplex._count;
 			}
 
-			// Prepare output.
-			simplex.GetWitnessPoints(&output->PointA, &output->PointB);
-			output->Distance = Vec2.Distance(output->PointA, output->PointB);
-			output->Iterations = iter;
 
-			// Cache the simplex.
-			simplex.WriteCache(cache);
+			fixed (DistanceOutput* doPtr = &output)
+			{
+				// Prepare output.
+				simplex.GetWitnessPoints(&doPtr->PointA, &doPtr->PointB);
+				doPtr->Distance = Vec2.Distance(doPtr->PointA, doPtr->PointB);
+				doPtr->Iterations = iter;
+			}
+
+			fixed (SimplexCache* sPtr = &cache)
+			{
+				// Cache the simplex.
+				simplex.WriteCache(sPtr);
+			}
 
 			// Apply radii if requested.
-			if (input->UseRadii)
+			if (input.UseRadii)
 			{
 				float rA = shapeA._radius;
 				float rB = shapeB._radius;
 
-				if (output->Distance > rA + rB && output->Distance > Common.Settings.FLT_EPSILON)
+				if (output.Distance > rA + rB && output.Distance > Common.Settings.FLT_EPSILON)
 				{
 					// Shapes are still no overlapped.
 					// Move the witness points to the outer surface.
-					output->Distance -= rA + rB;
-					Vec2 normal = output->PointB - output->PointA;
+					output.Distance -= rA + rB;
+					Vec2 normal = output.PointB - output.PointA;
 					normal.Normalize();
-					output->PointA += rA * normal;
-					output->PointB -= rB * normal;
+					output.PointA += rA * normal;
+					output.PointB -= rB * normal;
 				}
 				else
 				{
 					// Shapes are overlapped when radii are considered.
 					// Move the witness points to the middle.
-					Vec2 p = 0.5f * (output->PointA + output->PointB);
-					output->PointA = p;
-					output->PointB = p;
-					output->Distance = 0.0f;
+					Vec2 p = 0.5f * (output.PointA + output.PointB);
+					output.PointA = p;
+					output.PointB = p;
+					output.Distance = 0.0f;
 				}
 			}
 		}
