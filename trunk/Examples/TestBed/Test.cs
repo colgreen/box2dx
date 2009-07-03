@@ -224,9 +224,9 @@ namespace TestBed
 		public static TestEntry[] g_testEntries = new TestEntry[]
 		{			
 			new TestEntry("Simple Test", SimpleTest.Create),
-			/*new TestEntry("Line Joint Test", LineJoint.Create),
+			//new TestEntry("Line Joint Test", LineJoint.Create),
 			new TestEntry("Pyramid", Pyramid.Create),
-			new TestEntry("Prismatic", Prismatic.Create),
+			/*new TestEntry("Prismatic", Prismatic.Create),
 			new TestEntry("Revolute", Revolute.Create),
 			new TestEntry("Theo Jansen's Walker", TheoJansen.Create),
 			//new TestEntry("Contact Callback Test", ContactCB.Create),
@@ -236,9 +236,9 @@ namespace TestBed
 			/*new TestEntry("Varying Friction", VaryingFriction.Create),
 			new TestEntry("Varying Restitution", VaryingRestitution.Create),
 			new TestEntry("Bridge", Bridge.Create),
-			new TestEntry("Dominos", Dominos.Create),
+			new TestEntry("Dominos", Dominos.Create),*/
 			new TestEntry("CCD Test", CCDTest.Create),
-			new TestEntry("Biped Test", BipedTest.Create),
+			/*new TestEntry("Biped Test", BipedTest.Create),
 			new TestEntry("Sensor Test", SensorTest.Create),
 			new TestEntry("Car", Car.Create),
 			new TestEntry("Gears", Gears.Create),
