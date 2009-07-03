@@ -1,6 +1,6 @@
 ﻿/*
-  Box2DX Copyright (c) 2008 Ihar Kalasouski http://code.google.com/p/box2dx
-  Box2D original C++ version Copyright (c) 2006-2007 Erin Catto http://www.gphysics.com
+  Box2DX Copyright (c) 2009 Ihar Kalasouski http://code.google.com/p/box2dx
+  Box2D original C++ version Copyright (c) 2006-2009 Erin Catto http://www.gphysics.com
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -19,14 +19,7 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-#define v1
-
-using System;
-using System.Collections.Generic;
-using System.Text;
-
 using Box2DX.Common;
-using Box2DX.Collision;
 using Box2DX.Dynamics;
 
 namespace TestBed
@@ -35,72 +28,45 @@ namespace TestBed
 	{
 		public CCDTest()
 		{
-			const float k_restitution = 1.4f;
-
 			{
+				PolygonDef sd = new PolygonDef();
+				sd.SetAsBox(10.0f, 0.2f);
+				sd.Density = 0.0f;
+
+				BodyDef bd = new BodyDef();
+				bd.Position.Set(0.0f, -0.2f);
+				Body body = _world.CreateBody(bd);
+				body.CreateFixture(sd);
+
+				sd.SetAsBox(0.2f, 1.0f, new Vec2(0.5f, 1.2f), 0.0f);
+				body.CreateFixture(sd);
+			}
+			{
+				PolygonDef sd = new PolygonDef();
+				sd.SetAsBox(2.0f, 0.1f);
+				sd.Density = 1.0f;
+				sd.Restitution = 0;
+
 				BodyDef bd = new BodyDef();
 				bd.Position.Set(0.0f, 20.0f);
 				Body body = _world.CreateBody(bd);
-
-				PolygonDef sd = new PolygonDef();
-				sd.Density = 0.0f;
-				sd.Restitution = k_restitution;
-
-				sd.SetAsBox(0.1f, 10.0f, new Vec2(-10.0f, 0.0f), 0.0f);
-				body.CreateShape(sd);
-
-				sd.SetAsBox(0.1f, 10.0f, new Vec2(10.0f, 0.0f), 0.0f);
-				body.CreateShape(sd);
-
-				sd.SetAsBox(0.1f, 10.0f, new Vec2(0.0f, -10.0f), 0.5f * Box2DX.Common.Settings.Pi);
-				body.CreateShape(sd);
-
-				sd.SetAsBox(0.1f, 10.0f, new Vec2(0.0f, 10.0f), -0.5f * Box2DX.Common.Settings.Pi);
-				body.CreateShape(sd);
-			}
-
-			{
-				PolygonDef sd_bottom = new PolygonDef();
-				sd_bottom.SetAsBox( 1.5f, 0.15f );
-				sd_bottom.Density = 4.0f;
-
-				PolygonDef sd_left = new PolygonDef();
-				sd_left.SetAsBox(0.15f, 2.7f, new Vec2(-1.45f, 2.35f), 0.2f);
-				sd_left.Density = 4.0f;
-
-				PolygonDef sd_right = new PolygonDef();
-				sd_right.SetAsBox(0.15f, 2.7f, new Vec2(1.45f, 2.35f), -0.2f);
-				sd_right.Density = 4.0f;
-
-				BodyDef bd = new BodyDef();
-				bd.Position.Set( 0.0f, 15.0f );
-				Body body = _world.CreateBody(bd);
-				body.CreateShape(sd_bottom);
-				body.CreateShape(sd_left);
-				body.CreateShape(sd_right);
+				body.CreateFixture(sd);
 				body.SetMassFromShapes();
-			}
-
-			for (int i = 0; i < 0; ++i)
-			{
-				BodyDef bd = new BodyDef();
-				bd.Position.Set(0.0f, 15.0f + i);
-				bd.IsBullet = true;
-				Body body = _world.CreateBody(bd);
+				body.SetLinearVelocity(new Vec2(0.0f, -100.0f));
 				body.SetAngularVelocity(Box2DX.Common.Math.Random(-50.0f, 50.0f));
-
-				CircleDef sd = new CircleDef();
-				sd.Radius = 0.25f;
-				sd.Density = 1.0f;
-				sd.Restitution = 0.0f;
-				body.CreateShape(sd);
-				body.SetMassFromShapes();
 			}
 		}
 
 		public static Test Create()
 		{
 			return new CCDTest();
+		}
+
+		public override void Step(Settings settings)
+		{
+			base.Step(settings);
+			OpenGLDebugDraw.DrawString(5, _textLine, "Max toi iters = " + Box2DX.Collision.Collision.MaxToiIters + 
+				", max root iters = " + Box2DX.Collision.Collision.MaxToiRootIters);
 		}
 	}
 }

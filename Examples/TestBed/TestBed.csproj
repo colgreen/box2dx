@@ -91,9 +91,11 @@
     <Compile Include="Tests\BroadPhaseTest.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Tests\CCDTest.cs" />
     <Compile Include="Tests\DistanceTest.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Tests\Pyramid.cs" />
     <Compile Include="Tests\SimpleTest.cs" />
     <Compile Include="Tests\VerticalStack.cs">
       <SubType>Code</SubType>

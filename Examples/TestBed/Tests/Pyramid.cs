@@ -1,6 +1,6 @@
 ﻿/*
-  Box2DX Copyright (c) 2008 Ihar Kalasouski http://code.google.com/p/box2dx
-  Box2D original C++ version Copyright (c) 2006-2007 Erin Catto http://www.gphysics.com
+  Box2DX Copyright (c) 2009 Ihar Kalasouski http://code.google.com/p/box2dx
+  Box2D original C++ version Copyright (c) 2006-2009 Erin Catto http://www.gphysics.com
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -19,12 +19,7 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using System;
-using System.Collections.Generic;
-using System.Text;
-
 using Box2DX.Common;
-using Box2DX.Collision;
 using Box2DX.Dynamics;
 
 namespace TestBed
@@ -40,7 +35,7 @@ namespace TestBed
 				BodyDef bd = new BodyDef();
 				bd.Position.Set(0.0f, -10.0f);
 				Body ground = _world.CreateBody(bd);
-				ground.CreateShape(sd);
+				ground.CreateFixture(sd);
 			}
 
 			{
@@ -63,7 +58,7 @@ namespace TestBed
 						BodyDef bd = new BodyDef();
 						bd.Position = y;
 						Body body = _world.CreateBody(bd);
-						body.CreateShape(sd);
+						body.CreateFixture(sd);
 						body.SetMassFromShapes();
 
 						y += deltaY;
