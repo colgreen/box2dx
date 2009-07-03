@@ -20,11 +20,7 @@
 */
 
 using System;
-using System.Collections.Generic;
-using System.Text;
-
 using Box2DX.Common;
-using Box2DX.Dynamics;
 
 namespace Box2DX.Collision
 {
@@ -140,6 +136,8 @@ namespace Box2DX.Collision
 		public abstract Vec2 GetVertex(int index);
 
 		public abstract int GetSupport(Vec2 d);
+
+		public abstract Vec2 GetSupportVertex(Vec2 d);
 
 		public virtual void Dispose(){}
  	}

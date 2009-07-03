@@ -30,7 +30,7 @@ namespace Box2DX.Dynamics
 			: base(fixtureA, fixtureB)
 		{
 			Box2DXDebug.Assert(fixtureA.ShapeType == ShapeType.EdgeShape);
-			Box2DXDebug.Assert(fixtureA.ShapeType == ShapeType.CircleShape);
+			Box2DXDebug.Assert(fixtureB.ShapeType == ShapeType.CircleShape);
 			_manifold.PointCount = 0;
 			_manifold.Points[0].NormalImpulse = 0.0f;
 			_manifold.Points[0].TangentImpulse = 0.0f;

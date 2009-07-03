@@ -1,6 +1,6 @@
 ﻿/*
-  Box2DX Copyright (c) 2008 Ihar Kalasouski http://code.google.com/p/box2dx
-  Box2D original C++ version Copyright (c) 2006-2007 Erin Catto http://www.gphysics.com
+  Box2DX Copyright (c) 2009 Ihar Kalasouski http://code.google.com/p/box2dx
+  Box2D original C++ version Copyright (c) 2006-2009 Erin Catto http://www.gphysics.com
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -20,8 +20,6 @@
 */
 
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 using Box2DX.Common;
 using Box2DX.Collision;
@@ -51,6 +49,7 @@ namespace Box2DX.Dynamics
 
 		private Body _bodyList;
 		private Joint _jointList;
+		private Controllers.Controller _controllerList;
 
 		private Vec2 _raycastNormal;
 		private object _raycastUserData;
@@ -63,8 +62,6 @@ namespace Box2DX.Dynamics
 		private int _bodyCount;
 		internal int _contactCount;
 		private int _jointCount;
-
-		private Controllers.Controller _controllerList;
 		private int _controllerCount;
 
 		private Vec2 _gravity;
@@ -103,7 +100,7 @@ namespace Box2DX.Dynamics
 		{
 			_destructionListener = null;
 			_boundaryListener = null;
-			_contactFilter = WorldCallback.DefaultFilter;
+			_contactFilter = null;
 			_contactListener = null;
 			_debugDraw = null;
 
@@ -255,23 +252,30 @@ namespace Box2DX.Dynamics
 				DestroyJoint(jn0.Joint);
 			}
 
-			// Delete the attached shapes. This destroys broad-phase
-			// proxies and pairs, leading to the destruction of contacts.
-			Shape s = null;
-			if (b._shapeList != null)
-				s = b._shapeList;
-			while (s != null)
+			//Detach controllers attached to this body
+			Controllers.ControllerEdge ce = b._controllerList;
+			while (ce != null)
 			{
-				Shape s0 = s;
-				s = s._next;
+				Controllers.ControllerEdge ce0 = ce;
+				ce = ce.nextController;
+
+				ce0.controller.RemoveBody(b);
+			}
+
+			// Delete the attached fixtures. This destroys broad-phase
+			// proxies and pairs, leading to the destruction of contacts.
+			Fixture f = b._fixtureList;
+			while (f != null)
+			{
+				Fixture f0 = f;
+				f = f.Next;
 
 				if (_destructionListener != null)
 				{
-					_destructionListener.SayGoodbye(s0);
+					_destructionListener.SayGoodbye(f0);
 				}
 
-				s0.DestroyProxy(_broadPhase);
-				Shape.Destroy(ref s0);
+				f0.Destroy(_broadPhase);
 			}
 
 			// Remove world body list.
@@ -340,10 +344,10 @@ namespace Box2DX.Dynamics
 			if (def.CollideConnected == false)
 			{
 				// Reset the proxies on the body with the minimum number of shapes.
-				Body b = def.Body1._shapeCount < def.Body2._shapeCount ? def.Body1 : def.Body2;
-				for (Shape s = b._shapeList; s != null; s = s._next)
+				Body b = def.Body1._fixtureCount < def.Body2._fixtureCount ? def.Body1 : def.Body2;
+				for (Fixture f = b._fixtureList; f != null; f = f.Next)
 				{
-					s.RefilterProxy(_broadPhase, b.GetXForm());
+					f.RefilterProxy(_broadPhase, b.GetXForm());
 				}
 			}
 
@@ -432,10 +436,10 @@ namespace Box2DX.Dynamics
 			if (collideConnected == false)
 			{
 				// Reset the proxies on the body with the minimum number of shapes.
-				Body b = body1._shapeCount < body2._shapeCount ? body1 : body2;
-				for (Shape s = b._shapeList; s != null; s = s._next)
+				Body b = body1._fixtureCount < body2._fixtureCount ? body1 : body2;
+				for (Fixture f = b._fixtureList; f != null; f = f.Next)
 				{
-					s.RefilterProxy(_broadPhase, b.GetXForm());
+					f.RefilterProxy(_broadPhase, b.GetXForm());
 				}
 			}
 		}
@@ -496,13 +500,23 @@ namespace Box2DX.Dynamics
 			return _jointList;
 		}
 
+		public Controllers.Controller GetControllerList()
+		{
+			return _controllerList;
+		}
+
+		public int GetControllerCount()
+		{
+			return _controllerCount;
+		}
+
 		/// <summary>
-		/// Re-filter a shape. This re-runs contact filtering on a shape.
+		/// Re-filter a fixture. This re-runs contact filtering on a fixture.
 		/// </summary>		
-		public void Refilter(Shape shape)
+		public void Refilter(Fixture fixture)
 		{
 			Box2DXDebug.Assert(_lock == false);
-			shape.RefilterProxy(_broadPhase, shape.GetBody().GetXForm());
+			fixture.RefilterProxy(_broadPhase, fixture.Body.GetXForm());
 		}
 
 		/// <summary>
@@ -606,7 +620,7 @@ namespace Box2DX.Dynamics
 		/// @param shapes a user allocated shape pointer array of size maxCount (or greater).
 		/// @param maxCount the capacity of the shapes array.
 		/// @return the number of shapes found in aabb.
-		public int Query(AABB aabb, Shape[] shapes, int maxCount)
+		public int Query(AABB aabb, Fixture[] fixtures, int maxCount)
 		{
 			//using (object[] results = new object[maxCount])
 			{
@@ -616,7 +630,7 @@ namespace Box2DX.Dynamics
 
 				for (int i = 0; i < count; ++i)
 				{
-					shapes[i] = (Shape)results[i];
+					fixtures[i] = (Fixture)results[i];
 				}
 
 				results = null;
@@ -636,7 +650,7 @@ namespace Box2DX.Dynamics
 		/// <param name="solidShapes">Determines if shapes that the ray starts in are counted as hits.</param>
 		/// <param name="userData">Passed through the worlds contact filter, with method RayCollide. This can be used to filter valid shapes.</param>
 		/// <returns>The number of shapes found</returns>
-		public int Raycast(Segment segment, Shape[] shapes, int maxCount, bool solidShapes, object userData)
+		public int Raycast(Segment segment, out Fixture[] fixtures, int maxCount, bool solidShapes, object userData)
 		{
 #warning "PTR"
 			_raycastSegment = segment;
@@ -644,12 +658,14 @@ namespace Box2DX.Dynamics
 			_raycastSolidShape = solidShapes;
 
 			object[] results = new object[maxCount];
+			fixtures = new Fixture[maxCount];
 			int count = _broadPhase.QuerySegment(segment, results, maxCount, RaycastSortKey);
+
 			for (int i = 0; i < count; ++i)
 			{
-				shapes[i] = (Shape)results[i];
+				fixtures[i] = (Fixture)results[i];
 			}
-			results = null;
+
 			return count;
 		}
 
@@ -664,15 +680,14 @@ namespace Box2DX.Dynamics
 		/// <param name="solidShapes">Determines if shapes that the ray starts in are counted as hits.</param>
 		/// <param name="userData"></param>
 		/// <returns>Returns the colliding shape shape, or null if not found.</returns>
-		public Shape RaycastOne(Segment segment, out float lambda, out Vec2 normal, bool solidShapes, object userData)
+		public Fixture RaycastOne(Segment segment, out float lambda, out Vec2 normal, bool solidShapes, object userData)
 		{
-			lambda = 0;
-			normal = new Vec2(0, 0);
-
 			int maxCount = 1;
-			Shape[] shape = new Shape[maxCount];
+			Fixture[] fixture;
+			lambda = 0.0f;
+			normal = new Vec2();
 
-			int count = Raycast(segment, shape, maxCount, solidShapes, userData);
+			int count = Raycast(segment, out fixture, maxCount, solidShapes, userData);
 
 			if (count == 0)
 				return null;
@@ -681,10 +696,9 @@ namespace Box2DX.Dynamics
 
 			//Redundantly do TestSegment a second time, as the previous one's results are inaccessible
 
-			XForm xf = shape[0].GetBody().GetXForm();
-			shape[0].TestSegment(xf, out lambda, out normal, segment, 1);
+			fixture[0].TestSegment(out lambda, out normal, segment, 1);
 			//We already know it returns true
-			return shape[0];
+			return fixture[0];
 		}
 
 		// Find islands, integrate and solve constraints, solve position constraints
@@ -763,7 +777,7 @@ namespace Box2DX.Dynamics
 							}
 
 							// Is this contact touching?
-							if (cn.Contact.GetManifoldCount() == 0)
+							if ((cn.Contact._flags & Contact.CollisionFlags.Touch) == (Contact.CollisionFlags)0)
 							{
 								continue;
 							}
@@ -840,7 +854,7 @@ namespace Box2DX.Dynamics
 				// Update shapes (for broad-phase). If the shapes go out of
 				// the world AABB then shapes and contacts may be destroyed,
 				// including contacts that are
-				bool inRange = b.SynchronizeShapes();
+				bool inRange = b.SynchronizeFixtures();
 
 				// Did the body's shapes leave the world?
 				if (inRange == false && _boundaryListener != null)
@@ -870,6 +884,7 @@ namespace Box2DX.Dynamics
 			//  --queueSize;
 			int queueCapacity = _bodyCount;
 			Body[] queue = new Body[queueCapacity];
+
 			for (Body b = _bodyList; b != null; b = b._next)
 			{
 				b._flags &= ~Body.BodyFlags.Island;
@@ -882,12 +897,10 @@ namespace Box2DX.Dynamics
 				c._flags &= ~(Contact.CollisionFlags.Toi | Contact.CollisionFlags.Island);
 			}
 
-#if B2_TOI_JOINTS
-			for (Joint j = _jointList; j!=null; j = j._next)
+			for (Joint j = _jointList; j != null; j = j._next)
 			{
-					j._islandFlag = false;
+				j._islandFlag = false;
 			}
-#endif
 
 			// Find TOI events and solve them.
 			for (; ; )
@@ -898,7 +911,7 @@ namespace Box2DX.Dynamics
 
 				for (Contact c = _contactList; c != null; c = c._next)
 				{
-					if ((c._flags & (Contact.CollisionFlags.Slow | Contact.CollisionFlags.NonSolid)) != 0)
+					if ((int)(c._flags & (Contact.CollisionFlags.Slow | Contact.CollisionFlags.NonSolid)) == 1)
 					{
 						continue;
 					}
@@ -906,7 +919,7 @@ namespace Box2DX.Dynamics
 					// TODO_ERIN keep a counter on the contact, only respond to M TOIs per contact.
 
 					float toi = 1.0f;
-					if ((c._flags & Contact.CollisionFlags.Toi) != 0)
+					if ((int)(c._flags & Contact.CollisionFlags.Toi) == 1)
 					{
 						// This contact has a valid cached TOI.
 						toi = c._toi;
@@ -914,38 +927,42 @@ namespace Box2DX.Dynamics
 					else
 					{
 						// Compute the TOI for this contact.
-						Shape s1_ = c.GetShape1();
-						Shape s2_ = c.GetShape2();
-						Body b1_ = s1_.GetBody();
-						Body b2_ = s2_.GetBody();
+						Fixture s1 = c.FixtureA;
+						Fixture s2 = c.FixtureB;
+						Body b1 = s1.Body;
+						Body b2 = s2.Body;
 
-						if ((b1_.IsStatic() || b1_.IsSleeping()) && (b2_.IsStatic() || b2_.IsSleeping()))
+						if ((b1.IsStatic() || b1.IsSleeping()) && (b2.IsStatic() || b2.IsSleeping()))
 						{
 							continue;
 						}
 
 						// Put the sweeps onto the same time interval.
-						float t0 = b1_._sweep.T0;
+						float t0 = b1._sweep.T0;
 
-						if (b1_._sweep.T0 < b2_._sweep.T0)
+						if (b1._sweep.T0 < b2._sweep.T0)
 						{
-							t0 = b2_._sweep.T0;
-							b1_._sweep.Advance(t0);
+							t0 = b2._sweep.T0;
+							b1._sweep.Advance(t0);
 						}
-						else if (b2_._sweep.T0 < b1_._sweep.T0)
+						else if (b2._sweep.T0 < b1._sweep.T0)
 						{
-							t0 = b1_._sweep.T0;
-							b2_._sweep.Advance(t0);
+							t0 = b1._sweep.T0;
+							b2._sweep.Advance(t0);
 						}
 
 						Box2DXDebug.Assert(t0 < 1.0f);
 
 						// Compute the time of impact.
-						toi = Collision.Collision.TimeOfImpact(c._shape1, b1_._sweep, c._shape2, b2_._sweep);
+						toi = c.ComputeTOI(b1._sweep, b2._sweep);
+						//b2TimeOfImpact(c->m_fixtureA->GetShape(), b1->m_sweep, c->m_fixtureB->GetShape(), b2->m_sweep);
+
 						Box2DXDebug.Assert(0.0f <= toi && toi <= 1.0f);
 
-						if (toi > 0.0f && toi < 1.0f)
+						// If the TOI is in range ...
+						if (0.0f < toi && toi < 1.0f)
 						{
+							// Interpolate on the actual range.
 							toi = Common.Math.Min((1.0f - toi) * t0 + toi, 1.0f);
 						}
 
@@ -954,7 +971,7 @@ namespace Box2DX.Dynamics
 						c._flags |= Contact.CollisionFlags.Toi;
 					}
 
-					if (Common.Settings.FLT_EPSILON < toi && toi < minTOI)
+					if (Settings.FLT_EPSILON < toi && toi < minTOI)
 					{
 						// This is the minimum TOI found so far.
 						minContact = c;
@@ -962,25 +979,25 @@ namespace Box2DX.Dynamics
 					}
 				}
 
-				if (minContact == null || 1.0f - 100.0f * Common.Settings.FLT_EPSILON < minTOI)
+				if (minContact == null || 1.0f - 100.0f * Settings.FLT_EPSILON < minTOI)
 				{
 					// No more TOI events. Done!
 					break;
 				}
 
 				// Advance the bodies to the TOI.
-				Shape s1 = minContact.GetShape1();
-				Shape s2 = minContact.GetShape2();
-				Body b1 = s1.GetBody();
-				Body b2 = s2.GetBody();
-				b1.Advance(minTOI);
-				b2.Advance(minTOI);
+				Fixture f1 = minContact.FixtureA;
+				Fixture f2 = minContact.FixtureB;
+				Body b3 = f1.Body;
+				Body b4 = f2.Body;
+				b3.Advance(minTOI);
+				b4.Advance(minTOI);
 
 				// The TOI contact likely has some new contact points.
 				minContact.Update(_contactListener);
 				minContact._flags &= ~Contact.CollisionFlags.Toi;
 
-				if (minContact.GetManifoldCount() == 0)
+				if ((minContact._flags & Contact.CollisionFlags.Touch) == 0)
 				{
 					// This shouldn't happen. Numerical error?
 					//b2Assert(false);
@@ -988,17 +1005,17 @@ namespace Box2DX.Dynamics
 				}
 
 				// Build the TOI island. We need a dynamic seed.
-				Body seed = b1;
+				Body seed = b3;
 				if (seed.IsStatic())
 				{
-					seed = b2;
+					seed = b4;
 				}
 
 				// Reset island and queue.
 				island.Clear();
 
-				int queueStart = 0; //starting index for queue
-				int queueSize = 0;  //elements in queue
+				int queueStart = 0; // starting index for queue
+				int queueSize = 0;  // elements in queue
 				queue[queueStart + queueSize++] = seed;
 				seed._flags |= Body.BodyFlags.Island;
 
@@ -1008,6 +1025,7 @@ namespace Box2DX.Dynamics
 					// Grab the next body off the stack and add it to the island.
 					Body b = queue[queueStart++];
 					--queueSize;
+
 					island.Add(b);
 
 					// Make sure the body is awake.
@@ -1021,7 +1039,7 @@ namespace Box2DX.Dynamics
 					}
 
 					// Search all contacts connected to this body.
-					for (ContactEdge cn = b._contactList; cn != null; cn = cn.Next)
+					for (ContactEdge cEdge = b._contactList; cEdge != null; cEdge = cEdge.Next)
 					{
 						// Does the TOI island still have space for contacts?
 						if (island._contactCount == island._contactCapacity)
@@ -1030,25 +1048,25 @@ namespace Box2DX.Dynamics
 						}
 
 						// Has this contact already been added to an island? Skip slow or non-solid contacts.
-						if ((cn.Contact._flags & (Contact.CollisionFlags.Island | Contact.CollisionFlags.Slow | Contact.CollisionFlags.NonSolid)) != 0)
+						if ((int)(cEdge.Contact._flags & (Contact.CollisionFlags.Island | Contact.CollisionFlags.Slow | Contact.CollisionFlags.NonSolid)) != 0)
 						{
 							continue;
 						}
 
 						// Is this contact touching? For performance we are not updating this contact.
-						if (cn.Contact.GetManifoldCount() == 0)
+						if ((cEdge.Contact._flags & Contact.CollisionFlags.Touch) == 0)
 						{
 							continue;
 						}
 
-						island.Add(cn.Contact);
-						cn.Contact._flags |= Contact.CollisionFlags.Island;
+						island.Add(cEdge.Contact);
+						cEdge.Contact._flags |= Contact.CollisionFlags.Island;
 
 						// Update other body.
-						Body other = cn.Other;
+						Body other = cEdge.Other;
 
 						// Was the other body already added to this island?
-						if ((other._flags & Body.BodyFlags.Island) != 0)
+						if ((int)(other._flags & Body.BodyFlags.Island) == 1)
 						{
 							continue;
 						}
@@ -1060,53 +1078,53 @@ namespace Box2DX.Dynamics
 							other.WakeUp();
 						}
 
-						Box2DXDebug.Assert(queueStart + queueSize < queueCapacity);
-						queue[queueStart + queueSize++] = other;
+						//Box2DXDebug.Assert(queueStart + queueSize < queueCapacity);
+						queue[queueStart + queueSize] = other;
+						++queueSize;
 						other._flags |= Body.BodyFlags.Island;
 					}
 
-#if B2_TOI_JOINTS
-					for (JointEdge jn = b._jointList; jn!=null; jn = jn.Next)
+					for (JointEdge jEdge = b._jointList; jEdge != null; jEdge = jEdge.Next)
 					{
 						if (island._jointCount == island._jointCapacity)
 						{
 							continue;
 						}
-						
-						if (jn.Joint._islandFlag == true)
+
+						if (jEdge.Joint._islandFlag == true)
 						{
 							continue;
 						}
-						
-						island.Add(jn.Joint);
-						
-						jn.Joint._islandFlag = true;
-						
-						Body other = jn.Other;
-						
-						if (other._flags & Body.BodyFlags.Island)
+
+						island.Add(jEdge.Joint);
+
+						jEdge.Joint._islandFlag = true;
+
+						Body other = jEdge.Other;
+
+						if ((int)(other._flags & Body.BodyFlags.Island) == 1)
 						{
 							continue;
 						}
-						
+
 						if (!other.IsStatic())
 						{
 							other.Advance(minTOI);
 							other.WakeUp();
 						}
-						
-						Box2DXDebug.Assert(queueStart + queueSize < queueCapacity);
-						queue[queueStart + queueSize++] = other;
-						other._flags |= Body.BodyFlags.Island; 
+
+						//Box2DXDebug.Assert(queueStart + queueSize < queueCapacity);
+						queue[queueStart + queueSize] = other;
+						++queueSize;
+						other._flags |= Body.BodyFlags.Island;
 					}
-#endif
 				}
 
-				TimeStep subStep = new TimeStep();
+				TimeStep subStep;
 				subStep.WarmStarting = false;
 				subStep.Dt = (1.0f - minTOI) * step.Dt;
-				Box2DXDebug.Assert(subStep.Dt > Common.Settings.FLT_EPSILON);
 				subStep.Inv_Dt = 1.0f / subStep.Dt;
+				subStep.DtRatio = 0.0f;
 				subStep.VelocityIterations = step.VelocityIterations;
 				subStep.PositionIterations = step.PositionIterations;
 
@@ -1119,7 +1137,7 @@ namespace Box2DX.Dynamics
 					Body b = island._bodies[i];
 					b._flags &= ~Body.BodyFlags.Island;
 
-					if ((b._flags & (Body.BodyFlags.Sleep | Body.BodyFlags.Frozen)) != 0)
+					if ((int)(b._flags & (Body.BodyFlags.Sleep | Body.BodyFlags.Frozen)) == 1)
 					{
 						continue;
 					}
@@ -1129,12 +1147,12 @@ namespace Box2DX.Dynamics
 						continue;
 					}
 
-					// Update shapes (for broad-phase). If the shapes go out of
-					// the world AABB then shapes and contacts may be destroyed,
+					// Update fixtures (for broad-phase). If the fixtures go out of
+					// the world AABB then fixtures and contacts may be destroyed,
 					// including contacts that are
-					bool inRange = b.SynchronizeShapes();
+					bool inRange = b.SynchronizeFixtures();
 
-					// Did the body's shapes leave the world?
+					// Did the body's fixtures leave the world?
 					if (inRange == false && _boundaryListener != null)
 					{
 						_boundaryListener.Violation(b);
@@ -1162,7 +1180,7 @@ namespace Box2DX.Dynamics
 					j._islandFlag = false;
 				}
 
-				// Commit shape proxy movements to the broad-phase so that new contacts are created.
+				// Commit fixture proxy movements to the broad-phase so that new contacts are created.
 				// Also, some contacts can be destroyed.
 				_broadPhase.Commit();
 			}
@@ -1212,34 +1230,30 @@ namespace Box2DX.Dynamics
 			}
 		}
 
-		private void DrawShape(Shape shape, XForm xf, Color color, bool core)
+		private void DrawFixture(Fixture fixture, XForm xf, Color color, bool core)
 		{
+#warning "the core argument is not used, the coreColor variable is also not used"
 			Color coreColor = new Color(0.9f, 0.6f, 0.6f);
 
-			switch (shape.GetType())
+			switch (fixture.ShapeType)
 			{
 				case ShapeType.CircleShape:
 					{
-						CircleShape circle = (CircleShape)shape;
+						CircleShape circle = (CircleShape)fixture.Shape;
 
-						Vec2 center = Common.Math.Mul(xf, circle.GetLocalPosition());
-						float radius = circle.GetRadius();
+						Vec2 center = Common.Math.Mul(xf, circle._position);
+						float radius = circle._radius;
 						Vec2 axis = xf.R.Col1;
 
 						_debugDraw.DrawSolidCircle(center, radius, axis, color);
-
-						if (core)
-						{
-							_debugDraw.DrawCircle(center, radius - Settings.ToiSlop, coreColor);
-						}
 					}
 					break;
 
 				case ShapeType.PolygonShape:
 					{
-						PolygonShape poly = (PolygonShape)shape;
-						int vertexCount = poly.VertexCount;
-						Vec2[] localVertices = poly.GetVertices();
+						PolygonShape poly = (PolygonShape)fixture.Shape;
+						int vertexCount = poly._vertexCount;
+						Vec2[] localVertices = poly._vertices;
 
 						Box2DXDebug.Assert(vertexCount <= Settings.MaxPolygonVertices);
 						Vec2[] vertices = new Vec2[Settings.MaxPolygonVertices];
@@ -1250,16 +1264,14 @@ namespace Box2DX.Dynamics
 						}
 
 						_debugDraw.DrawSolidPolygon(vertices, vertexCount, color);
+					}
+					break;
 
-						if (core)
-						{
-							Vec2[] localCoreVertices = poly.GetCoreVertices();
-							for (int i = 0; i < vertexCount; ++i)
-							{
-								vertices[i] = Common.Math.Mul(xf, localCoreVertices[i]);
-							}
-							_debugDraw.DrawPolygon(vertices, vertexCount, coreColor);
-						}
+				case ShapeType.EdgeShape:
+					{
+						EdgeShape edge = (EdgeShape)fixture.Shape;
+
+						_debugDraw.DrawSegment(Common.Math.Mul(xf, edge.Vertex1), Common.Math.Mul(xf, edge.Vertex2), color);
 					}
 					break;
 			}
@@ -1281,19 +1293,19 @@ namespace Box2DX.Dynamics
 				for (Body b = _bodyList; b != null; b = b.GetNext())
 				{
 					XForm xf = b.GetXForm();
-					for (Shape s = b.GetShapeList(); s != null; s = s.GetNext())
+					for (Fixture f = b.GetFixtureList(); f != null; f = f.Next)
 					{
 						if (b.IsStatic())
 						{
-							DrawShape(s, xf, new Color(0.5f, 0.9f, 0.5f), core);
+							DrawFixture(f, xf, new Color(0.5f, 0.9f, 0.5f), core);
 						}
 						else if (b.IsSleeping())
 						{
-							DrawShape(s, xf, new Color(0.5f, 0.5f, 0.9f), core);
+							DrawFixture(f, xf, new Color(0.5f, 0.5f, 0.9f), core);
 						}
 						else
 						{
-							DrawShape(s, xf, new Color(0.9f, 0.9f, 0.9f), core);
+							DrawFixture(f, xf, new Color(0.9f, 0.9f, 0.9f), core);
 						}
 					}
 				}
@@ -1394,40 +1406,6 @@ namespace Box2DX.Dynamics
 				_debugDraw.DrawPolygon(vs, 4, new Color(0.3f, 0.9f, 0.9f));
 			}
 
-			if ((flags & DebugDraw.DrawFlags.Obb) != 0)
-			{
-				Color color = new Color(0.5f, 0.3f, 0.5f);
-
-				for (Body b = _bodyList; b != null; b = b.GetNext())
-				{
-					XForm xf = b.GetXForm();
-					for (Shape s = b.GetShapeList(); s != null; s = s.GetNext())
-					{
-						if (s.GetType() != ShapeType.PolygonShape)
-						{
-							continue;
-						}
-
-						PolygonShape poly = (PolygonShape)s;
-						OBB obb = poly.GetOBB();
-						Vec2 h = obb.Extents;
-						Vec2[] vs = new Vec2[4];
-						vs[0].Set(-h.X, -h.Y);
-						vs[1].Set(h.X, -h.Y);
-						vs[2].Set(h.X, h.Y);
-						vs[3].Set(-h.X, h.Y);
-
-						for (int i = 0; i < 4; ++i)
-						{
-							vs[i] = obb.Center + Common.Math.Mul(obb.R, vs[i]);
-							vs[i] = Common.Math.Mul(xf, vs[i]);
-						}
-
-						_debugDraw.DrawPolygon(vs, 4, color);
-					}
-				}
-			}
-
 			if ((flags & DebugDraw.DrawFlags.CenterOfMass) != 0)
 			{
 				for (Body b = _bodyList; b != null; b = b.GetNext())
@@ -1442,17 +1420,17 @@ namespace Box2DX.Dynamics
 		//Is it safe to pass private static function pointers?
 		private static float RaycastSortKey(object data)
 		{
-			Shape shape = data as Shape;
-			Box2DXDebug.Assert(shape != null);
-			Body body = shape.GetBody();
+			Fixture fixture = data as Fixture;
+			Box2DXDebug.Assert(fixture != null);
+			Body body = fixture.Body;
 			World world = body.GetWorld();
-			XForm xf = body.GetXForm();
 
-			if (world._contactFilter != null && !world._contactFilter.RayCollide(world._raycastUserData, shape))
+			if (world._contactFilter != null && !world._contactFilter.RayCollide(world._raycastUserData, fixture))
 				return -1;
 
 			float lambda;
-			SegmentCollide collide = shape.TestSegment(xf, out lambda, out world._raycastNormal, world._raycastSegment, 1);
+
+			SegmentCollide collide = fixture.TestSegment(out lambda, out world._raycastNormal, world._raycastSegment, 1);
 
 			if (world._raycastSolidShape && collide == SegmentCollide.MissCollide)
 				return -1;

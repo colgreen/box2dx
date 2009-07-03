@@ -122,7 +122,7 @@ namespace TestBed
 	// nullify the mouse joint.
 	public class MyDestructionListener : DestructionListener
 	{
-		public override void SayGoodbye(Shape shape) { ; }
+		public override void SayGoodbye(Fixture shape) { ; }
 		public override void SayGoodbye(Joint joint)
 		{
 			if (test._mouseJoint == joint)
@@ -151,7 +151,16 @@ namespace TestBed
 		public Test test;
 	}
 
-	public class MyContactListener : ContactListener
+	public struct ContactPoint
+	{
+		public Fixture fixtureA;
+		public Fixture fixtureB;
+		public Vec2 normal;
+		public Vec2 position;
+		public PointState state;
+	}
+
+	/*public class MyContactListener : ContactListener
 	{
 		public override void Add(ContactPoint point)
 		{
@@ -208,23 +217,23 @@ namespace TestBed
 		}
 
 		public Test test;
-	}
+	}*/
 
 	public class Test : IDisposable
 	{
 		public static TestEntry[] g_testEntries = new TestEntry[]
 		{			
 			new TestEntry("Simple Test", SimpleTest.Create),
-			new TestEntry("Line Joint Test", LineJoint.Create),
+			/*new TestEntry("Line Joint Test", LineJoint.Create),
 			new TestEntry("Pyramid", Pyramid.Create),
 			new TestEntry("Prismatic", Prismatic.Create),
 			new TestEntry("Revolute", Revolute.Create),
 			new TestEntry("Theo Jansen's Walker", TheoJansen.Create),
 			//new TestEntry("Contact Callback Test", ContactCB.Create),
 			new TestEntry("Polygon Shapes", PolyShapes.Create),
-			new TestEntry("Web", Web.Create),
+			new TestEntry("Web", Web.Create),*/
 			new TestEntry("Vertical Stack", VerticalStack.Create),
-			new TestEntry("Varying Friction", VaryingFriction.Create),
+			/*new TestEntry("Varying Friction", VaryingFriction.Create),
 			new TestEntry("Varying Restitution", VaryingRestitution.Create),
 			new TestEntry("Bridge", Bridge.Create),
 			new TestEntry("Dominos", Dominos.Create),
@@ -235,20 +244,20 @@ namespace TestBed
 			new TestEntry("Gears", Gears.Create),
 			new TestEntry("Slider Crank", SliderCrank.Create),
 			new TestEntry("Compound Shapes", CompoundShapes.Create),
-			new TestEntry("Chain", Chain.Create),
-			new TestEntry("Collision Processing", CollisionProcessing.Create),
-			new TestEntry("Collision Filtering", CollisionFiltering.Create),
+			new TestEntry("Chain", Chain.Create),*/
+			//new TestEntry("Collision Processing", CollisionProcessing.Create),
+			/*new TestEntry("Collision Filtering", CollisionFiltering.Create),
 			new TestEntry("Motors and Limits", MotorsAndLimits.Create),
 			new TestEntry("Apply Force", ApplyForce.Create),
 			new TestEntry("Pulleys", Pulleys.Create),
 			new TestEntry("Shape Editing", ShapeEditing.Create),
-			new TestEntry("Time of Impact", TimeOfImpact.Create),
+			new TestEntry("Time of Impact", TimeOfImpact.Create),*/
 			new TestEntry("Distance Test", DistanceTest.Create),
 			new TestEntry("Broad Phase", BroadPhaseTest.Create),
-			new TestEntry("PolyCollision", PolyCollision.Create),
+			/*new TestEntry("PolyCollision", PolyCollision.Create),
 			new TestEntry("Elastic Body", ElasticBody.Create),
 			new TestEntry("Raycast Test", RaycastTest.Create),
-			new TestEntry("Buoyancy", Buoyancy.Create)
+			new TestEntry("Buoyancy", Buoyancy.Create)*/
 		};
 
 		public static int k_maxContactPoints = 2048;
@@ -258,7 +267,7 @@ namespace TestBed
 		internal int _pointCount;
 		protected MyDestructionListener _destructionListener = new MyDestructionListener();
 		protected MyBoundaryListener _boundaryListener = new MyBoundaryListener();
-		protected MyContactListener _contactListener = new MyContactListener();
+		//protected MyContactListener _contactListener = new MyContactListener();
 		internal DebugDraw _debugDraw = new OpenGLDebugDraw();
 		protected int _textLine;
 		internal World _world;
@@ -281,10 +290,10 @@ namespace TestBed
 
 			_destructionListener.test = this;
 			_boundaryListener.test = this;
-			_contactListener.test = this;
+			//_contactListener.test = this;
 			_world.SetDestructionListener(_destructionListener);
 			_world.SetBoundaryListener(_boundaryListener);
-			_world.SetContactListener(_contactListener);
+			//_world.SetContactListener(_contactListener);
 			_world.SetDebugDraw(_debugDraw);
 		}
 
@@ -325,18 +334,18 @@ namespace TestBed
 
 			// Query the world for overlapping shapes.
 			int k_maxCount = 10;
-			Shape[] shapes = new Shape[k_maxCount];
+			Fixture[] shapes = new Fixture[k_maxCount];
 			int count = _world.Query(aabb, shapes, k_maxCount);
 			Body body = null;
 			for (int i = 0; i < count; ++i)
 			{
-				Body shapeBody = shapes[i].GetBody();
+				Body shapeBody = shapes[i].Body;
 				if (shapeBody.IsStatic() == false && shapeBody.GetMass() > 0.0f)
 				{
-					bool inside = shapes[i].TestPoint(shapeBody.GetXForm(), p);
+					bool inside = shapes[i].TestPoint(p);
 					if (inside)
 					{
-						body = shapes[i].GetBody();
+						body = shapes[i].Body;
 						break;
 					}
 				}
@@ -378,7 +387,7 @@ namespace TestBed
 
 		public void LaunchBomb()
 		{
-			if (_bomb != null)
+			/*if (_bomb != null)
 			{
 				_world.DestroyBody(_bomb);
 				_bomb = null;
@@ -397,7 +406,7 @@ namespace TestBed
 			sd.Restitution = 0.1f;
 			_bomb.CreateShape(sd);
 
-			_bomb.SetMassFromShapes();
+			_bomb.SetMassFromShapes();*/
 		}
 
 		public virtual void Step(Settings settings)

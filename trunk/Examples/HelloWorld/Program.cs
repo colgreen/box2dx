@@ -1,6 +1,6 @@
 ﻿/*
-  Box2DX Copyright (c) 2008 Ihar Kalasouski http://code.google.com/p/box2dx
-  Box2D original C++ version Copyright (c) 2006-2007 Erin Catto http://www.gphysics.com
+  Box2DX Copyright (c) 2009 Ihar Kalasouski http://code.google.com/p/box2dx
+  Box2D original C++ version Copyright (c) 2006-2009 Erin Catto http://www.gphysics.com
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -20,9 +20,6 @@
 */
 
 using System;
-using System.Collections.Generic;
-using System.Text;
-
 using Box2DX.Dynamics;
 using Box2DX.Collision;
 using Box2DX.Common;
@@ -39,8 +36,8 @@ namespace HelloWorld
 			// Define the size of the world. Simulation will still work
 			// if bodies reach the end of the world, but it will be slower.
 			AABB worldAABB = new AABB();
-			worldAABB.LowerBound.Set(-100.0f, -100.0f);
-			worldAABB.UpperBound.Set(100.0f, 100.0f);
+			worldAABB.LowerBound.Set(-100.0f);
+			worldAABB.UpperBound.Set(100.0f);
 
 			// Define the gravity vector.
 			Vec2 gravity = new Vec2(0.0f, -10.0f);
@@ -55,7 +52,7 @@ namespace HelloWorld
 			BodyDef groundBodyDef = new BodyDef();
 			groundBodyDef.Position.Set(0.0f, -10.0f);
 
-			// Call the body factory which creates the ground box shape.
+			// Call the body factory which  creates the ground box shape.
 			// The body is also added to the world.
 			Body groundBody = world.CreateBody(groundBodyDef);
 
@@ -66,7 +63,7 @@ namespace HelloWorld
 			groundShapeDef.SetAsBox(50.0f, 10.0f);
 
 			// Add the ground shape to the ground body.
-			groundBody.CreateShape(groundShapeDef);
+			groundBody.CreateFixture(groundShapeDef);
 
 			// Define the dynamic body. We set its position and call the body factory.
 			BodyDef bodyDef = new BodyDef();
@@ -84,7 +81,7 @@ namespace HelloWorld
 			shapeDef.Friction = 0.3f;
 
 			// Add the shape to the body.
-			body.CreateShape(shapeDef);
+			body.CreateFixture(shapeDef);
 
 			// Now tell the dynamic body to compute it's mass properties base
 			// on its shape.

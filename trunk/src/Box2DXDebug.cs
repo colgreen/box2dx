@@ -31,18 +31,30 @@ namespace Box2DX
 		[Conditional("DEBUG")]
 		public static void Assert(bool condition)
 		{
+			if (!condition)
+			{
+				condition = condition;
+			}
 			Debug.Assert(condition);
 		}
 
 		[Conditional("DEBUG")]
 		public static void Assert(bool condition, string message)
 		{
+			if (!condition)
+			{
+				condition = condition;
+			}
 			Debug.Assert(condition, message);
 		}
 
 		[Conditional("DEBUG")]
 		public static void Assert(bool condition, string message, string detailMessage)
 		{
+			if (!condition)
+			{
+				condition = condition;
+			}
 			Debug.Assert(condition, message, detailMessage);
 		}
 

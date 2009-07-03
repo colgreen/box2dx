@@ -1,6 +1,6 @@
 ﻿/*
-  Box2DX Copyright (c) 2008 Ihar Kalasouski http://code.google.com/p/box2dx
-  Box2D original C++ version Copyright (c) 2006-2007 Erin Catto http://www.gphysics.com
+  Box2DX Copyright (c) 2009 Ihar Kalasouski http://code.google.com/p/box2dx
+  Box2D original C++ version Copyright (c) 2006-2009 Erin Catto http://www.gphysics.com
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -106,9 +106,9 @@ to increase the number of cache hits. Much of misses are due to random access
 to body data. The constraint structures are iterated over linearly, which leads
 to few cache misses.
 
-The bodies are not accessed during iteration. Instead read only data, such as
+The _bodies are not accessed during iteration. Instead read only data, such as
 the mass values are stored with the constraints. The mutable data are the constraint
-impulses and the bodies velocities/positions. The impulses are held inside the
+impulses and the _bodies velocities/positions. The impulses are held inside the
 constraint structures. The body velocities/positions are held in compact, temporary
 arrays to increase the number of cache hits. Linear and angular velocity are
 stored in a single array since multiple arrays lead to multiple misses.
@@ -184,9 +184,9 @@ namespace Box2DX.Dynamics
 			_bodyCapacity = bodyCapacity;
 			_contactCapacity = contactCapacity;
 			_jointCapacity = jointCapacity;
-			_bodyCount = 0;
-			_contactCount = 0;
-			_jointCount = 0;
+			//__bodyCount = 0;
+			//_contactCount = 0;
+			//_jointCount = 0;
 
 			_listener = listener;
 
@@ -242,39 +242,6 @@ namespace Box2DX.Dynamics
 				// v2 = (1.0f - c * dt) * v1
 				b._linearVelocity *= Common.Math.Clamp(1.0f - step.Dt * b._linearDamping, 0.0f, 1.0f);
 				b._angularVelocity *= Common.Math.Clamp(1.0f - step.Dt * b._angularDamping, 0.0f, 1.0f);
-
-				// Check for large velocities.
-#if TARGET_FLOAT32_IS_FIXED
-				// Fixed point code written this way to prevent
-				// overflows, float code is optimized for speed
-
-				float vMagnitude = b._linearVelocity.Length();
-				if(vMagnitude > Settings.MaxLinearVelocity)
-				{
-					b._linearVelocity *= Settings.MaxLinearVelocity/vMagnitude;
-				}
-				b._angularVelocity = Vector2.Clamp(b._angularVelocity, 
-					-Settings.MaxAngularVelocity, Settings.MaxAngularVelocity);
-
-#else
-				if (Vec2.Dot(b._linearVelocity, b._linearVelocity) > Settings.MaxLinearVelocitySquared)
-				{
-					b._linearVelocity.Normalize();
-					b._linearVelocity *= Settings.MaxLinearVelocity;
-				}
-
-				if (b._angularVelocity * b._angularVelocity > Settings.MaxAngularVelocitySquared)
-				{
-					if (b._angularVelocity < 0.0f)
-					{
-						b._angularVelocity = -Settings.MaxAngularVelocity;
-					}
-					else
-					{
-						b._angularVelocity = Settings.MaxAngularVelocity;
-					}
-				}
-#endif
 			}
 
 			ContactSolver contactSolver = new ContactSolver(step, _contacts, _contactCount);
@@ -308,6 +275,27 @@ namespace Box2DX.Dynamics
 				if (b.IsStatic())
 					continue;
 
+				// Check for large velocities.
+				Vec2 translation = step.Dt * b._linearVelocity;
+				if (Common.Vec2.Dot(translation, translation) > Settings.MaxTranslationSquared)
+				{
+					translation.Normalize();
+					b._linearVelocity = (Settings.MaxTranslation * step.Inv_Dt) * translation;
+				}
+
+				float rotation = step.Dt * b._angularVelocity;
+				if (rotation * rotation > Settings.MaxRotationSquared)
+				{
+					if (rotation < 0.0)
+					{
+						b._angularVelocity = -step.Inv_Dt * Settings.MaxRotation;
+					}
+					else
+					{
+						b._angularVelocity = step.Inv_Dt * Settings.MaxRotation;
+					}
+				}
+
 				// Store positions for continuous collision.
 				b._sweep.C0 = b._sweep.C;
 				b._sweep.A0 = b._sweep.A;
@@ -323,13 +311,14 @@ namespace Box2DX.Dynamics
 			}
 
 			// Iterate over constraints.
-			for (int ii = 0; ii < step.PositionIterations; ++ii)
+			for (int i = 0; i < step.PositionIterations; ++i)
 			{
 				bool contactsOkay = contactSolver.SolvePositionConstraints(Settings.ContactBaumgarte);
+
 				bool jointsOkay = true;
-				for (int i = 0; i < _jointCount; ++i)
+				for (int j = 0; j < _jointCount; ++j)
 				{
-					bool jointOkay = _joints[i].SolvePositionConstraints(Settings.ContactBaumgarte);
+					bool jointOkay = _joints[j].SolvePositionConstraints(Settings.ContactBaumgarte);
 					jointsOkay = jointsOkay && jointOkay;
 				}
 
@@ -344,7 +333,8 @@ namespace Box2DX.Dynamics
 
 			if (allowSleep)
 			{
-				float minSleepTime = Common.Settings.FLT_MAX;
+				float minSleepTime = Settings.FLT_MAX;
+
 #if !TARGET_FLOAT32_IS_FIXED
 				float linTolSqr = Settings.LinearSleepTolerance * Settings.LinearSleepTolerance;
 				float angTolSqr = Settings.AngularSleepTolerance * Settings.AngularSleepTolerance;
@@ -370,7 +360,7 @@ namespace Box2DX.Dynamics
 						Common.Math.Abs(b._linearVelocity.X) > Settings.LinearSleepTolerance ||
 						Common.Math.Abs(b._linearVelocity.Y) > Settings.LinearSleepTolerance)
 #else
-						b._angularVelocity * b._angularVelocity > angTolSqr ||
+ b._angularVelocity * b._angularVelocity > angTolSqr ||
 						Vec2.Dot(b._linearVelocity, b._linearVelocity) > linTolSqr)
 #endif
 					{
@@ -401,11 +391,11 @@ namespace Box2DX.Dynamics
 		{
 			ContactSolver contactSolver = new ContactSolver(subStep, _contacts, _contactCount);
 
-			// No warm starting needed for TOI contact events.
+			// No warm starting is needed for TOI events because warm
+			// starting impulses were applied in the discrete solver.
 
-			//Warm starting for joints is off for now, 
-			//but we need  to call this function to compute Jacobians.
-
+			// Warm starting for joints is off for now, but we need to
+			// call this function to compute Jacobians.
 			for (int i = 0; i < _jointCount; ++i)
 			{
 				_joints[i].InitVelocityConstraints(subStep);
@@ -415,7 +405,6 @@ namespace Box2DX.Dynamics
 			for (int i = 0; i < subStep.VelocityIterations; ++i)
 			{
 				contactSolver.SolveVelocityConstraints();
-
 				for (int j = 0; j < _jointCount; ++j)
 				{
 					_joints[j].SolveVelocityConstraints(subStep);
@@ -433,6 +422,27 @@ namespace Box2DX.Dynamics
 				if (b.IsStatic())
 					continue;
 
+				// Check for large velocities.
+				Vec2 translation = subStep.Dt * b._linearVelocity;
+				if (Vec2.Dot(translation, translation) > Settings.MaxTranslationSquared)
+				{
+					translation.Normalize();
+					b._linearVelocity = (Settings.MaxTranslation * subStep.Inv_Dt) * translation;
+				}
+
+				float rotation = subStep.Dt * b._angularVelocity;
+				if (rotation * rotation > Settings.MaxRotationSquared)
+				{
+					if (rotation < 0.0)
+					{
+						b._angularVelocity = -subStep.Inv_Dt * Settings.MaxRotation;
+					}
+					else
+					{
+						b._angularVelocity = subStep.Inv_Dt * Settings.MaxRotation;
+					}
+				}
+
 				// Store positions for continuous collision.
 				b._sweep.C0 = b._sweep.C;
 				b._sweep.A0 = b._sweep.A;
@@ -448,18 +458,17 @@ namespace Box2DX.Dynamics
 			}
 
 			// Solve position constraints.
-			float k_toiBaumgarte = 0.75f;
+			const float k_toiBaumgarte = 0.75f;
 			for (int i = 0; i < subStep.PositionIterations; ++i)
 			{
 				bool contactsOkay = contactSolver.SolvePositionConstraints(k_toiBaumgarte);
-
 				bool jointsOkay = true;
 				for (int j = 0; j < _jointCount; ++j)
 				{
 					bool jointOkay = _joints[j].SolvePositionConstraints(k_toiBaumgarte);
 					jointsOkay = jointsOkay && jointOkay;
 				}
-				
+
 				if (contactsOkay && jointsOkay)
 				{
 					break;
@@ -499,31 +508,14 @@ namespace Box2DX.Dynamics
 			{
 				Contact c = _contacts[i];
 				ContactConstraint cc = constraints[i];
-				ContactResult cr = new ContactResult();
-				cr.Shape1 = c.GetShape1();
-				cr.Shape2 = c.GetShape2();
-				Body b1 = cr.Shape1.GetBody();
-				int manifoldCount = c.GetManifoldCount();
-				Manifold[] manifolds = c.GetManifolds();
-				for (int j = 0; j < manifoldCount; ++j)
+				ContactImpulse impulse = new ContactImpulse();
+				for (int j = 0; j < cc.PointCount; ++j)
 				{
-					Manifold manifold = manifolds[j];
-					cr.Normal = manifold.Normal;
-					for (int k = 0; k < manifold.PointCount; ++k)
-					{
-						ManifoldPoint point = manifold.Points[k];
-						ContactConstraintPoint ccp = cc.Points[k];
-						cr.Position = b1.GetWorldPoint(point.LocalPoint1);
-
-						// TOI constraint results are not stored, so get
-						// the result from the constraint.
-						cr.NormalImpulse = ccp.NormalImpulse;
-						cr.TangentImpulse = ccp.TangentImpulse;
-						cr.ID = point.ID;
-
-						_listener.Result(cr);
-					}
+					impulse.normalImpulses[j] = cc.Points[j].NormalImpulse;
+					impulse.tangentImpulses[j] = cc.Points[j].TangentImpulse;
 				}
+
+				_listener.PostSolve(c, impulse);
 			}
 		}
 	}

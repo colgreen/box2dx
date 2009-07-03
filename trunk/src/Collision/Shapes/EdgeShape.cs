@@ -245,7 +245,7 @@ namespace Box2DX.Collision
 			return Vec2.Dot(_v1, d) > Vec2.Dot(_v2, d) ? 0 : 1;
 		}
 
-		public Vec2 GetSupportVertex(Vec2 d)
+		public override Vec2 GetSupportVertex(Vec2 d)
 		{
 			return Vec2.Dot(_v1, d) > Vec2.Dot(_v2, d) ? _v1 : _v2;
 		}

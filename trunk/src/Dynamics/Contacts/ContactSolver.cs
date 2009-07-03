@@ -57,11 +57,11 @@ namespace Box2DX.Dynamics
 		public int PointCount;
 		public Manifold Manifold;
 
-		public ContactConstraint()
-		{
-			for (int i = 0; i < Settings.MaxManifoldPoints; i++)
-				Points[i] = new ContactConstraintPoint();
-		}
+		//public ContactConstraint()
+		//{
+		//	for (int i = 0; i < Settings.MaxManifoldPoints; i++)
+		//		Points[i] = new ContactConstraintPoint();
+		//}
 	}
 
 	public class ContactSolver : IDisposable
@@ -70,10 +70,10 @@ namespace Box2DX.Dynamics
 		public ContactConstraint[] _constraints;
 		public int _constraintCount;
 
-		public ContactSolver(TimeStep step, Contact[] contacts)
+		public ContactSolver(TimeStep step, Contact[] contacts, int contactCount)
 		{
 			_step = step;
-			_constraintCount = contacts.Length;
+			_constraintCount = contactCount;
 
 			_constraints = new ContactConstraint[_constraintCount];
 			for (int i = 0; i < _constraintCount; i++)
@@ -214,8 +214,6 @@ namespace Box2DX.Dynamics
 					}
 				}
 			}
-
-			Box2DXDebug.Assert(count == _constraintCount);
 		}
 
 		public void Dispose()

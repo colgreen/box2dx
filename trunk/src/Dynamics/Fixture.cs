@@ -314,7 +314,7 @@ namespace Box2DX.Dynamics
 					{
 						PolygonShape polygon = new PolygonShape();
 						PolygonDef polygonDef = (PolygonDef)def;
-						polygon.Set(polygonDef.Vertices);
+						polygon.Set(polygonDef.Vertices, polygonDef.VertexCount);
 						_shape = polygon;
 					}
 					break;

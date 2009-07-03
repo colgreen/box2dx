@@ -256,5 +256,10 @@ namespace Box2DX.Common
 			Vec3 u = v.X * A.Col1 + v.Y * A.Col2 + v.Z * A.Col3;
 			return u;
 		}
+
+		public static float Atan2(float y, float x)
+		{
+			return (float)System.Math.Atan2(y, x);
+		}
 	}
 }

@@ -83,6 +83,8 @@ namespace Box2DX.Common
 		/// </summary>
 		public void Set(float x, float y) { X = x; Y = y; }
 
+		public void Set(float xy) { X = xy; Y = xy; }
+
 		/// <summary>
 		///  Get the length of this vector (the norm).
 		/// </summary>

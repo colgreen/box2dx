@@ -30,7 +30,7 @@ namespace Box2DX.Dynamics
 			: base(fixtureA, fixtureB)
 		{
 			Box2DXDebug.Assert(fixtureA.ShapeType == ShapeType.PolygonShape);
-			Box2DXDebug.Assert(fixtureA.ShapeType == ShapeType.CircleShape);
+			Box2DXDebug.Assert(fixtureB.ShapeType == ShapeType.CircleShape);
 			CollideShapeFunction = CollidePolygonCircle;
 		}
 

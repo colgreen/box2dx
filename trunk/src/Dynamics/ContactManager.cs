@@ -1,6 +1,6 @@
 ﻿/*
-  Box2DX Copyright (c) 2008 Ihar Kalasouski http://code.google.com/p/box2dx
-  Box2D original C++ version Copyright (c) 2006-2007 Erin Catto http://www.gphysics.com
+  Box2DX Copyright (c) 2009 Ihar Kalasouski http://code.google.com/p/box2dx
+  Box2D original C++ version Copyright (c) 2006-2009 Erin Catto http://www.gphysics.com
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -19,11 +19,6 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using System;
-using System.Collections.Generic;
-using System.Text;
-
-using Box2DX.Common;
 using Box2DX.Collision;
 
 namespace Box2DX.Dynamics
@@ -41,44 +36,40 @@ namespace Box2DX.Dynamics
 
 		public bool _destroyImmediate;
 
-		public ContactManager()
-		{
-			_world = null;
-			_destroyImmediate = false;
-		}
+		public ContactManager() { }
 
 		// This is a callback from the broadphase when two AABB proxies begin
 		// to overlap. We create a Contact to manage the narrow phase.
-		public override object PairAdded(object proxyUserData1, object proxyUserData2)
+		public override object PairAdded(object proxyUserDataA, object proxyUserDataB)
 		{
-			Shape shape1 = proxyUserData1 as Shape;
-			Shape shape2 = proxyUserData2 as Shape;
+			Fixture fixtureA = proxyUserDataA as Fixture;
+			Fixture fixtureB = proxyUserDataB as Fixture;
 
-			Body body1 = shape1.GetBody();
-			Body body2 = shape2.GetBody();
+			Body bodyA = fixtureA.Body;
+			Body bodyB = fixtureB.Body;
 
-			if (body1.IsStatic() && body2.IsStatic())
+			if (bodyA.IsStatic() && bodyB.IsStatic())
 			{
 				return _nullContact;
 			}
 
-			if (shape1.GetBody() == shape2.GetBody())
+			if (fixtureA.Body == fixtureB.Body)
 			{
 				return _nullContact;
 			}
 
-			if (body2.IsConnected(body1))
+			if (bodyB.IsConnected(bodyA))
 			{
 				return _nullContact;
 			}
 
-			if (_world._contactFilter != null && _world._contactFilter.ShouldCollide(shape1, shape2) == false)
+			if (_world._contactFilter != null && _world._contactFilter.ShouldCollide(fixtureA, fixtureB) == false)
 			{
 				return _nullContact;
 			}
 
 			// Call the factory.
-			Contact c = Contact.Create(shape1, shape2);
+			Contact c = Contact.Create(fixtureA, fixtureB);
 
 			if (c == null)
 			{
@@ -86,10 +77,10 @@ namespace Box2DX.Dynamics
 			}
 
 			// Contact creation may swap shapes.
-			shape1 = c.GetShape1();
-			shape2 = c.GetShape2();
-			body1 = shape1.GetBody();
-			body2 = shape2.GetBody();
+			fixtureA = c.FixtureA;
+			fixtureB = c.FixtureB;
+			bodyA = fixtureA.Body;
+			bodyB = fixtureB.Body;
 
 			// Insert into the world.
 			c._prev = null;
@@ -103,28 +94,28 @@ namespace Box2DX.Dynamics
 			// Connect to island graph.
 
 			// Connect to body 1
-			c._node1.Contact = c;
-			c._node1.Other = body2;
+			c._nodeA.Contact = c;
+			c._nodeA.Other = bodyB;
 
-			c._node1.Prev = null;
-			c._node1.Next = body1._contactList;
-			if (body1._contactList != null)
+			c._nodeA.Prev = null;
+			c._nodeA.Next = bodyA._contactList;
+			if (bodyA._contactList != null)
 			{
-				body1._contactList.Prev = c._node1;
+				bodyA._contactList.Prev = c._nodeA;
 			}
-			body1._contactList = c._node1;
+			bodyA._contactList = c._nodeA;
 
 			// Connect to body 2
-			c._node2.Contact = c;
-			c._node2.Other = body1;
+			c._nodeB.Contact = c;
+			c._nodeB.Other = bodyA;
 
-			c._node2.Prev = null;
-			c._node2.Next = body2._contactList;
-			if (body2._contactList != null)
+			c._nodeB.Prev = null;
+			c._nodeB.Next = bodyB._contactList;
+			if (bodyB._contactList != null)
 			{
-				body2._contactList.Prev = c._node2;
+				bodyB._contactList.Prev = c._nodeB;
 			}
-			body2._contactList = c._node2;
+			bodyB._contactList = c._nodeB;
 
 			++_world._contactCount;
 			return c;
@@ -155,40 +146,15 @@ namespace Box2DX.Dynamics
 
 		public void Destroy(Contact c)
 		{
-			Shape shape1 = c.GetShape1();
-			Shape shape2 = c.GetShape2();
-			Body body1 = shape1.GetBody();
-			Body body2 = shape2.GetBody();
+			Fixture fixtureA = c.FixtureA;
+			Fixture fixtureB = c.FixtureB;
+			Body bodyA = fixtureA.Body;
+			Body bodyB = fixtureB.Body;
 
-			ContactPoint cp = new ContactPoint();
-			cp.Shape1 = shape1;
-			cp.Shape2 = shape2;
-			cp.Friction = Settings.MixFriction(shape1.Friction, shape2.Friction);
-			cp.Restitution = Settings.MixRestitution(shape1.Restitution, shape2.Restitution);
-
-			// Inform the user that this contact is ending.
-			int manifoldCount = c.GetManifoldCount();
-			if (manifoldCount > 0 && _world._contactListener!=null)
+			if (c.Manifold.PointCount > 0)
 			{
-				Manifold[] manifolds = c.GetManifolds();
-
-				for (int i = 0; i < manifoldCount; ++i)
-				{
-					Manifold manifold = manifolds[i];
-					cp.Normal = manifold.Normal;
-
-					for (int j = 0; j < manifold.PointCount; ++j)
-					{
-						ManifoldPoint mp = manifold.Points[j];
-						cp.Position = body1.GetWorldPoint(mp.LocalPoint1);
-						Vec2 v1 = body1.GetLinearVelocityFromLocalPoint(mp.LocalPoint1);
-						Vec2 v2 = body2.GetLinearVelocityFromLocalPoint(mp.LocalPoint2);
-						cp.Velocity = v2 - v1;
-						cp.Separation = mp.Separation;
-						cp.ID = mp.ID;
-						_world._contactListener.Remove(cp);
-					}
-				}
+				if(_world._contactListener!=null)
+					_world._contactListener.EndContact(c);
 			}
 
 			// Remove from the world.
@@ -208,39 +174,39 @@ namespace Box2DX.Dynamics
 			}
 
 			// Remove from body 1
-			if (c._node1.Prev != null)
+			if (c._nodeA.Prev != null)
 			{
-				c._node1.Prev.Next = c._node1.Next;
+				c._nodeA.Prev.Next = c._nodeA.Next;
 			}
 
-			if (c._node1.Next != null)
+			if (c._nodeA.Next != null)
 			{
-				c._node1.Next.Prev = c._node1.Prev;
+				c._nodeA.Next.Prev = c._nodeA.Prev;
 			}
 
-			if (c._node1 == body1._contactList)
+			if (c._nodeA == bodyA._contactList)
 			{
-				body1._contactList = c._node1.Next;
+				bodyA._contactList = c._nodeA.Next;
 			}
 
 			// Remove from body 2
-			if (c._node2.Prev != null)
+			if (c._nodeB.Prev != null)
 			{
-				c._node2.Prev.Next = c._node2.Next;
+				c._nodeB.Prev.Next = c._nodeB.Next;
 			}
 
-			if (c._node2.Next != null)
+			if (c._nodeB.Next != null)
 			{
-				c._node2.Next.Prev = c._node2.Prev;
+				c._nodeB.Next.Prev = c._nodeB.Prev;
 			}
 
-			if (c._node2 == body2._contactList)
+			if (c._nodeB == bodyB._contactList)
 			{
-				body2._contactList = c._node2.Next;
+				bodyB._contactList = c._nodeB.Next;
 			}
 
 			// Call the factory.
-			Contact.Destroy(c);
+			Contact.Destroy(ref c);
 			--_world._contactCount;
 		}
 
@@ -252,9 +218,9 @@ namespace Box2DX.Dynamics
 			// Update awake contacts.
 			for (Contact c = _world._contactList; c != null; c = c.GetNext())
 			{
-				Body body1 = c.GetShape1().GetBody();
-				Body body2 = c.GetShape2().GetBody();
-				if (body1.IsSleeping() && body2.IsSleeping())
+				Body bodyA = c._fixtureA.Body;
+				Body bodyB = c._fixtureB.Body;
+				if (bodyA.IsSleeping() && bodyB.IsSleeping())
 				{
 					continue;
 				}

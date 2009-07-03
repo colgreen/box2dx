@@ -1,6 +1,6 @@
 ﻿/*
-  Box2DX Copyright (c) 2008 Ihar Kalasouski http://code.google.com/p/box2dx
-  Box2D original C++ version Copyright (c) 2006-2008 Erin Catto http://www.gphysics.com
+  Box2DX Copyright (c) 2009 Ihar Kalasouski http://code.google.com/p/box2dx
+  Box2D original C++ version Copyright (c) 2006-2009 Erin Catto http://www.gphysics.com
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -19,109 +19,122 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using System;
-using System.Collections.Generic;
 using System.Text;
 
 using Box2DX.Common;
 using Box2DX.Collision;
 using Box2DX.Dynamics;
+using Math=Box2DX.Common.Math;
 
 namespace TestBed
 {
 	public class DistanceTest : Test
 	{
-		Body _body1;
-		Body _body2;
-		Shape _shape1;
-		Shape _shape2;
+		Vec2 _positionB;
+		float _angleB;
+
+		XForm _transformA;
+		XForm _transformB;
+		PolygonShape _polygonA;
+		PolygonShape _polygonB;
+
+		Vec2[] _dv = new Vec2[Box2DX.Common.Settings.MaxPolygonVertices];
 
 		public DistanceTest()
 		{
-			PolygonDef sd = new PolygonDef();
-			sd.SetAsBox(1.0f, 1.0f);
-			sd.Density = 0.0f;
+			{
+				_polygonA = new PolygonShape();
+				_transformA.SetIdentity();
+				_transformA.Position.Set(0.0f, -0.2f);
+				_polygonA.SetAsBox(10.0f, 0.2f);
+			}
 
-			BodyDef bd = new BodyDef();
-			bd.Position.Set(0.0f, 10.0f);
-			_body1 = _world.CreateBody(bd);
-			_shape1 = _body1.CreateShape(sd);
-
-			PolygonDef sd2 = new PolygonDef();
-			sd2.VertexCount = 3;
-			sd2.Vertices[0].Set(-1.0f, 0.0f);
-			sd2.Vertices[1].Set(1.0f, 0.0f);
-			sd2.Vertices[2].Set(0.0f, 15.0f);
-			sd2.Density = 1.0f;
-
-			BodyDef bd2 = new BodyDef();
-
-			bd2.Position.Set(0.0f, 10.0f);
-
-			_body2 = _world.CreateBody(bd2);
-			_shape2 = _body2.CreateShape(sd2);
-			_body2.SetMassFromShapes();
-
-			_world.Gravity = new Vec2(0.0f, 0.0f);
+			{
+				_polygonB = new PolygonShape();
+				_positionB.Set(12.017401f, 0.13678508f);
+				_angleB = -0.0109265f;
+				_transformB.Set(_positionB, _angleB);
+				_polygonB.SetAsBox(2.0f, 0.1f);
+			}
 		}
 
 		public override void Step(Settings settings)
-		{			
-			settings.pause = 1;
+		{
 			base.Step(settings);
-			settings.pause = 0;
 
-			Vec2 x1, x2;
-			float distance = Collision.Distance(out x1, out x2, _shape1, _body1.GetXForm(), _shape2, _body2.GetXForm());
+			DistanceInput input = new DistanceInput();
+			input.TransformA = _transformA;
+			input.TransformB = _transformB;
+			input.UseRadii = true;
+			SimplexCache cache = new SimplexCache();
+			cache.Count = 0;
+			DistanceOutput output;
+			Collision.Distance(out output, ref cache, ref input, _polygonA, _polygonB);
 
 			StringBuilder strBld = new StringBuilder();
-			strBld.AppendFormat("distance = {0}", new object[] { distance });
+			strBld.AppendFormat("distance = {0}", new object[] { output.Distance });
 			OpenGLDebugDraw.DrawString(5, _textLine, strBld.ToString());
 			_textLine += 15;
 
 			strBld = new StringBuilder();
-			strBld.AppendFormat("iterations = {0}", new object[] { Collision.GJKIterations });
+			strBld.AppendFormat("iterations = {0}", new object[] { output.Iterations });
 			OpenGLDebugDraw.DrawString(5, _textLine, strBld.ToString());
 			_textLine += 15;
 
+			{
+				Color color = new Color(0.9f, 0.9f, 0.9f);
+				int i;
+				for (i = 0; i < _polygonA.VertexCount; ++i)
+				{
+					_dv[i] = Math.Mul(_transformA, _polygonA.Vertices[i]);
+				}
+				_debugDraw.DrawPolygon(_dv, _polygonA.VertexCount, color);
+
+				for (i = 0; i < _polygonB.VertexCount; ++i)
+				{
+					_dv[i] = Math.Mul(_transformB, _polygonB.Vertices[i]);
+				}
+				_debugDraw.DrawPolygon(_dv, _polygonB.VertexCount, color);
+			}
+
+			Vec2 x1 = output.PointA;
+			Vec2 x2 = output.PointB;
+
 			OpenGLDebugDraw.DrawPoint(x1, 4.0f, new Color(1, 0, 0));
-			OpenGLDebugDraw.DrawSegment(x1, x2, new Color(1, 0, 0));
+			OpenGLDebugDraw.DrawSegment(x1, x2, new Color(1, 1, 0));
 			OpenGLDebugDraw.DrawPoint(x2, 4.0f, new Color(1, 0, 0));
 		}
 
 		public override void Keyboard(System.Windows.Forms.Keys key)
 		{
-			Vec2 p = _body2.GetPosition();
-			float a = _body2.GetAngle();
-
 			switch (key)
 			{
-				case System.Windows.Forms.Keys.A:
-					p.X -= 0.1f;
+				case  System.Windows.Forms.Keys.A:
+					_positionB.X -= 0.1f;
 					break;
 
 				case System.Windows.Forms.Keys.D:
-					p.X += 0.1f;
+					_positionB.X += 0.1f;
 					break;
 
 				case System.Windows.Forms.Keys.S:
-					p.Y -= 0.1f;
+					_positionB.Y -= 0.1f;
 					break;
 
 				case System.Windows.Forms.Keys.W:
-					p.Y += 0.1f;
+					_positionB.Y += 0.1f;
 					break;
 
 				case System.Windows.Forms.Keys.Q:
-					a += 0.1f * Box2DX.Common.Settings.Pi;
+					_angleB += 0.1f * Box2DX.Common.Settings.Pi;
 					break;
 
 				case System.Windows.Forms.Keys.E:
-					a -= 0.1f * Box2DX.Common.Settings.Pi;
+					_angleB -= 0.1f * Box2DX.Common.Settings.Pi;
 					break;
 			}
 
-			_body2.SetXForm(p, a);
+			_transformB.Set(_positionB, _angleB);
 		}
 
 		public static Test Create()

@@ -30,11 +30,11 @@ namespace Box2DX.Collision
 		/// </summary>
 		public static float EdgeSeparation(PolygonShape poly1, XForm xf1, int edge1, PolygonShape poly2, XForm xf2)
 		{
-			int count1 = poly1.VertexCount;
+			int count1 = poly1._vertexCount;
 			Vec2[] vertices1 = poly1._vertices;
 			Vec2[] normals1 = poly1._normals;
 
-			int count2 = poly2.VertexCount;
+			int count2 = poly2._vertexCount;
 			Vec2[] vertices2 = poly2._vertices;
 
 			Box2DXDebug.Assert(0 <= edge1 && edge1 < count1);
@@ -67,7 +67,7 @@ namespace Box2DX.Collision
 		/// </summary>
 		public static float FindMaxSeparation(ref int edgeIndex, PolygonShape poly1, XForm xf1, PolygonShape poly2, XForm xf2)
 		{
-			int count1 = poly1.VertexCount;
+			int count1 = poly1._vertexCount;
 			Vec2[] normals1 = poly1._normals;
 
 			// Vector pointing from the centroid of poly1 to the centroid of poly2.
@@ -148,10 +148,10 @@ namespace Box2DX.Collision
 		public static void FindIncidentEdge(out ClipVertex[] c,
 			PolygonShape poly1, XForm xf1, int edge1, PolygonShape poly2, XForm xf2)
 		{
-			int count1 = poly1.VertexCount;
+			int count1 = poly1._vertexCount;
 			Vec2[] normals1 = poly1._normals;
 
-			int count2 = poly2.VertexCount;
+			int count2 = poly2._vertexCount;
 			Vec2[] vertices2 = poly2._vertices;
 			Vec2[] normals2 = poly2._normals;
 
@@ -244,7 +244,7 @@ namespace Box2DX.Collision
 			ClipVertex[] incidentEdge;
 			Collision.FindIncidentEdge(out incidentEdge, poly1, xf1, edge1, poly2, xf2);
 
-			int count1 = poly1.VertexCount;
+			int count1 = poly1._vertexCount;
 			Vec2[] vertices1 = poly1._vertices;
 
 			Vec2 v11 = vertices1[edge1];

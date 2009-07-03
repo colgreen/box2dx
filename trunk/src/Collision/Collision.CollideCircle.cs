@@ -35,8 +35,6 @@ namespace Box2DX.Collision
 
 			Vec2 d = p2 - p1;
 			float distSqr = Vec2.Dot(d, d);
-			float r1 = circle1._radius;
-			float r2 = circle2._radius;
 			float radius = circle1._radius + circle2._radius;
 			if (distSqr > radius * radius)
 			{
@@ -65,7 +63,7 @@ namespace Box2DX.Collision
 			int normalIndex = 0;
 			float separation = -Settings.FLT_MAX;
 			float radius = polygon._radius + circle._radius;
-			int vertexCount = polygon.VertexCount;
+			int vertexCount = polygon._vertexCount;
 			Vec2[] vertices = polygon._vertices;
 			Vec2[] normals = polygon._normals;
 
@@ -134,7 +132,7 @@ namespace Box2DX.Collision
 				manifold.LocalPlaneNormal.Normalize();
 				manifold.LocalPoint = v2;
 				manifold.Points[0].LocalPoint = circle._position;
-				manifold.Points[0].Id.key = 0;
+				manifold.Points[0].ID.Key = 0;
 			}
 			else
 			{
@@ -150,7 +148,7 @@ namespace Box2DX.Collision
 				manifold.LocalPlaneNormal = normals[vertIndex1];
 				manifold.LocalPoint = faceCenter;
 				manifold.Points[0].LocalPoint = circle._position;
-				manifold.Points[0].ID.key = 0;
+				manifold.Points[0].ID.Key = 0;
 			}
 		}
 	}
