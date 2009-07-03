@@ -1,6 +1,6 @@
 ﻿/*
-  Box2DX Copyright (c) 2008 Ihar Kalasouski http://code.google.com/p/box2dx
-  Box2D original C++ version Copyright (c) 2006-2007 Erin Catto http://www.gphysics.com
+  Box2DX Copyright (c) 2009 Ihar Kalasouski http://code.google.com/p/box2dx
+  Box2D original C++ version Copyright (c) 2006-2009 Erin Catto http://www.gphysics.com
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -20,8 +20,6 @@
 */
 
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 using Box2DX.Common;
 using Box2DX.Collision;
@@ -45,7 +43,7 @@ namespace Box2DX.Dynamics
 		/// Called when any shape is about to be destroyed due
 		/// to the destruction of its parent body.
 		/// </summary>
-		public abstract void SayGoodbye(Shape shape);
+		public abstract void SayGoodbye(Fixture fixture);
 	}
 
 	/// <summary>
@@ -71,42 +69,45 @@ namespace Box2DX.Dynamics
 		/// If you implement your own collision filter you may want to build from this implementation.
 		/// @warning for performance reasons this is only called when the AABBs begin to overlap.
 		/// </summary>
-		public virtual bool ShouldCollide(Shape shape1, Shape shape2)
+		public virtual bool ShouldCollide(Fixture fixtureA, Fixture fixtureB)
 		{
-			FilterData filter1 = shape1.FilterData;
-			FilterData filter2 = shape2.FilterData;
+			FilterData filterA = fixtureA.Filter;
+			FilterData filterB = fixtureB.Filter;
 
-			if (filter1.GroupIndex == filter2.GroupIndex && filter1.GroupIndex != 0)
+			if (filterA.GroupIndex == filterB.GroupIndex && filterA.GroupIndex != 0)
 			{
-				return filter1.GroupIndex > 0;
+				return filterA.GroupIndex > 0;
 			}
 
-			bool collide = (filter1.MaskBits & filter2.CategoryBits) != 0 && (filter1.CategoryBits & filter2.MaskBits) != 0;
+			bool collide = (filterA.MaskBits & filterB.CategoryBits) != 0 && (filterA.CategoryBits & filterB.MaskBits) != 0;
 			return collide;
 		}
 
 		/// <summary>
 		/// Return true if the given shape should be considered for ray intersection.
 		/// </summary>
-		public bool RayCollide(object userData, Shape shape)
+		public bool RayCollide(object userData, Fixture fixture)
 		{
 			//By default, cast userData as a shape, and then collide if the shapes would collide
 			if (userData == null)
+			{
 				return true;
-			return ShouldCollide((Shape)userData, shape);
+			}
+
+			return ShouldCollide((Fixture)userData, fixture);
 		}
 	}
 
-	public class WorldCallback
+	/// Contact impulses for reporting. Impulses are used instead of forces because
+	/// sub-step forces may approach infinity for rigid body collisions. These
+	/// match up one-to-one with the contact points in b2Manifold.
+	public class ContactImpulse
 	{
-		/// <summary>
-		/// The default contact filter.
-		/// </summary>
-		public static ContactFilter DefaultFilter = new ContactFilter();
+		public float[] normalImpulses = new float[Settings.MaxManifoldPoints];
+		public float[] tangentImpulses = new float[Settings.MaxManifoldPoints];
 	}
 
-	/// <summary>
-	/// Implement this class to get collision results. You can use these results for
+	/// Implement this class to get contact information. You can use these results for
 	/// things like sounds and game logic. You can also get contact results by
 	/// traversing the contact lists after the time step. However, you might miss
 	/// some contacts because continuous physics leads to sub-stepping.
@@ -114,33 +115,34 @@ namespace Box2DX.Dynamics
 	/// single time step.
 	/// You should strive to make your callbacks efficient because there may be
 	/// many callbacks per time step.
-	/// @warning The contact separation is the last computed value.
-	/// @warning You cannot create/destroy Box2D entities inside these callbacks.
-	/// </summary>
-	public abstract class ContactListener
+	/// @warning You cannot create/destroy Box2DX entities inside these callbacks.
+	public interface ContactListener
 	{
-		/// <summary>
-		/// Called when a contact point is added. This includes the geometry
-		/// and the forces.
-		/// </summary>
-		public virtual void Add(ContactPoint point) { return; }
+		/// Called when two fixtures begin to touch.
+		void BeginContact(Contact contact);
 
-		/// <summary>
-		/// Called when a contact point persists. This includes the geometry
-		/// and the forces.
-		/// </summary>
-		public virtual void Persist(ContactPoint point) { return; }
+		/// Called when two fixtures cease to touch.
+		void EndContact(Contact contact);
 
-		/// <summary>
-		/// Called when a contact point is removed. This includes the last
-		/// computed geometry and forces.
-		/// </summary>
-		public virtual void Remove(ContactPoint point) { return; }
+		/// This is called after a contact is updated. This allows you to inspect a
+		/// contact before it goes to the solver. If you are careful, you can modify the
+		/// contact manifold (e.g. disable contact).
+		/// A copy of the old manifold is provided so that you can detect changes.
+		/// Note: this is called only for awake bodies.
+		/// Note: this is called even when the number of contact points is zero.
+		/// Note: this is not called for sensors.
+		/// Note: if you set the number of contact points to zero, you will not
+		/// get an EndContact callback. However, you may get a BeginContact callback
+		/// the next step.
+		void PreSolve(Contact contact, Manifold oldManifold);
 
-		/// <summary>
-		/// Called after a contact point is solved.
-		/// </summary>
-		public virtual void Result(ContactResult point) { return; }
+		/// This lets you inspect a contact after the solver is finished. This is useful
+		/// for inspecting impulses.
+		/// Note: the contact manifold does not include time of impact impulses, which can be
+		/// arbitrarily large if the sub-step is small. Hence the impulse is provided explicitly
+		/// in a separate data structure.
+		/// Note: this is only called for contacts that are touching, solid, and awake.
+		void PostSolve(Contact contact, ContactImpulse impulse);
 	}
 
 	/// <summary>
@@ -151,6 +153,10 @@ namespace Box2DX.Dynamics
 		public float R, G, B;
 
 		public Color(float r, float g, float b)
+		{
+			R = r; G = g; B = b;
+		}
+		public void Set(float r, float g, float b)
 		{
 			R = r; G = g; B = b;
 		}
@@ -167,13 +173,13 @@ namespace Box2DX.Dynamics
 		{
 			Shape = 0x0001, // draw shapes
 			Joint = 0x0002, // draw joint connections
-			CoreShape = 0x0004, // draw core (TOI) shapes
+			CoreShape = 0x0004, // draw core (TOI) shapes       // should be removed in this revision?
 			Aabb = 0x0008, // draw axis aligned bounding boxes
-			Obb = 0x0010, // draw oriented bounding boxes
+			Obb = 0x0010, // draw oriented bounding boxes       // should be removed in this revision?
 			Pair = 0x0020, // draw broad-phase pairs
 			CenterOfMass = 0x0040, // draw center of mass frame
 			Controller = 0x0080 // draw center of mass frame
-		}
+		};
 
 		protected DrawFlags _drawFlags;
 

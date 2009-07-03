@@ -36,26 +36,38 @@ namespace Box2DX.Collision
 	{
 		internal Vec2 _centroid;
 		internal Vec2[] _vertices = new Vec2[Settings.MaxPolygonVertices];
-		internal Vec2[] _normals = new Vec2[Settings.MaxPolygonVertices];		
+		internal Vec2[] _normals = new Vec2[Settings.MaxPolygonVertices];
+
+		internal int _vertexCount;
+
+		public int VertexCount
+		{
+			get { return _vertexCount; }
+		}
+
+		public Vec2[] Vertices
+		{
+			get { return _vertices; }
+		}
 
 		/// <summary>
 		/// Copy vertices. This assumes the vertices define a convex polygon.
 		/// It is assumed that the exterior is the the right of each edge.
 		/// </summary>
-		public void Set(Vec2[] vertices)
+		public void Set(Vec2[] vertices, int count)
 		{
-			int count = vertices.Length;
 			Box2DXDebug.Assert(3 <= count && count <= Settings.MaxPolygonVertices);
+			_vertexCount = count;
 
 			int i;
 			// Copy vertices.
-			for (i = 0; i < count; ++i)
+			for (i = 0; i < _vertexCount; ++i)
 			{
 				_vertices[i] = vertices[i];
 			}
 
 			// Compute normals. Ensure the edges have non-zero length.
-			for (i = 0; i < count; ++i)
+			for (i = 0; i < _vertexCount; ++i)
 			{
 				int i1 = i;
 				int i2 = i + 1 < count ? i + 1 : 0;
@@ -68,13 +80,13 @@ namespace Box2DX.Collision
 #if DEBUG
 			// Ensure the polygon is convex and the interior
 			// is to the left of each edge.
-			for (i = 0; i < count; ++i)
+			for (i = 0; i < _vertexCount; ++i)
 			{
 				int i1 = i;
 				int i2 = i + 1 < count ? i + 1 : 0;
 				Vec2 edge = _vertices[i2] - _vertices[i1];
 
-				for (int j = 0; j < count; ++j)
+				for (int j = 0; j < _vertexCount; ++j)
 				{
 					// Don't check vertices on the current edge.
 					if (j == i1 || j == i2)
@@ -93,7 +105,7 @@ namespace Box2DX.Collision
 #endif
 
 			// Compute the polygon centroid.
-			_centroid = ComputeCentroid(_vertices);
+			_centroid = ComputeCentroid(_vertices, _vertexCount);
 		}
 
 		/// <summary>
@@ -103,6 +115,7 @@ namespace Box2DX.Collision
 		/// <param name="hy">The half-height.</param>
 		public void SetAsBox(float hx, float hy)
 		{
+			_vertexCount = 4;
 			_vertices[0].Set(-hx, -hy);
 			_vertices[1].Set(hx, -hy);
 			_vertices[2].Set(hx, hy);
@@ -131,18 +144,29 @@ namespace Box2DX.Collision
 			xf.R.Set(angle);
 
 			// Transform vertices and normals.
-			for (int i = 0; i < VertexCount; ++i)
+			for (int i = 0; i < _vertexCount; ++i)
 			{
 				_vertices[i] = Common.Math.Mul(xf, _vertices[i]);
 				_normals[i] = Common.Math.Mul(xf.R, _normals[i]);
 			}
 		}
 
+		public void SetAsEdge(Vec2 v1, Vec2 v2)
+		{
+			_vertexCount = 2;
+			_vertices[0] = v1;
+			_vertices[1] = v2;
+			_centroid = 0.5f * (v1 + v2);
+			_normals[0] = Vec2.Cross(v2 - v1, 1.0f);
+			_normals[0].Normalize();
+			_normals[1] = -_normals[0];
+		}
+
 		public override bool TestPoint(XForm xf, Vec2 p)
 		{
 			Vec2 pLocal = Common.Math.MulT(xf.R, p - xf.Position);
 
-			int vc = VertexCount;
+			int vc = _vertexCount;
 			for (int i = 0; i < vc; ++i)
 			{
 				float dot = Vec2.Dot(_normals[i], pLocal - _vertices[i]);
@@ -167,8 +191,7 @@ namespace Box2DX.Collision
 			Vec2 d = p2 - p1;
 			int index = -1;
 
-			int vCount = VertexCount;
-			for (int i = 0; i < vCount; ++i)
+			for (int i = 0; i < _vertexCount; ++i)
 			{
 				// p = p1 + a * d
 				// dot(normal, p - v) = 0
@@ -228,8 +251,7 @@ namespace Box2DX.Collision
 			Vec2 lower = Common.Math.Mul(xf, _vertices[0]);
 			Vec2 upper = lower;
 
-			int vCount = VertexCount;
-			for (int i = 1; i < vCount; ++i)
+			for (int i = 1; i < _vertexCount; ++i)
 			{
 				Vec2 v = Common.Math.Mul(xf, _vertices[i]);
 				lower = Common.Math.Min(lower, v);
@@ -267,8 +289,7 @@ namespace Box2DX.Collision
 			//
 			// The rest of the derivation is handled by computer algebra.
 
-			int vCount = VertexCount;
-			Box2DXDebug.Assert(vCount >= 3);
+			Box2DXDebug.Assert(_vertexCount >= 3);
 
 			Vec2 center = new Vec2(0);
 			float area = 0.0f;
@@ -289,12 +310,12 @@ namespace Box2DX.Collision
 
 			const float k_inv3 = 1.0f / 3.0f;
 
-			for (int i = 0; i < vCount; ++i)
+			for (int i = 0; i < _vertexCount; ++i)
 			{
 				// Triangle vertices.
 				Vec2 p1 = pRef;
 				Vec2 p2 = _vertices[i];
-				Vec2 p3 = i + 1 < vCount ? _vertices[i + 1] : _vertices[0];
+				Vec2 p3 = i + 1 < _vertexCount ? _vertices[i + 1] : _vertices[0];
 
 				Vec2 e1 = p2 - p1;
 				Vec2 e2 = p3 - p1;
@@ -340,11 +361,9 @@ namespace Box2DX.Collision
 			int intoIndex = -1;
 			int outoIndex = -1;
 
-			int vCount = VertexCount;
-
 			bool lastSubmerged = false;
 			int i;
-			for (i = 0; i < vCount; i++)
+			for (i = 0; i < _vertexCount; i++)
 			{
 				depths[i] = Vec2.Dot(normalL, _vertices[i]) - offsetL;
 				bool isSubmerged = depths[i] < -Common.Settings.FLT_EPSILON;
@@ -390,16 +409,16 @@ namespace Box2DX.Collision
 				case 1:
 					if (intoIndex == -1)
 					{
-						intoIndex = vCount - 1;
+						intoIndex = _vertexCount - 1;
 					}
 					else
 					{
-						outoIndex = vCount - 1;
+						outoIndex = _vertexCount - 1;
 					}
 					break;
 			}
-			int intoIndex2 = (intoIndex + 1) % vCount;
-			int outoIndex2 = (outoIndex + 1) % vCount;
+			int intoIndex2 = (intoIndex + 1) % _vertexCount;
+			int outoIndex2 = (outoIndex + 1) % _vertexCount;
 
 			float intoLambda = (0 - depths[intoIndex]) / (depths[intoIndex2] - depths[intoIndex]);
 			float outoLambda = (0 - depths[outoIndex]) / (depths[outoIndex2] - depths[outoIndex]);
@@ -421,7 +440,7 @@ namespace Box2DX.Collision
 			i = intoIndex2;
 			while (i != outoIndex2)
 			{
-				i = (i + 1) % vCount;
+				i = (i + 1) % _vertexCount;
 				if (i == outoIndex2)
 					p3 = outoVec;
 				else
@@ -455,7 +474,7 @@ namespace Box2DX.Collision
 
 		public override float ComputeSweepRadius(Vec2 pivot)
 		{
-			int vCount = VertexCount;
+			int vCount = _vertexCount;
 			Box2DXDebug.Assert(vCount > 0);
 			float sr = Vec2.DistanceSquared(_vertices[0], pivot);
 			for (int i = 1; i < vCount; ++i)
@@ -471,10 +490,9 @@ namespace Box2DX.Collision
 		/// </summary>
 		public override int GetSupport(Vec2 d)
 		{
-			int vCount = VertexCount;
 			int bestIndex = 0;
 			float bestValue = Vec2.Dot(_vertices[0], d);
-			for (int i = 1; i < vCount; ++i)
+			for (int i = 1; i < _vertexCount; ++i)
 			{
 				float value = Vec2.Dot(_vertices[i], d);
 				if (value > bestValue)
@@ -487,12 +505,11 @@ namespace Box2DX.Collision
 			return bestIndex;
 		}
 
-		public Vec2 GetSupportVertex(Vec2 d)
+		public override Vec2 GetSupportVertex(Vec2 d)
 		{
-			int vCount = VertexCount;
 			int bestIndex = 0;
 			float bestValue = Vec2.Dot(_vertices[0], d);
-			for (int i = 1; i < vCount; ++i)
+			for (int i = 1; i < _vertexCount; ++i)
 			{
 				float value = Vec2.Dot(_vertices[i], d);
 				if (value > bestValue)
@@ -505,21 +522,15 @@ namespace Box2DX.Collision
 			return _vertices[bestIndex];
 		}
 
-		/// <summary>
-		/// Get the vertex count.
-		/// </summary>
-		public int VertexCount { get { return _vertices.Length; } }
-
 		public override Vec2 GetVertex(int index)
 		{
-			Box2DXDebug.Assert(0 <= index && index < VertexCount);
+			Box2DXDebug.Assert(0 <= index && index < _vertexCount);
 			return _vertices[index];
 		}
 
-		public static Vec2 ComputeCentroid(Vec2[] vs)
+		public static Vec2 ComputeCentroid(Vec2[] vs, int count)
 		{
-			int vCount = vs.Length;
-			Box2DXDebug.Assert(vCount >= 3);
+			Box2DXDebug.Assert(count >= 3);
 
 			Vec2 c = new Vec2(0f);
 			float area = 0f;
@@ -538,12 +549,12 @@ namespace Box2DX.Collision
 
 			const float inv3 = 1.0f / 3.0f;
 
-			for (int i = 0; i < vCount; ++i)
+			for (int i = 0; i < count; ++i)
 			{
 				// Triangle vertices.
 				Vec2 p1 = pRef;
 				Vec2 p2 = vs[i];
-				Vec2 p3 = i + 1 < vCount ? vs[i + 1] : vs[0];
+				Vec2 p3 = i + 1 < count ? vs[i + 1] : vs[0];
 
 				Vec2 e1 = p2 - p1;
 				Vec2 e2 = p3 - p1;

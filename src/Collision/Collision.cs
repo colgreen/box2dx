@@ -1,6 +1,6 @@
 ﻿/*
-  Box2DX Copyright (c) 2008 Ihar Kalasouski http://code.google.com/p/box2dx
-  Box2D original C++ version Copyright (c) 2006-2007 Erin Catto http://www.gphysics.com
+  Box2DX Copyright (c) 2009 Ihar Kalasouski http://code.google.com/p/box2dx
+  Box2D original C++ version Copyright (c) 2006-2009 Erin Catto http://www.gphysics.com
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -170,7 +170,7 @@ namespace Box2DX.Collision
 		/// Used to quickly compare contact ids.
 		/// </summary>
 		[System.Runtime.InteropServices.FieldOffset(0)]
-		public uint Key;
+		public UInt32 Key;
 	}
 
 	/// <summary>
@@ -210,6 +210,7 @@ namespace Box2DX.Collision
 		public ManifoldPoint Clone()
 		{
 			ManifoldPoint newPoint = new ManifoldPoint();
+			newPoint.LocalPoint = this.LocalPoint;
 			newPoint.NormalImpulse = this.NormalImpulse;
 			newPoint.TangentImpulse = this.TangentImpulse;
 			newPoint.ID = this.ID;

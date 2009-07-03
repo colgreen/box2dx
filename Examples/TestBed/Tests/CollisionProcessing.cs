@@ -45,7 +45,7 @@ namespace TestBed
 				bd.Position.Set(0.0f, -10.0f);
 
 				Body ground = _world.CreateBody(bd);
-				ground.CreateShape(sd);
+				ground.CreateFixture(sd);
 			}
 
 			float xLo = -5.0f, xHi = 5.0f;
@@ -64,7 +64,7 @@ namespace TestBed
 			triangleBodyDef.Position.Set(Box2DX.Common.Math.Random(xLo, xHi), 35f);
 
 			Body body1 = _world.CreateBody(triangleBodyDef);
-			body1.CreateShape(triangleShapeDef);
+			body1.CreateFixture(triangleShapeDef);
 			body1.SetMassFromShapes();
 
 			// Large triangle (recycle definitions)
@@ -75,7 +75,7 @@ namespace TestBed
 			triangleBodyDef.Position.Set(Box2DX.Common.Math.Random(xLo, xHi), 30f);
 
 			Body body2 = _world.CreateBody(triangleBodyDef);
-			body2.CreateShape(triangleShapeDef);
+			body2.CreateFixture(triangleShapeDef);
 			body2.SetMassFromShapes();
 
 			// Small box
@@ -88,7 +88,7 @@ namespace TestBed
 			boxBodyDef.Position.Set(Box2DX.Common.Math.Random(xLo, xHi), 25f);
 
 			Body body3 = _world.CreateBody(boxBodyDef);
-			body3.CreateShape(boxShapeDef);
+			body3.CreateFixture(boxShapeDef);
 			body3.SetMassFromShapes();
 
 			// Large box (recycle definitions)
@@ -97,7 +97,7 @@ namespace TestBed
 			boxBodyDef.Position.Set(Box2DX.Common.Math.Random(xLo, xHi), 15f);
 
 			Body body4 = _world.CreateBody(boxBodyDef);
-			body4.CreateShape(boxShapeDef);
+			body4.CreateFixture(boxShapeDef);
 			body4.SetMassFromShapes();
 
 			// Small circle
@@ -110,7 +110,7 @@ namespace TestBed
 			circleBodyDef.Position.Set(Box2DX.Common.Math.Random(xLo, xHi), 10f);
 
 			Body body5 = _world.CreateBody(circleBodyDef);
-			body5.CreateShape(circleShapeDef);
+			body5.CreateFixture(circleShapeDef);
 			body5.SetMassFromShapes();
 
 			// Large circle
@@ -119,7 +119,7 @@ namespace TestBed
 			circleBodyDef.Position.Set(Box2DX.Common.Math.Random(xLo, xHi), 5f);
 
 			Body body6 = _world.CreateBody(circleBodyDef);
-			body6.CreateShape(circleShapeDef);
+			body6.CreateFixture(circleShapeDef);
 			body6.SetMassFromShapes();
 		}
 
@@ -139,8 +139,8 @@ namespace TestBed
 			{
 				MyContactPoint point = _points[i];
 
-				Body body1 = point.shape1.GetBody();
-				Body body2 = point.shape2.GetBody();
+				Body body1 = point.shape1.Body;
+				Body body2 = point.shape2.Body;
 				float mass1 = body1.GetMass();
 				float mass2 = body2.GetMass();
 

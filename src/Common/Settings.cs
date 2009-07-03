@@ -124,6 +124,21 @@ namespace Box2DX.Common
 #if !TARGET_FLOAT32_IS_FIXED
 		public static readonly float MaxAngularVelocitySquared = MaxAngularVelocity * MaxAngularVelocity;
 #endif
+
+		/// <summary>
+		/// The maximum linear velocity of a body. This limit is very large and is used
+		/// to prevent numerical problems. You shouldn't need to adjust this.
+		/// </summary>
+		public static readonly float MaxTranslation = 2.0f;
+		public static readonly float MaxTranslationSquared = (MaxTranslation * MaxTranslation);
+
+		/// <summary>
+		/// The maximum angular velocity of a body. This limit is very large and is used
+		/// to prevent numerical problems. You shouldn't need to adjust this.
+		/// </summary>
+		public static readonly float MaxRotation = (0.5f * Pi);
+		public static readonly float MaxRotationSquared = (MaxRotation * MaxRotation);
+
 		/// <summary>
 		/// This scale factor controls how fast overlap is resolved. Ideally this would be 1 so
 		/// that overlap is removed in one time step. However using values close to 1 often lead to overshoot.

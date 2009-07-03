@@ -1,6 +1,6 @@
 ﻿/*
-  Box2DX Copyright (c) 2008 Ihar Kalasouski http://code.google.com/p/box2dx
-  Box2D original C++ version Copyright (c) 2006-2007 Erin Catto http://www.gphysics.com
+  Box2DX Copyright (c) 2009 Ihar Kalasouski http://code.google.com/p/box2dx
+  Box2D original C++ version Copyright (c) 2006-2009 Erin Catto http://www.gphysics.com
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -20,8 +20,6 @@
 */
 
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 using Box2DX.Common;
 using Box2DX.Collision;
@@ -32,28 +30,29 @@ namespace Box2DX.Dynamics
 	/// A body definition holds all the data needed to construct a rigid body.
 	/// You can safely re-use body definitions.
 	/// </summary>
-	public class BodyDef
+	public struct BodyDef
 	{
 		/// <summary>
 		/// This constructor sets the body definition default values.
 		/// </summary>
-		public BodyDef()
+		public BodyDef(byte init)
 		{
-			//MassData = new MassData();
-			//MassData.Center.SetZero();
-			//MassData.Mass = 0.0f;
-			//MassData.I = 0.0f;
-			//UserData = null;
-			//Position = new Vec2(0);
-			//Angle = 0.0f;
-			//LinearVelocity = new Vec2(0);
-			//AngularVelocity = 0.0f;
-			//LinearDamping = 0.0f;
-			//AngularDamping = 0.0f;
+			MassData = new MassData();
+			MassData.Center.SetZero();
+			MassData.Mass = 0.0f;
+			MassData.I = 0.0f;
+			UserData = null;
+			Position = new Vec2();
+			Position.Set(0.0f, 0.0f);
+			Angle = 0.0f;
+			LinearVelocity = new Vec2(0f, 0f);
+			AngularVelocity = 0.0f;
+			LinearDamping = 0.0f;
+			AngularDamping = 0.0f;
 			AllowSleep = true;
-			//IsSleeping = false;
-			//FixedRotation = false;
-			//IsBullet = false;
+			IsSleeping = false;
+			FixedRotation = false;
+			IsBullet = false;
 		}
 
 		/// <summary>
@@ -79,14 +78,10 @@ namespace Box2DX.Dynamics
 		/// </summary>
 		public float Angle;
 
-		/// <summary>
 		/// The linear velocity of the body in world co-ordinates.
-		/// </summary>
 		public Vec2 LinearVelocity;
 
-		/// <summary>
-		/// The angular velocity of the body.
-		/// </summary>
+		// The angular velocity of the body.
 		public float AngularVelocity;
 
 		/// <summary>
@@ -129,7 +124,7 @@ namespace Box2DX.Dynamics
 	}
 
 	/// <summary>
-	/// A rigid body.
+	/// A rigid body. These are created via World.CreateBody.
 	/// </summary>
 	public class Body : IDisposable
 	{
@@ -157,6 +152,7 @@ namespace Box2DX.Dynamics
 		internal int _islandIndex;
 
 		internal XForm _xf;		// the body origin transform
+
 		internal Sweep _sweep;	// the swept motion for CCD
 
 		internal Vec2 _linearVelocity;
@@ -179,7 +175,7 @@ namespace Box2DX.Dynamics
 
 		internal float _mass;
 		internal float _invMass;
-		private float _I;
+		internal float _I;
 		internal float _invI;
 
 		internal float _linearDamping;
@@ -224,8 +220,12 @@ namespace Box2DX.Dynamics
 
 			//_jointList = null;
 			//_contactList = null;
+			//_controllerList = null;
 			//_prev = null;
 			//_next = null;
+
+			_linearVelocity = bd.LinearVelocity;
+			_angularVelocity = bd.AngularVelocity;
 
 			_linearDamping = bd.LinearDamping;
 			_angularDamping = bd.AngularDamping;
@@ -277,6 +277,49 @@ namespace Box2DX.Dynamics
 			// shapes and joints are destroyed in World.Destroy
 		}
 
+		internal bool SynchronizeFixtures()
+		{
+			XForm xf1 = new XForm();
+			xf1.R.Set(_sweep.A0);
+			xf1.Position = _sweep.C0 - Common.Math.Mul(xf1.R, _sweep.LocalCenter);
+
+			bool inRange = true;
+			for (Fixture f = _fixtureList; f != null; f = f.Next)
+			{
+				inRange = f.Synchronize(_world._broadPhase, xf1, _xf);
+				if (inRange == false)
+				{
+					break;
+				}
+			}
+
+			if (inRange == false)
+			{
+				_flags |= BodyFlags.Frozen;
+				_linearVelocity.SetZero();
+				_angularVelocity = 0.0f;
+
+				// Failure
+				return false;
+			}
+
+			// Success
+			return true;
+		}
+
+		// This is used to prevent connected bodies from colliding.
+		// It may lie, depending on the collideConnected flag.
+		internal bool IsConnected(Body other)
+		{
+			for (JointEdge jn = _jointList; jn != null; jn = jn.Next)
+			{
+				if (jn.Other == other)
+					return jn.Joint._collideConnected == false;
+			}
+
+			return false;
+		}
+
 		/// <summary>
 		/// Creates a fixture and attach it to this body.
 		/// @warning This function is locked during callbacks.
@@ -290,8 +333,10 @@ namespace Box2DX.Dynamics
 				return null;
 			}
 
-			Fixture fixture =new Fixture();
-			fixture.Create(_world._broadPhase, this, _xf, def);
+			BroadPhase broadPhase = _world._broadPhase;
+
+			Fixture fixture = new Fixture();
+			fixture.Create(broadPhase, this, _xf, def);
 
 			fixture._next = _fixtureList;
 			_fixtureList = fixture;
@@ -309,7 +354,7 @@ namespace Box2DX.Dynamics
 		/// @warning This function is locked during callbacks.
 		/// </summary>
 		/// <param name="fixture">The fixture to be removed.</param>
-		public void DestroyShape(Fixture fixture)
+		public void DestroyFixture(Fixture fixture)
 		{
 			Box2DXDebug.Assert(_world._lock == false);
 			if (_world._lock == true)
@@ -317,7 +362,7 @@ namespace Box2DX.Dynamics
 				return;
 			}
 
-			Box2DXDebug.Assert(fixture._body == this);
+			Box2DXDebug.Assert(fixture.Body == this);
 
 			// Remove the fixture from this body's singly linked list.
 			Box2DXDebug.Assert(_fixtureCount > 0);
@@ -327,21 +372,23 @@ namespace Box2DX.Dynamics
 			{
 				if (node == fixture)
 				{
-					_fixtureList = fixture._next;
+					//*node = fixture->m_next;
+					_fixtureList = fixture.Next;
 					found = true;
 					break;
 				}
 
-				node = node._next;
+				node = node.Next;
 			}
 
 			// You tried to remove a shape that is not attached to this body.
 			Box2DXDebug.Assert(found);
 
-			fixture.Destroy(_world._broadPhase);
+			BroadPhase broadPhase = _world._broadPhase;
+
+			fixture.Destroy(broadPhase);
 			fixture._body = null;
 			fixture._next = null;
-			fixture.Dispose();
 
 			--_fixtureCount;
 		}
@@ -351,9 +398,8 @@ namespace Box2DX.Dynamics
 		/// Set the mass properties. Note that this changes the center of mass position.
 		/// If you are not sure how to compute mass properties, use SetMassFromShapes.
 		/// The inertia tensor is assumed to be relative to the center of mass.
-		/// @param massData the mass properties.
 		/// </summary>
-		/// <param name="massData"></param>
+		/// <param name="massData">The mass properties.</param>
 		public void SetMass(MassData massData)
 		{
 			Box2DXDebug.Assert(_world._lock == false);
@@ -373,25 +419,16 @@ namespace Box2DX.Dynamics
 				_invMass = 1.0f / _mass;
 			}
 
-			if ((_flags & BodyFlags.FixedRotation) == 0)
-			{
-				_I = massData.I;
-			}
+			_I = massData.I;
 
-			if (_I > 0.0f)
+			if (_I > 0.0f && (_flags & BodyFlags.FixedRotation) == 0)
 			{
-				_invI = 1.0f /_I;
+				_invI = 1.0f / _I;
 			}
 
 			// Move center of mass.
 			_sweep.LocalCenter = massData.Center;
 			_sweep.C0 = _sweep.C = Common.Math.Mul(_xf, _sweep.LocalCenter);
-
-			// Update the sweep radii of all child shapes.
-			for (Shape s = _shapeList; s != null; s = s._next)
-			{
-				s.UpdateSweepRadius(_sweep.LocalCenter);
-			}
 
 			BodyType oldType = _type;
 			if (_invMass == 0.0f && _invI == 0.0f)
@@ -406,9 +443,9 @@ namespace Box2DX.Dynamics
 			// If the body type changed, we need to refilter the broad-phase proxies.
 			if (oldType != _type)
 			{
-				for (Shape s = _shapeList; s!=null; s = s._next)
+				for (Fixture f = _fixtureList; f != null; f = f.Next)
 				{
-					s.RefilterProxy(_world._broadPhase, _xf);
+					f.RefilterProxy(_world._broadPhase, _xf);
 				}
 			}
 		}
@@ -434,10 +471,10 @@ namespace Box2DX.Dynamics
 			_invI = 0.0f;
 
 			Vec2 center = Vec2.Zero;
-			for (Shape s = _shapeList; s!=null; s = s._next)
+			for (Fixture f = _fixtureList; f != null; f = f.Next)
 			{
 				MassData massData;
-				s.ComputeMass(out massData);
+				f.ComputeMass(out massData);
 				_mass += massData.Mass;
 				center += massData.Mass * massData.Center;
 				_I += massData.I;
@@ -467,12 +504,6 @@ namespace Box2DX.Dynamics
 			_sweep.LocalCenter = center;
 			_sweep.C0 = _sweep.C = Common.Math.Mul(_xf, _sweep.LocalCenter);
 
-			// Update the sweep radii of all child shapes.
-			for (Shape s = _shapeList; s != null; s = s._next)
-			{
-				s.UpdateSweepRadius(_sweep.LocalCenter);
-			}
-
 			BodyType oldType = _type;
 			if (_invMass == 0.0f && _invI == 0.0f)
 			{
@@ -486,9 +517,9 @@ namespace Box2DX.Dynamics
 			// If the body type changed, we need to refilter the broad-phase proxies.
 			if (oldType != _type)
 			{
-				for (Shape s = _shapeList; s!=null; s = s._next)
+				for (Fixture f = _fixtureList; f != null; f = f.Next)
 				{
-					s.RefilterProxy(_world._broadPhase, _xf);
+					f.RefilterProxy(_world._broadPhase, _xf);
 				}
 			}
 		}
@@ -522,9 +553,9 @@ namespace Box2DX.Dynamics
 			_sweep.A0 = _sweep.A = angle;
 
 			bool freeze = false;
-			for (Shape s = _shapeList; s != null; s = s._next)
+			for (Fixture f = _fixtureList; f != null; f = f.Next)
 			{
-				bool inRange = s.Synchronize(_world._broadPhase, _xf, _xf);
+				bool inRange = f.Synchronize(_world._broadPhase, _xf, _xf);
 
 				if (inRange == false)
 				{
@@ -538,10 +569,6 @@ namespace Box2DX.Dynamics
 				_flags |= BodyFlags.Frozen;
 				_linearVelocity.SetZero();
 				_angularVelocity = 0.0f;
-				for (Shape s = _shapeList; s != null; s = s._next)
-				{
-					s.DestroyProxy(_world._broadPhase);
-				}
 
 				// Failure
 				return false;
@@ -553,12 +580,44 @@ namespace Box2DX.Dynamics
 		}
 
 		/// <summary>
+		/// Set the position of the body's origin and rotation (radians).
+		/// This breaks any contacts and wakes the other bodies.
+		/// Note this is less efficient than the other overload - you should use that
+		/// if the angle is available.
+		/// </summary>
+		/// <param name="xf">The transform of position and angle to set the body to.</param>
+		/// <returns>False if the movement put a shape outside the world. In this case the
+		/// body is automatically frozen.</returns>
+		public bool SetXForm(XForm xf)
+		{
+			return SetXForm(xf.Position, xf.GetAngle());
+		}
+
+		/// <summary>
 		/// Get the body transform for the body's origin.
 		/// </summary>
 		/// <returns>Return the world transform of the body's origin.</returns>
 		public XForm GetXForm()
 		{
 			return _xf;
+		}
+
+		/// <summary>
+		/// Set the world body origin position.
+		/// </summary>
+		/// <param name="position">The new position of the body.</param>
+		public void SetPosition(Vec2 position)
+		{
+			SetXForm(position, GetAngle());
+		}
+
+		/// <summary>
+		/// Set the world body angle.
+		/// </summary>
+		/// <param name="angle">The new angle of the body.</param>
+		public void SetAngle(float angle)
+		{
+			SetXForm(GetPosition(), angle);
 		}
 
 		/// <summary>
@@ -619,9 +678,9 @@ namespace Box2DX.Dynamics
 		/// Set the angular velocity.
 		/// </summary>
 		/// <param name="omega">The new angular velocity in radians/second.</param>
-		public void SetAngularVelocity(float omega)
+		public void SetAngularVelocity(float w)
 		{
-			_angularVelocity = omega;
+			_angularVelocity = w;
 		}
 
 		/// <summary>
@@ -655,7 +714,7 @@ namespace Box2DX.Dynamics
 		/// without affecting the linear velocity of the center of mass.
 		/// This wakes up the body.
 		/// </summary>
-		/// <param name="torque">About the z-axis (out of the screen), usually in N-m.</param>
+		/// <param name="torque">Torque about the z-axis (out of the screen), usually in N-m.</param>
 		public void ApplyTorque(float torque)
 		{
 			if (IsSleeping())
@@ -698,6 +757,19 @@ namespace Box2DX.Dynamics
 		public float GetInertia()
 		{
 			return _I;
+		}
+
+		/// <summary>
+		/// Get the mass data of the body.
+		/// </summary>
+		/// <returns>A struct containing the mass, inertia and center of the body.</returns>
+		public MassData GetMassData()
+		{
+			MassData massData = new MassData();
+			massData.Mass = _mass;
+			massData.I = _I;
+			massData.Center = GetWorldCenter();
+			return massData;
 		}
 
 		/// <summary>
@@ -760,6 +832,26 @@ namespace Box2DX.Dynamics
 			return GetLinearVelocityFromWorldPoint(GetWorldPoint(localPoint));
 		}
 
+		public float GetLinearDamping()
+		{
+			return _linearDamping;
+		}
+
+		public void SetLinearDamping(float linearDamping)
+		{
+			_linearDamping = linearDamping;
+		}
+
+		public float GetAngularDamping()
+		{
+			return _angularDamping;
+		}
+
+		public void SetAngularDamping(float angularDamping)
+		{
+			_angularDamping = angularDamping;
+		}
+
 		/// <summary>
 		/// Is this body treated like a bullet for continuous collision detection?
 		/// </summary>
@@ -785,6 +877,31 @@ namespace Box2DX.Dynamics
 			}
 		}
 
+		public bool IsFixedRotation()
+		{
+			return (_flags & BodyFlags.FixedRotation) == BodyFlags.FixedRotation;
+		}
+
+		public void SetFixedRotation(bool fixedr)
+		{
+			if (fixedr)
+			{
+				_angularVelocity = 0.0f;
+				_invI = 0.0f;
+				_flags |= BodyFlags.FixedRotation;
+			}
+			else
+			{
+				if (_I > 0.0f)
+				{
+					// Recover _invI from _I.
+					_invI = 1.0f / _I;
+					_flags &= BodyFlags.FixedRotation;
+				}
+				// TODO: Else what?
+			}
+		}
+
 		/// <summary>
 		/// Is this body static (immovable)?
 		/// </summary>
@@ -792,6 +909,22 @@ namespace Box2DX.Dynamics
 		public bool IsStatic()
 		{
 			return _type == BodyType.Static;
+		}
+
+		public void SetStatic()
+		{
+			if (_type == BodyType.Static)
+				return;
+			_mass = 0.0f;
+			_invMass = 0.0f;
+			_I = 0.0f;
+			_invI = 0.0f;
+			_type = BodyType.Static;
+
+			for (Fixture f = _fixtureList; f != null; f = f.Next)
+			{
+				f.RefilterProxy(_world._broadPhase, _xf);
+			}
 		}
 
 		/// <summary>
@@ -819,6 +952,11 @@ namespace Box2DX.Dynamics
 		public bool IsSleeping()
 		{
 			return (_flags & BodyFlags.Sleep) == BodyFlags.Sleep;
+		}
+
+		public bool IsAllowSleeping()
+		{
+			return (_flags & BodyFlags.AllowSleep) == BodyFlags.AllowSleep;
 		}
 
 		/// <summary>
@@ -862,12 +1000,12 @@ namespace Box2DX.Dynamics
 		}
 
 		/// <summary>
-		/// Get the list of all shapes attached to this body.
+		/// Get the list of all fixtures attached to this body.
 		/// </summary>
 		/// <returns></returns>
-		public Shape GetShapeList()
+		public Fixture GetFixtureList()
 		{
-			return _shapeList;
+			return _fixtureList;
 		}
 
 		/// <summary>
@@ -879,6 +1017,10 @@ namespace Box2DX.Dynamics
 			return _jointList;
 		}
 
+		public Controllers.ControllerEdge GetControllerList()
+		{
+			return _controllerList;
+		}
 
 		/// <summary>
 		/// Get the next body in the world's body list.
@@ -910,57 +1052,10 @@ namespace Box2DX.Dynamics
 		/// <returns></returns>
 		public World GetWorld() { return _world; }
 
-		internal bool SynchronizeShapes()
-		{
-			XForm xf1 = new XForm();
-			xf1.R.Set(_sweep.A0);
-			xf1.Position = _sweep.C0 - Common.Math.Mul(xf1.R, _sweep.LocalCenter);
-
-			bool inRange = true;
-			for (Shape s = _shapeList; s != null; s = s._next)
-			{
-				inRange = s.Synchronize(_world._broadPhase, xf1, _xf);
-				if (inRange == false)
-				{
-					break;
-				}
-			}
-
-			if (inRange == false)
-			{
-				_flags |= BodyFlags.Frozen;
-				_linearVelocity.SetZero();
-				_angularVelocity = 0.0f;
-				for (Shape s = _shapeList; s != null; s = s._next)
-				{
-					s.DestroyProxy(_world._broadPhase);
-				}
-
-				// Failure
-				return false;
-			}
-
-			// Success
-			return true;
-		}
-
 		internal void SynchronizeTransform()
 		{
 			_xf.R.Set(_sweep.A);
 			_xf.Position = _sweep.C - Common.Math.Mul(_xf.R, _sweep.LocalCenter);
-		}
-
-		// This is used to prevent connected bodies from colliding.
-		// It may lie, depending on the collideConnected flag.
-		internal bool IsConnected(Body other)
-		{
-			for (JointEdge jn = _jointList; jn != null; jn = jn.Next)
-			{
-				if (jn.Other == other)
-					return jn.Joint._collideConnected == false;
-			}
-
-			return false;
 		}
 
 		internal void Advance(float t)

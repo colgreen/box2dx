@@ -1,6 +1,6 @@
 ﻿/*
-  Box2DX Copyright (c) 2008 Ihar Kalasouski http://code.google.com/p/box2dx
-  Box2D original C++ version Copyright (c) 2006-2007 Erin Catto http://www.gphysics.com
+  Box2DX Copyright (c) 2009 Ihar Kalasouski http://code.google.com/p/box2dx
+  Box2D original C++ version Copyright (c) 2006-2009 Erin Catto http://www.gphysics.com
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -20,7 +20,6 @@
 */
 
 using System;
-using System.Collections.Generic;
 using System.Text;
 
 using Box2DX;
@@ -31,75 +30,73 @@ using Box2DX.Dynamics;
 namespace TestBed
 {
 	using Box2DXMath = Box2DX.Common.Math;
-	using SystemMath = System.Math;
 
 	public class Actor
 	{
 		public AABB aabb;
 		public int overlapCount;
 		public ushort proxyId;
-	}
-
-	public class Callback : PairCallback
-	{
-		public override object PairAdded(object proxyUserData1, object proxyUserData2)
-		{
-			Actor actor1 = proxyUserData1 as Actor;
-			Actor actor2 = proxyUserData2 as Actor;
-
-			int id1 = Array.IndexOf(_test._actors, actor1);
-			int id2 = Array.IndexOf(_test._actors, actor2);
-			Box2DXDebug.Assert(id1 < BroadPhaseTest.k_actorCount);
-			Box2DXDebug.Assert(id2 < BroadPhaseTest.k_actorCount);
-
-			Box2DXDebug.Assert(_test._overlaps[id1][id2] == false);
-			_test._overlaps[id1][id2] = true;
-			_test._overlaps[id2][id1] = true;
-			++_test._overlapCount;
-
-			++actor1.overlapCount;
-			++actor2.overlapCount;
-
-			return null;
-		}
-
-		public override void PairRemoved(object proxyUserData1, object proxyUserData2, object pairUserData)
-		{
-			//B2_NOT_USED(pairUserData);
-
-			Actor actor1 = proxyUserData1 as Actor;
-			Actor actor2 = proxyUserData2 as Actor;
-
-			// The pair may have been removed by destroying a proxy.
-			int id1 = Array.IndexOf(_test._actors, actor1);
-			int id2 = Array.IndexOf(_test._actors, actor2);
-			Box2DXDebug.Assert(id1 < BroadPhaseTest.k_actorCount);
-			Box2DXDebug.Assert(id2 < BroadPhaseTest.k_actorCount);
-
-			_test._overlaps[id1][id2] = false;
-			_test._overlaps[id2][id1] = false;
-			--_test._overlapCount;
-
-			--actor1.overlapCount;
-			--actor2.overlapCount;
-		}
-
-		public BroadPhaseTest _test;
-	}
+	}	
 
 	public class BroadPhaseTest : Test
 	{
+		public class Callback : PairCallback
+		{
+			public override object PairAdded(object proxyUserData1, object proxyUserData2)
+			{
+				Actor actor1 = proxyUserData1 as Actor;
+				Actor actor2 = proxyUserData2 as Actor;
+
+				int id1 = Array.IndexOf(_test._actors, actor1);
+				int id2 = Array.IndexOf(_test._actors, actor2);
+				Box2DXDebug.Assert(id1 < BroadPhaseTest.k_actorCount);
+				Box2DXDebug.Assert(id2 < BroadPhaseTest.k_actorCount);
+
+				Box2DXDebug.Assert(_test._overlaps[id1][id2] == false);
+				_test._overlaps[id1][id2] = true;
+				_test._overlaps[id2][id1] = true;
+				++_test._overlapCount;
+
+				++actor1.overlapCount;
+				++actor2.overlapCount;
+
+				return null;
+			}
+
+			public override void PairRemoved(object proxyUserData1, object proxyUserData2, object pairUserData)
+			{
+				Actor actor1 = proxyUserData1 as Actor;
+				Actor actor2 = proxyUserData2 as Actor;
+
+				// The pair may have been removed by destroying a proxy.
+				int id1 = Array.IndexOf(_test._actors, actor1);
+				int id2 = Array.IndexOf(_test._actors, actor2);
+				Box2DXDebug.Assert(id1 < BroadPhaseTest.k_actorCount);
+				Box2DXDebug.Assert(id2 < BroadPhaseTest.k_actorCount);
+
+				_test._overlaps[id1][id2] = false;
+				_test._overlaps[id2][id1] = false;
+				--_test._overlapCount;
+
+				--actor1.overlapCount;
+				--actor2.overlapCount;
+			}
+
+			public BroadPhaseTest _test;
+		}
+
 		public static readonly int k_actorCount = 256;
-		public static readonly float k_extent = 15.0f;
 		public static readonly float k_width = 1.0f;
 
-		internal int _overlapCount;
+		private float _extent;
+
+		private int _overlapCount;
 		private int _overlapCountExact;
 
 		private Callback _callback = new Callback();
 		private BroadPhase _broadPhase;
-		internal Actor[] _actors = new Actor[k_actorCount];
-		internal bool[][] _overlaps = new bool[k_actorCount][/*k_actorCount*/];
+		private Actor[] _actors = new Actor[k_actorCount];
+		private bool[][] _overlaps = new bool[k_actorCount][/*k_actorCount*/];
 		private bool _automated;
 		private int _stepCount;
 
@@ -110,13 +107,15 @@ namespace TestBed
 
 		public BroadPhaseTest()
 		{
+			_extent = 15.0f;
+
 			BroadPhase.IsValidate = true;
 
 			//srand(888);
 
 			AABB worldAABB = new AABB();
-			worldAABB.LowerBound.Set(-5.0f * k_extent, -5.0f * k_extent);
-			worldAABB.UpperBound.Set(5.0f * k_extent, 5.0f * k_extent);
+			worldAABB.LowerBound.Set(-5.0f * _extent, -5.0f * _extent);
+			worldAABB.UpperBound.Set(5.0f * _extent, 5.0f * _extent);
 
 			_overlapCount = 0;
 			_overlapCountExact = 0;
@@ -126,18 +125,12 @@ namespace TestBed
 
 			for (int i = 0; i < k_actorCount; i++)
 				_overlaps[i] = new bool[k_actorCount];
-			for (int i = 0; i < k_actorCount; i++)
-				for (int j = 0; j < k_actorCount; j++)
-					_overlaps[i][j] = false;
 
 			for (int i = 0; i < k_actorCount; i++)
 				_actors[i] = new Actor();
 
 			for (int i = 0; i < k_actorCount; ++i)
 			{
-				bool s = false;
-				if (i == 91)
-					s = true;
 				Actor actor = _actors[i];
 				GetRandomAABB(ref actor.aabb);
 				//actor->aabb.minVertex.Set(0.0f, 0.0f);
@@ -160,13 +153,9 @@ namespace TestBed
 			}
 		}
 
-		public float GetExtent() { return 1.5f * k_extent; }
-
 		public override void Step(Settings settings)
 		{
-			//B2_NOT_USED(settings);
-
-			if (_automated == true)
+			if (_automated)
 			{
 				int actionCount = Box2DXMath.Max(1, k_actorCount >> 2);
 
@@ -237,8 +226,8 @@ namespace TestBed
 		private void GetRandomAABB(ref AABB aabb)
 		{
 			Vec2 w = new Vec2(); w.Set(k_width, k_width);
-			aabb.LowerBound.X = Box2DXMath.Random(-k_extent, k_extent);
-			aabb.LowerBound.Y = Box2DXMath.Random(0.0f, 2.0f * k_extent);
+			aabb.LowerBound.X = Box2DXMath.Random(-_extent, _extent);
+			aabb.LowerBound.Y = Box2DXMath.Random(0.0f, 2.0f * _extent);
 			aabb.UpperBound = aabb.LowerBound + w;
 		}
 
@@ -253,8 +242,8 @@ namespace TestBed
 			aabb.UpperBound += d;
 
 			Vec2 c0 = 0.5f * (aabb.LowerBound + aabb.UpperBound);
-			Vec2 min = new Vec2(); min.Set(-k_extent, 0.0f);
-			Vec2 max = new Vec2(); max.Set(k_extent, 2.0f * k_extent);
+			Vec2 min = new Vec2(); min.Set(-_extent, 0.0f);
+			Vec2 max = new Vec2(); max.Set(_extent, 2.0f * _extent);
 			Vec2 c = Box2DXMath.Clamp(c0, min, max);
 
 			aabb.LowerBound += c - c0;

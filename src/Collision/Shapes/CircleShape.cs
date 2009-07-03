@@ -19,10 +19,6 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using System;
-using System.Collections.Generic;
-using System.Text;
-
 using Box2DX.Common;
 
 namespace Box2DX.Collision
@@ -113,12 +109,7 @@ namespace Box2DX.Collision
 
 			// inertia about the local origin
 			massData.I = massData.Mass * (0.5f * _radius * _radius + Vec2.Dot(_position, _position));
-		}
-
-		public override float ComputeSweepRadius(Vec2 pivot)
-		{
-			return Vec2.Distance(_position, pivot);
-		}
+		}		
 
 		public override float ComputeSubmergedArea(Vec2 normal, float offset, XForm xf, out Vec2 c)
 		{
@@ -161,7 +152,7 @@ namespace Box2DX.Collision
 		/// <summary>
 		/// Get the supporting vertex in the given direction.
 		/// </summary>
-		public Vec2 GetSupportVertex(Vec2 d)
+		public override Vec2 GetSupportVertex(Vec2 d)
 		{
 			return _position;
 		}
@@ -173,6 +164,11 @@ namespace Box2DX.Collision
 		{
 			Box2DXDebug.Assert(index == 0);
 			return _position;
+		}
+
+		public override float ComputeSweepRadius(Vec2 pivot)
+		{
+			return Vec2.Distance(_position, pivot);
 		}
 
 		/// <summary>

@@ -26,10 +26,6 @@
 #define DEBUG
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Text;
-
 using Box2DX.Common;
 
 namespace Box2DX.Collision

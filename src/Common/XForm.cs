@@ -54,6 +54,19 @@ namespace Box2DX.Common
 			R.SetIdentity();
 		}
 
+		/// Set this based on the position and angle.
+		public void Set(Vec2 p, float angle)
+		{
+			Position = p;
+			R.Set(angle);
+		}
+
+		/// Calculate the angle that the rotation matrix represents.
+		public float GetAngle()
+		{
+			return Math.Atan2(R.Col1.Y, R.Col1.X);
+		}
+
 		public static XForm Identity { get { return new XForm(Vec2.Zero, Mat22.Identity); } }
 	}
 }

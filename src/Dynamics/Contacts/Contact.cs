@@ -26,7 +26,7 @@ using Box2DX.Common;
 namespace Box2DX.Dynamics
 {
 	public delegate Contact ContactCreateFcn(Fixture fixtureA, Fixture fixtureB);
-	public delegate void ContactDestroyFcn(Contact contact);
+	public delegate void ContactDestroyFcn(ref Contact contact);
 
 	public struct ContactRegister
 	{
@@ -96,7 +96,7 @@ namespace Box2DX.Dynamics
 		public Fixture _fixtureA;
 		public Fixture _fixtureB;
 		
-		public Manifold _manifold;
+		public Manifold _manifold = new Manifold();
 
 		public float _toi;
 
@@ -207,12 +207,12 @@ namespace Box2DX.Dynamics
 			Box2DXDebug.Assert(ShapeType.UnknownShape < typeB && typeB < ShapeType.ShapeTypeCount);
 
 			ContactDestroyFcn destroyFcn = s_registers[(int)typeA][(int)typeB].DestroyFcn;
-			destroyFcn(contact);
+			destroyFcn(ref contact);
 		}
 
 		public void Update(ContactListener listener)
 		{
-			Manifold oldManifold = _manifold;
+			Manifold oldManifold = _manifold.Clone();
 
 			Evaluate();
 
@@ -220,7 +220,7 @@ namespace Box2DX.Dynamics
 			Body bodyB = _fixtureB.Body;
 
 			int oldCount = oldManifold.PointCount;
-			int newCount = GetManifoldCount();
+			int newCount = _manifold.PointCount;
 
 			if (newCount == 0 && oldCount > 0)
 			{
@@ -263,18 +263,21 @@ namespace Box2DX.Dynamics
 			if (oldCount == 0 && newCount > 0)
 			{
 				_flags |= CollisionFlags.Touch;
-				listener.BeginContact(this);
+				if(listener!=null)
+					listener.BeginContact(this);
 			}
 
 			if (oldCount > 0 && newCount == 0)
 			{
 				_flags &= ~CollisionFlags.Touch;
+				if (listener != null)
 				listener.EndContact(this);
 			}
 
 			if ((_flags & CollisionFlags.NonSolid) == 0)
 			{
-				listener.PreSolve(this, &oldManifold);
+				if (listener != null)
+					listener.PreSolve(this, oldManifold);
 
 				// The user may have disabled contact.
 				if (_manifold.PointCount == 0)

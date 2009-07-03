@@ -37,27 +37,16 @@ namespace Box2DX.Common
 		/// <summary>
 		/// Get the interpolated transform at a specific time.
 		/// </summary>
-		/// <param name="t">The normalized time in [0,1].</param>
-		public void GetXForm(out XForm xf, float t)
+		/// <param name="alpha">Alpha is a factor in [0,1], where 0 indicates t0.</param>
+		public void GetTransform(out XForm xf, float alpha)
 		{
 			xf = new XForm();
-
-			// center = p + R * LocalCenter
-			if (1.0f - T0 > Settings.FLT_EPSILON)
-			{
-				float alpha = (t - T0) / (1.0f - T0);
-				xf.Position = (1.0f - alpha) * C0 + alpha * C;
-				float angle = (1.0f - alpha) * A0 + alpha * A;
-				xf.R.Set(angle);
-			}
-			else
-			{
-				xf.Position = C;
-				xf.R.Set(A);
-			}
+			xf.Position = (1.0f - alpha) * C0 + alpha * C;
+			float angle = (1.0f - alpha) * A0 + alpha * A;
+			xf.R.Set(angle);
 
 			// Shift to origin
-			xf.Position -= Math.Mul(xf.R, LocalCenter);
+			xf.Position -= Common.Math.Mul(xf.R, LocalCenter);
 		}
 
 		/// <summary>
