@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>Box2DX</id>
+    <version>$version$</version>
+    <title>Box2DX physics engine. </title>
+    <authors>Ihar Kalasouski</authors>
+    <owners>$author$</owners>
+    <licenseUrl>http://opensource.org/licenses/MIT</licenseUrl>
+    <projectUrl>https://github.com/colgreen/box2dx</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>$description$</description>
+    <releaseNotes>First release of this clone of the Box2DX project. See project URL for details on why this release is being made.</releaseNotes>
+    <tags>box2d 2Dphysics physicsengine physics c# .net</tags>
+  </metadata>
+</package>
