@@ -39,7 +39,6 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Text;
-using Tao.FreeType;
 using Tao.OpenGl;
 using System.Runtime.InteropServices;
 

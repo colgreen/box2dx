@@ -20,19 +20,15 @@
 */
 
 using System;
-using System.Collections.Generic;
-using System.Text;
-
-using Box2DX.Common;
 using Box2DX.Collision;
+using Box2DX.Common;
 using Box2DX.Dynamics;
-
 using Tao.OpenGl;
-using Tao.FreeGlut;
+
 
 namespace TestBed
 {
-	public delegate Test TestCreateFcn();
+    public delegate Test TestCreateFcn();
 
 	public class Settings
 	{

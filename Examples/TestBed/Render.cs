@@ -19,26 +19,19 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using System;
-using System.Collections.Generic;
-using System.Text;
 
-using Tao.OpenGl;
-using Tao.FreeGlut;
-using ISE;
-
-using Box2DX.Common;
 using Box2DX.Collision;
+using Box2DX.Common;
 using Box2DX.Dynamics;
+using Tao.OpenGl;
 
 namespace TestBed
 {
-	using Box2DXMath = Box2DX.Common.Math;
-	using SysMath = System.Math;
+    using SysMath = System.Math;
 
-	// This class implements debug drawing callbacks that are invoked
-	// inside World.Step.
-	public class OpenGLDebugDraw : DebugDraw
+    // This class implements debug drawing callbacks that are invoked
+    // inside World.Step.
+    public class OpenGLDebugDraw : DebugDraw
 	{
 		public override void DrawPolygon(Vec2[] vertices, int vertexCount, Color color)
 		{
@@ -172,20 +165,11 @@ namespace TestBed
 			Gl.glPointSize(1.0f);
 		}
 
-		static FTFont sysfont;
 
 		static Tao.Platform.Windows.SimpleOpenGlControl openGlControl;
 		public static void InitTextRenderer(Tao.Platform.Windows.SimpleOpenGlControl openGlCtrl)
 		{
 			openGlControl = openGlCtrl;
-			
-			int Errors = 0;
-			// CREATE FONT
-			sysfont = new FTFont("FreeSans.ttf", out Errors);
-			// INITIALISE FONT AS A PER_CHARACTER TEXTURE MAPPED FONT
-			sysfont.ftRenderToTexture(12, 196);
-			// SET the sample font to align CENTERED
-			sysfont.FT_ALIGN = FTFontAlign.FT_ALIGN_LEFT;
 		}
 
 		public static void DrawString(int x, int y, string str)
@@ -207,11 +191,6 @@ namespace TestBed
 			// Scale the font
 			Gl.glScalef(0.0035f, 0.0035f, 0.0035f);			
 
-			// Begin writing the font
-			sysfont.ftBeginFont();
-			sysfont.ftWrite(str);
-			// Stop writing the font and restore old OpenGL parameters
-			sysfont.ftEndFont();
 
 			Gl.glPopMatrix();
 			Gl.glMatrixMode(Gl.GL_PROJECTION);

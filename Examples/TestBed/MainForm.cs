@@ -21,25 +21,13 @@
 #define GLRender
 
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Text;
 using System.Windows.Forms;
-using System.Reflection;
-using System.Threading;
-
-using Tao.OpenGl;
-using Tao.FreeGlut;
-
 using Box2DX.Common;
-using Box2DX.Dynamics;
-using Box2DX.Collision;
+using Tao.OpenGl;
 
 namespace TestBed
 {
-	public partial class MainForm : Form
+    public partial class MainForm : Form
 	{
 		private Test _currentTest;
 		public Test CurrentTest

@@ -19,15 +19,11 @@
 */
 
 using System;
-using System.Collections.Generic;
 using System.Windows.Forms;
-
-using Tao.OpenGl;
-using Tao.FreeGlut;
 
 namespace TestBed
 {
-	static class Program
+    static class Program
 	{
 		/// <summary>
 		/// The main entry point for the application.
